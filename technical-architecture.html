@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picture This - Technical Architecture Design</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .section-header {
+            background: #2196F3;
+            color: white;
+            padding: 15px 20px;
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .section-content {
+            padding: 20px;
+        }
+        .architecture-diagram {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .db-table {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .db-table h4 {
+            margin-top: 0;
+            color: #856404;
+            border-bottom: 2px solid #ffeaa7;
+            padding-bottom: 5px;
+        }
+        .api-endpoint {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .api-endpoint h4 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .method.get { background: #28a745; color: white; }
+        .method.post { background: #007bff; color: white; }
+        .method.put { background: #ffc107; color: black; }
+        .method.delete { background: #dc3545; color: white; }
+        .component-card {
+            background: #e8f5e8;
+            border: 1px solid #d4edda;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .component-card h4 {
+            margin-top: 0;
+            color: #155724;
+        }
+        .security-measure {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .security-measure h4 {
+            margin-top: 0;
+            color: #721c24;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            background: #28a745;
+            color: white;
+        }
+        .summary {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .tech-stack {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .flow-diagram {
+            background: #f3e5f5;
+            border: 1px solid #ce93d8;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏗️ Picture This - Technical Architecture Design</h1>
+        <p>Comprehensive Technical Specification & Implementation Guide</p>
+        <p><strong>Document Version:</strong> 1.0 | <strong>Date:</strong> September 5, 2025</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Executive Summary</h2>
+        <p>This document outlines the complete technical architecture for Picture This, an AI-powered image generation platform. The design covers database schema, API architecture, frontend components, and comprehensive security measures to ensure scalable, secure, and maintainable implementation.</p>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🏛️ 1. System Architecture Overview</h2>
+        <div class="section-content">
+            <div class="architecture-diagram">
+                <h3>High-Level Architecture</h3>
+                <pre>
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (React)       │◄──►│   (Node.js)     │◄──►│   (PostgreSQL)  │
+│                 │    │                 │    │                 │
+│ • Components    │    │ • API Routes    │    │ • Users         │
+│ • Pages         │    │ • Controllers   │    │ • Images        │
+│ • Utils         │    │ • Middleware    │    │ • Credits       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   External      │
+                    │   Services      │
+                    │                 │
+                    │ • OpenAI API    │
+                    │ • Stripe API    │
+                    │ • File Storage  │
+                    └─────────────────┘
+                </pre>
+            </div>
+
+            <h3>Technology Stack</h3>
+            <div class="tech-stack">
+                <h4>Frontend</h4>
+                <ul>
+                    <li><strong>Framework:</strong> React 18 with Vite</li>
+                    <li><strong>State Management:</strong> React Context API</li>
+                    <li><strong>Styling:</strong> CSS Modules + Tailwind CSS</li>
+                    <li><strong>HTTP Client:</strong> Axios</li>
+                    <li><strong>Routing:</strong> React Router</li>
+                </ul>
+
+                <h4>Backend</h4>
+                <ul>
+                    <li><strong>Runtime:</strong> Node.js 18+</li>
+                    <li><strong>Framework:</strong> Express.js</li>
+                    <li><strong>Database:</strong> PostgreSQL 12+</li>
+                    <li><strong>Authentication:</strong> JWT</li>
+                    <li><strong>Validation:</strong> Joi</li>
+                </ul>
+
+                <h4>External Services</h4>
+                <ul>
+                    <li><strong>AI Generation:</strong> OpenAI DALL-E API</li>
+                    <li><strong>Payments:</strong> Stripe API</li>
+                    <li><strong>Deployment:</strong> Docker + Cloud Platform</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🗄️ 2. Database Schema Design</h2>
+        <div class="section-content">
+            <div class="db-table">
+                <h4>users</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Unique user identifier</td></tr>
+                        <tr><td>email</td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>User email address</td></tr>
+                        <tr><td>password_hash</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Hashed password</td></tr>
+                        <tr><td>full_name</td><td>VARCHAR(255)</td><td></td><td>User's full name</td></tr>
+                        <tr><td>credits</td><td>INTEGER</td><td>DEFAULT 0</td><td>Available credits</td></tr>
+                        <tr><td>is_admin</td><td>BOOLEAN</td><td>DEFAULT FALSE</td><td>Admin privileges</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Account creation date</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Last update date</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-table">
+                <h4>credit_transactions</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Transaction identifier</td></tr>
+                        <tr><td>user_id</td><td>INTEGER</td><td>REFERENCES users(id)</td><td>User who made transaction</td></tr>
+                        <tr><td>amount</td><td>INTEGER</td><td>NOT NULL</td><td>Credit amount (positive/negative)</td></tr>
+                        <tr><td>transaction_type</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>Type: purchase, usage, refund</td></tr>
+                        <tr><td>stripe_payment_id</td><td>VARCHAR(255)</td><td></td><td>Stripe payment reference</td></tr>
+                        <tr><td>description</td><td>TEXT</td><td></td><td>Transaction description</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Transaction date</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-table">
+                <h4>images</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Image identifier</td></tr>
+                        <tr><td>user_id</td><td>INTEGER</td><td>REFERENCES users(id)</td><td>Image owner</td></tr>
+                        <tr><td>prompt</td><td>TEXT</td><td>NOT NULL</td><td>Generation prompt</td></tr>
+                        <tr><td>image_url</td><td>VARCHAR(500)</td><td></td><td>External image URL</td></tr>
+                        <tr><td>image_data</td><td>BYTEA</td><td></td><td>Binary image data</td></tr>
+                        <tr><td>file_name</td><td>VARCHAR(255)</td><td></td><td>Original filename</td></tr>
+                        <tr><td>file_size</td><td>INTEGER</td><td></td><td>File size in bytes</td></tr>
+                        <tr><td>generation_cost</td><td>INTEGER</td><td>DEFAULT 10</td><td>Credits used</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Generation date</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-table">
+                <h4>api_usage_logs</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Log entry identifier</td></tr>
+                        <tr><td>user_id</td><td>INTEGER</td><td>REFERENCES users(id)</td><td>User who made request</td></tr>
+                        <tr><td>endpoint</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>API endpoint called</td></tr>
+                        <tr><td>method</td><td>VARCHAR(10)</td><td>NOT NULL</td><td>HTTP method</td></tr>
+                        <tr><td>status_code</td><td>INTEGER</td><td></td><td>Response status code</td></tr>
+                        <tr><td>response_time</td><td>INTEGER</td><td></td><td>Response time in ms</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Request timestamp</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="db-table">
+                <h4>settings</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>SERIAL</td><td>PRIMARY KEY</td><td>Setting identifier</td></tr>
+                        <tr><td>key</td><td>VARCHAR(255)</td><td>UNIQUE, NOT NULL</td><td>Setting key</td></tr>
+                        <tr><td>value</td><td>TEXT</td><td></td><td>Setting value</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>Last update</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Entity Relationship Diagram</h3>
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────┐       ┌─────────────────────┐
+│   users     │       │ credit_transactions │
+├─────────────┤       ├─────────────────────┤
+│ id (PK)     │◄──────┤ user_id (FK)        │
+│ email       │       │ amount              │
+│ password    │       │ transaction_type    │
+│ full_name   │       │ stripe_payment_id   │
+│ credits     │       │ description         │
+│ is_admin    │       │ created_at          │
+│ created_at  │       └─────────────────────┘
+│ updated_at  │
+└─────────────┘
+      │
+      │
+      ▼
+┌─────────────┐       ┌─────────────────────┐
+│   images    │       │   api_usage_logs    │
+├─────────────┤       ├─────────────────────┤
+│ id (PK)     │       │ id (PK)             │
+│ user_id (FK)├──────►│ user_id (FK)        │
+│ prompt      │       │ endpoint            │
+│ image_url   │       │ method              │
+│ image_data  │       │ status_code         │
+│ file_name   │       │ response_time       │
+│ file_size   │       │ created_at          │
+│ cost        │       └─────────────────────┘
+│ created_at  │
+└─────────────┘
+                ┌─────────────┐
+                │  settings   │
+                ├─────────────┤
+                │ id (PK)     │
+                │ key         │
+                │ value       │
+                │ updated_at  │
+                └─────────────┘
+                </pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🔌 3. API Endpoints Design</h2>
+        <div class="section-content">
+            <h3>Authentication Endpoints</h3>
+            <div class="api-endpoint">
+                <h4><span class="method post">POST</span> /api/auth/register</h4>
+                <p><strong>Description:</strong> Register a new user account</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-block">
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "fullName": "John Doe"
+}
+                </div>
+                <p><strong>Response:</strong> User data with JWT token</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method post">POST</span> /api/auth/login</h4>
+                <p><strong>Description:</strong> Authenticate user and return token</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-block">
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/auth/profile</h4>
+                <p><strong>Description:</strong> Get current user profile</p>
+                <p><strong>Headers:</strong> Authorization: Bearer {token}</p>
+            </div>
+
+            <h3>Credit Management Endpoints</h3>
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/credits/balance</h4>
+                <p><strong>Description:</strong> Get user's current credit balance</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method post">POST</span> /api/credits/purchase</h4>
+                <p><strong>Description:</strong> Purchase credits via Stripe</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-block">
+{
+  "amount": 100,
+  "stripeToken": "tok_..."
+}
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/credits/history</h4>
+                <p><strong>Description:</strong> Get credit transaction history</p>
+            </div>
+
+            <h3>Image Generation Endpoints</h3>
+            <div class="api-endpoint">
+                <h4><span class="method post">POST</span> /api/images/generate</h4>
+                <p><strong>Description:</strong> Generate new image from prompt</p>
+                <p><strong>Request Body:</strong></p>
+                <div class="code-block">
+{
+  "prompt": "A beautiful sunset over mountains",
+  "style": "realistic"
+}
+                </div>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/images/my-images</h4>
+                <p><strong>Description:</strong> Get user's generated images</p>
+                <p><strong>Query Parameters:</strong> page, limit, sort</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method post">POST</span> /api/images/upload</h4>
+                <p><strong>Description:</strong> Upload and process image file</p>
+                <p><strong>Content-Type:</strong> multipart/form-data</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/images/:id/download</h4>
+                <p><strong>Description:</strong> Download specific image</p>
+            </div>
+
+            <h3>Administrative Endpoints</h3>
+            <div class="api-endpoint">
+                <h4><span class="method get">GET</span> /api/admin/stats</h4>
+                <p><strong>Description:</strong> Get system statistics</p>
+                <p><strong>Requires:</strong> Admin privileges</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h4><span class="method put">PUT</span> /api/admin/settings/:key</h4>
+                <p><strong>Description:</strong> Update system settings</p>
+            </div>
+
+            <h3>API Response Format</h3>
+            <div class="code-block">
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150
+  }
+}
+            </div>
+
+            <h3>Error Response Format</h3>
+            <div class="code-block">
+{
+  "success": false,
+  "message": "Error description",
+  "error": "Detailed error information",
+  "code": "ERROR_CODE"
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🖥️ 4. Frontend Component Architecture</h2>
+        <div class="section-content">
+            <div class="flow-diagram">
+                <h3>Component Hierarchy</h3>
+                <pre>
+App
+├── Layout
+│   ├── Header
+│   │   ├── Navigation
+│   │   ├── UserMenu
+│   │   └── CreditDisplay
+│   ├── Main
+│   │   ├── Routes
+│   │   │   ├── HomePage
+│   │   │   ├── AuthPage
+│   │   │   │   ├── LoginForm
+│   │   │   │   └── RegisterForm
+│   │   │   ├── DashboardPage
+│   │   │   │   ├── CreditBalance
+│   │   │   │   ├── ImageGallery
+│   │   │   │   └── GenerationForm
+│   │   │   ├── ImageDetailPage
+│   │   │   ├── ProfilePage
+│   │   │   └── AdminPage
+│   └── Footer
+└── Global Components
+    ├── LoadingSpinner
+    ├── ErrorBoundary
+    ├── ToastNotifications
+    └── Modal
+                </pre>
+            </div>
+
+            <div class="component-card">
+                <h4>Layout Components</h4>
+                <ul>
+                    <li><strong>App:</strong> Root component with routing and global state</li>
+                    <li><strong>Layout:</strong> Main layout wrapper with header/footer</li>
+                    <li><strong>Header:</strong> Navigation bar with user menu and credits</li>
+                    <li><strong>Navigation:</strong> Main navigation links</li>
+                    <li><strong>Footer:</strong> Site footer with links and info</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4>Page Components</h4>
+                <ul>
+                    <li><strong>HomePage:</strong> Landing page with marketing content</li>
+                    <li><strong>AuthPage:</strong> Login/register forms</li>
+                    <li><strong>DashboardPage:</strong> User dashboard with overview</li>
+                    <li><strong>ImageDetailPage:</strong> Individual image view and actions</li>
+                    <li><strong>ProfilePage:</strong> User profile management</li>
+                    <li><strong>AdminPage:</strong> Administrative interface</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4>Feature Components</h4>
+                <ul>
+                    <li><strong>GenerationForm:</strong> Image generation input form</li>
+                    <li><strong>ImageGallery:</strong> Grid display of user images</li>
+                    <li><strong>CreditBalance:</strong> Credit display and purchase options</li>
+                    <li><strong>ImageUploader:</strong> File upload component</li>
+                    <li><strong>PromptTemplates:</strong> Pre-built prompt suggestions</li>
+                    <li><strong>ImageEditor:</strong> Basic image editing tools</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4>Shared Components</h4>
+                <ul>
+                    <li><strong>LoadingSpinner:</strong> Loading state indicator</li>
+                    <li><strong>ErrorBoundary:</strong> Error handling wrapper</li>
+                    <li><strong>ToastNotifications:</strong> User feedback messages</li>
+                    <li><strong>Modal:</strong> Reusable modal dialog</li>
+                    <li><strong>Button:</strong> Consistent button styling</li>
+                    <li><strong>Input:</strong> Form input components</li>
+                </ul>
+            </div>
+
+            <h3>State Management Architecture</h3>
+            <div class="code-block">
+// Context Providers Structure
+App
+├── AuthProvider
+│   ├── user: User | null
+│   ├── login: (credentials) => Promise
+│   ├── logout: () => void
+│   └── isAuthenticated: boolean
+├── CreditProvider
+│   ├── balance: number
+│   ├── transactions: Transaction[]
+│   ├── purchaseCredits: (amount) => Promise
+│   └── refreshBalance: () => Promise
+└── ImageProvider
+    ├── images: Image[]
+    ├── generateImage: (prompt) => Promise
+    ├── uploadImage: (file) => Promise
+    └── deleteImage: (id) => Promise
+            </div>
+
+            <h3>Routing Structure</h3>
+            <div class="code-block">
+// React Router Configuration
+const routes = [
+  { path: '/', component: HomePage, public: true },
+  { path: '/auth', component: AuthPage, public: true },
+  { path: '/dashboard', component: DashboardPage, private: true },
+  { path: '/images/:id', component: ImageDetailPage, private: true },
+  { path: '/profile', component: ProfilePage, private: true },
+  { path: '/admin', component: AdminPage, private: true, admin: true }
+];
+
+// Route Guards
+- PublicRoute: Redirects authenticated users
+- PrivateRoute: Requires authentication
+- AdminRoute: Requires admin privileges
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🔒 5. Security Architecture</h2>
+        <div class="section-content">
+            <div class="security-measure">
+                <h4>Authentication & Authorization</h4>
+                <ul>
+                    <li><strong>JWT Tokens:</strong> Stateless authentication with expiration</li>
+                    <li><strong>Password Hashing:</strong> bcrypt with 12 salt rounds</li>
+                    <li><strong>Role-Based Access:</strong> User and admin role separation</li>
+                    <li><strong>Session Management:</strong> Secure token storage and refresh</li>
+                    <li><strong>Password Policies:</strong> Minimum 8 characters, complexity requirements</li>
+                </ul>
+            </div>
+
+            <div class="security-measure">
+                <h4>API Security</h4>
+                <ul>
+                    <li><strong>Rate Limiting:</strong> 100 requests per 15 minutes per IP</li>
+                    <li><strong>Input Validation:</strong> Joi schema validation for all inputs</li>
+                    <li><strong>SQL Injection Prevention:</strong> Parameterized queries</li>
+                    <li><strong>XSS Protection:</strong> Input sanitization and CSP headers</li>
+                    <li><strong>CORS Configuration:</strong> Restricted origins in production</li>
+                </ul>
+            </div>
+
+            <div class="security-measure">
+                <h4>Data Protection</h4>
+                <ul>
+                    <li><strong>Encryption at Rest:</strong> Database encryption for sensitive data</li>
+                    <li><strong>HTTPS Only:</strong> SSL/TLS for all communications</li>
+                    <li><strong>Secure Headers:</strong> Helmet.js for security headers</li>
+                    <li><strong>Data Sanitization:</strong> Input cleaning and validation</li>
+                    <li><strong>GDPR Compliance:</strong> Data retention and deletion policies</li>
+                </ul>
+            </div>
+
+            <div class="security-measure">
+                <h4>File Upload Security</h4>
+                <ul>
+                    <li><strong>File Type Validation:</strong> MIME type checking</li>
+                    <li><strong>File Size Limits:</strong> 10MB maximum per file</li>
+                    <li><strong>Virus Scanning:</strong> Integration with antivirus service</li>
+                    <li><strong>Secure File Storage:</strong> Access control and encryption</li>
+                    <li><strong>Content Moderation:</strong> AI-powered content filtering</li>
+                </ul>
+            </div>
+
+            <h3>Security Implementation Layers</h3>
+            <div class="architecture-diagram">
+                <pre>
+┌─────────────────────────────────────┐
+│         Client Layer                 │
+│ • Input validation                   │
+│ • XSS prevention                     │
+│ • Secure token storage               │
+└─────────────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────┐
+│         API Gateway Layer            │
+│ • Rate limiting                      │
+│ • Request validation                 │
+│ • Authentication middleware          │
+└─────────────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────┐
+│         Application Layer            │
+│ • Business logic validation          │
+│ • Authorization checks               │
+│ • Error handling                     │
+└─────────────────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────┐
+│         Data Layer                   │
+│ • SQL injection prevention           │
+│ • Data encryption                    │
+│ • Access control                     │
+└─────────────────────────────────────┘
+            </pre>
+            </div>
+
+            <h3>Security Monitoring & Auditing</h3>
+            <ul>
+                <li><strong>API Usage Logs:</strong> Track all API calls with user context</li>
+                <li><strong>Error Monitoring:</strong> Centralized error tracking and alerting</li>
+                <li><strong>Security Audits:</strong> Regular security assessments</li>
+                <li><strong>Compliance Monitoring:</strong> GDPR and PCI DSS compliance tracking</li>
+                <li><strong>Incident Response:</strong> Defined procedures for security incidents</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">📊 6. Performance & Scalability</h2>
+        <div class="section-content">
+            <h3>Database Optimization</h3>
+            <ul>
+                <li><strong>Indexing Strategy:</strong> Optimized indexes on frequently queried columns</li>
+                <li><strong>Connection Pooling:</strong> Efficient database connection management</li>
+                <li><strong>Query Optimization:</strong> Efficient SQL queries with EXPLAIN analysis</li>
+                <li><strong>Caching Layer:</strong> Redis for frequently accessed data</li>
+                <li><strong>Database Sharding:</strong> Horizontal scaling strategy for large datasets</li>
+            </ul>
+
+            <h3>API Performance</h3>
+            <ul>
+                <li><strong>Response Time Targets:</strong> < 500ms for API endpoints</li>
+                <li><strong>Concurrent Users:</strong> Support for 1000+ simultaneous users</li>
+                <li><strong>Image Processing:</strong> Asynchronous processing for large files</li>
+                <li><strong>CDN Integration:</strong> Global content delivery for static assets</li>
+                <li><strong>Load Balancing:</strong> Distributed request handling</li>
+            </ul>
+
+            <h3>Frontend Optimization</h3>
+            <ul>
+                <li><strong>Code Splitting:</strong> Lazy loading of components</li>
+                <li><strong>Asset Optimization:</strong> Minification and compression</li>
+                <li><strong>Caching Strategy:</strong> Browser caching for static resources</li>
+                <li><strong>Progressive Loading:</strong> Image lazy loading and pagination</li>
+                <li><strong>Bundle Analysis:</strong> Regular bundle size monitoring</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-header">🚀 7. Deployment & DevOps</h2>
+        <div class="section-content">
+            <h3>Environment Configuration</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Environment</th>
+                        <th>Purpose</th>
+                        <th>Database</th>
+                        <th>Domain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Development</td><td>Local development</td><td>Local PostgreSQL</td><td>localhost:3010</td></tr>
+                    <tr><td>Staging</td><td>Pre-production testing</td><td>Staging PostgreSQL</td><td>staging.example.com</td></tr>
+                    <tr><td>Production</td><td>Live application</td><td>Production PostgreSQL</td><td>app.example.com</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Docker Configuration</h3>
+            <div class="code-block">
+# Dockerfile (Backend)
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3001
+CMD ["npm", "start"]
+
+# docker-compose.yml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=picturethis
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secure_password
+            </div>
+
+            <h3>CI/CD Pipeline</h3>
+            <ul>
+                <li><strong>Automated Testing:</strong> Unit and integration tests on every push</li>
+                <li><strong>Code Quality:</strong> ESLint and Prettier for code standards</li>
+                <li><strong>Security Scanning:</strong> Automated vulnerability scanning</li>
+                <li><strong>Deployment Automation:</strong> GitHub Actions for CI/CD</li>
+                <li><strong>Rollback Strategy:</strong> Quick rollback procedures for issues</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="summary">
+        <h2>📝 Conclusion</h2>
+        <p>This technical architecture design provides a comprehensive blueprint for building Picture This as a scalable, secure, and maintainable AI image generation platform. The design incorporates modern best practices and ensures the system can handle growth while maintaining security and performance.</p>
+
+        <h3>Key Architecture Principles</h3>
+        <ul>
+            <li><strong>Modularity:</strong> Clean separation of concerns with well-defined boundaries</li>
+            <li><strong>Security First:</strong> Comprehensive security measures at every layer</li>
+            <li><strong>Scalability:</strong> Architecture designed for horizontal scaling</li>
+            <li><strong>Maintainability:</strong> Clear documentation and consistent patterns</li>
+            <li><strong>Performance:</strong> Optimized for speed and efficiency</li>
+        </ul>
+
+        <p><strong>Next Steps:</strong></p>
+        <ul>
+            <li>Begin implementation of core authentication system</li>
+            <li>Set up development environment with Docker</li>
+            <li>Implement database migrations and seeding</li>
+            <li>Develop core API endpoints</li>
+            <li>Build responsive frontend components</li>
+        </ul>
+
+        <p><strong>Document Status:</strong> <span class="status">Completed</span></p>
+        <p><strong>Approval Required:</strong> Technical Lead, DevOps Team, Security Team</p>
+    </div>
+</body>
+</html>
