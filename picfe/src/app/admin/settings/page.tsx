@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Save, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { adminAPI } from '../../../lib/api';
 
 interface SystemSettings {
   creditCostPerImage: number;
@@ -30,19 +31,20 @@ export default function SystemSettings() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/settings', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await adminAPI.getSystemSettings();
       
-      if (!response.ok) {
+      if (response.data.success && response.data.data) {
+        const settingsData = response.data.data.settings;
+        setSettings({
+          ...settingsData,
+          creditCostPerImage: settingsData.creditCostPerImage || 10,
+          maxFreeCredits: settingsData.maxFreeCredits || 50,
+          enhancedPromptCost: (settingsData as any).enhancedPromptCost || 5,
+          aiProvider: settingsData.aiProvider as 'openrouter' | 'openai' | 'stabilityai'
+        });
+      } else {
         throw new Error('Failed to fetch system settings');
       }
-      
-      const data = await response.json();
-      setSettings(data.data.settings);
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast.error('Failed to fetch system settings');
@@ -55,20 +57,13 @@ export default function SystemSettings() {
   const saveSettings = async () => {
     try {
       setIsSaving(true);
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ settings })
-      });
+      const response = await adminAPI.updateSystemSettings({ settings });
       
-      if (!response.ok) {
+      if (response.data.success) {
+        toast.success('System settings updated successfully');
+      } else {
         throw new Error('Failed to update system settings');
       }
-      
-      toast.success('System settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('Failed to update system settings');
@@ -86,7 +81,7 @@ export default function SystemSettings() {
       [name]: type === 'checkbox' 
         ? (e.target as HTMLInputElement).checked 
         : type === 'number' 
-        ? parseInt(value) 
+        ? (parseInt(value) || 0)
         : value
     }));
   };

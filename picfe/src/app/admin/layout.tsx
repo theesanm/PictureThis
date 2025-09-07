@@ -15,7 +15,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     // Redirect if user is not an admin
-    if (!isLoading && (!user || user.role !== 'admin')) {
+    if (!isLoading && (!user || !user.isAdmin)) {
       router.push('/dashboard');
     }
   }, [user, isLoading, router]);
@@ -29,7 +29,7 @@ export default function AdminLayout({
   }
 
   // Only render if user is admin
-  if (user?.role !== 'admin') {
+  if (user?.isAdmin !== true) {
     return null;
   }
 

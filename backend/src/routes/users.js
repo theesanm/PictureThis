@@ -27,6 +27,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
           email: user.rows[0].email,
           fullName: user.rows[0].full_name,
           credits: user.rows[0].credits,
+          isAdmin: user.rows[0].is_admin,
           createdAt: user.rows[0].created_at
         }
       }

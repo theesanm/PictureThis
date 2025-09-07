@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Wand2, Sparkles, Send, Database } from 'lucide-react';
+import { Wand2, Sparkles, Send, Database, Image as ImageIcon } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -135,7 +135,7 @@ export default function Home() {
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                  <Image src="/image-icon.svg" alt="Image icon" width={24} height={24} className="text-green-400" />
+                  <ImageIcon size={24} className="text-green-400" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Image-to-Image Generation</h3>
                 <p className="text-gray-400">

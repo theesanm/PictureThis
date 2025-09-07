@@ -296,7 +296,8 @@ router.post('/login', [
           email: user.email,
           fullName: user.full_name,
           credits: user.credits,
-          emailVerified: user.email_verified
+          emailVerified: user.email_verified,
+          isAdmin: user.is_admin
         },
         token
       }
@@ -317,7 +318,7 @@ router.get('/profile', async (req, res) => {
     const userId = req.user.userId;
 
     const result = await query(
-      'SELECT id, email, full_name, credits, email_verified, created_at FROM users WHERE id = $1',
+      'SELECT id, email, full_name, credits, email_verified, created_at, is_admin FROM users WHERE id = $1',
       [userId]
     );
 
@@ -328,10 +329,19 @@ router.get('/profile', async (req, res) => {
       });
     }
 
+    const user = result.rows[0];
+    
     res.json({
       success: true,
       data: {
-        user: result.rows[0]
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          credits: user.credits,
+          emailVerified: user.email_verified,
+          isAdmin: user.is_admin
+        }
       }
     });
   } catch (error) {

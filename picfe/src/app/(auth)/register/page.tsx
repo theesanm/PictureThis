@@ -87,12 +87,12 @@ export default function Register() {
           <h2 className="text-2xl font-bold mb-4">Check Your Email</h2>
           
           <p className="text-gray-300 mb-6">
-            We've sent a verification link to <strong>{formData.email}</strong>.
+            We&apos;ve sent a verification link to <strong>{formData.email}</strong>.
             Please check your inbox and click the link to activate your account.
           </p>
           
           <div className="mt-6 text-sm text-gray-400">
-            Didn't receive an email?{' '}
+            Didn&apos;t receive an email?{' '}
             <button
               onClick={async () => {
                 try {

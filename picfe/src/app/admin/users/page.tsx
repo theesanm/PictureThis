@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { ArrowLeft, Search, Edit, Trash, AlertTriangle, Check, X, RefreshCw, Shield, CreditCard } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
+import { adminAPI } from '../../../lib/api';
 
 // Define API types for admin operations
 interface User {
   id: string;
   email: string;
   fullName?: string;
-  role: string;
+  isAdmin: boolean;
   credits: number;
   isVerified: boolean;
   createdAt: string;
@@ -31,20 +32,17 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      // We'll implement this API endpoint
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await adminAPI.getUsers();
       
-      if (!response.ok) {
+      if (response.data.success && response.data.data) {
+        const usersData = response.data.data.users.map((user: any) => ({
+          ...user,
+          isVerified: user.emailVerified
+        }));
+        setUsers(usersData);
+      } else {
         throw new Error('Failed to fetch users');
       }
-      
-      const data = await response.json();
-      setUsers(data.data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to fetch users');
@@ -183,9 +181,9 @@ export default function UserManagement() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                        user.isAdmin ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {user.role}
+                        {user.isAdmin ? 'Admin' : 'User'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-white">{user.credits}</td>

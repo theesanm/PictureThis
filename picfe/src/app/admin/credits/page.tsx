@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Search, DollarSign, Settings, RefreshCw, ArrowDown, ArrowUp } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { adminAPI } from '../../../lib/api';
 
 interface CreditTransaction {
   id: string;
@@ -21,25 +22,23 @@ export default function CreditManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [creditCostPerImage, setCreditCostPerImage] = useState(10);
+  const [creditCostPerImage, setCreditCostPerImage] = useState<number | undefined>(undefined);
 
   // Function to fetch credit transactions
   const fetchTransactions = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/credits/transactions', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await adminAPI.getCreditTransactions();
       
-      if (!response.ok) {
+      if (response.data.success && response.data.data) {
+        const transactionsData = response.data.data.transactions.map((transaction: any) => ({
+          ...transaction,
+          type: transaction.type as 'purchase' | 'usage' | 'admin' | 'refund'
+        }));
+        setTransactions(transactionsData);
+      } else {
         throw new Error('Failed to fetch credit transactions');
       }
-      
-      const data = await response.json();
-      setTransactions(data.data.transactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast.error('Failed to fetch credit transactions');
@@ -51,19 +50,14 @@ export default function CreditManagement() {
   // Function to fetch credit settings
   const fetchCreditSettings = async () => {
     try {
-      const response = await fetch('/api/admin/settings/credits', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await adminAPI.getCreditSettings();
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch credit settings');
+      if (response.data.success && response.data.data) {
+        setCreditCostPerImage(response.data.data.settings.creditCostPerImage);
+      } else {
+        // Fallback to default value if response structure is unexpected
+        setCreditCostPerImage(1);
       }
-      
-      const data = await response.json();
-      setCreditCostPerImage(data.data.creditCostPerImage);
     } catch (error) {
       console.error('Error fetching credit settings:', error);
       toast.error('Failed to fetch credit settings');
@@ -73,30 +67,31 @@ export default function CreditManagement() {
   // Function to update credit settings
   const updateCreditSettings = async () => {
     try {
-      const response = await fetch('/api/admin/settings/credits', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          creditCostPerImage
-        })
+      const response = await adminAPI.updateCreditSettings({
+        creditCostPerImage: creditCostPerImage || 1,
+        creditCostPerEnhancement: 1,
+        initialUserCredits: 10,
+        enablePromptEnhancement: true
       });
       
-      if (!response.ok) {
+      if (response.data.success) {
+        toast.success('Credit settings updated successfully');
+        setShowSettingsModal(false);
+        // Refresh the credit settings to show the updated value
+        fetchCreditSettings();
+      } else {
         throw new Error('Failed to update credit settings');
       }
-      
-      toast.success('Credit settings updated successfully');
-      setShowSettingsModal(false);
     } catch (error) {
       console.error('Error updating credit settings:', error);
       toast.error('Failed to update credit settings');
     }
   };
 
-  // Filter transactions based on search term
+  useEffect(() => {
+    fetchTransactions();
+    fetchCreditSettings();
+  }, []);
   const filteredTransactions = transactions.filter(transaction => 
     transaction.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -127,7 +122,7 @@ export default function CreditManagement() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white">Credit Transactions</h2>
-            <p className="text-gray-400 mt-1">Cost per image generation: {creditCostPerImage} credits</p>
+            <p className="text-gray-400 mt-1">Cost per image generation: {creditCostPerImage || 1} credits</p>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -174,15 +169,15 @@ export default function CreditManagement() {
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
             <h3 className="text-gray-300 text-sm font-medium mb-2">Images Generated</h3>
             <p className="text-2xl font-bold text-white">
-              {Math.floor(transactions
+              {(creditCostPerImage || 1) > 0 ? Math.floor(transactions
                 .filter(t => t.type === 'usage')
-                .reduce((sum, t) => sum + Math.abs(t.amount), 0) / creditCostPerImage)}
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0) / (creditCostPerImage || 1)) : 0}
             </p>
           </div>
           
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
             <h3 className="text-gray-300 text-sm font-medium mb-2">Credit Cost per Image</h3>
-            <p className="text-2xl font-bold text-white">{creditCostPerImage}</p>
+            <p className="text-2xl font-bold text-white">{creditCostPerImage || 1}</p>
           </div>
         </div>
 
@@ -261,7 +256,7 @@ export default function CreditManagement() {
               <input
                 type="number"
                 id="creditCost"
-                value={creditCostPerImage}
+                value={creditCostPerImage || 1}
                 onChange={(e) => setCreditCostPerImage(parseInt(e.target.value) || 1)}
                 min="1"
                 className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"

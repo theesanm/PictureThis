@@ -15,10 +15,21 @@ router.get('/users', async (req, res) => {
       'SELECT id, email, full_name, credits, is_admin, email_verified, created_at FROM users ORDER BY created_at DESC'
     );
     
+    // Convert database fields to API format
+    const users = result.rows.map(user => ({
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      credits: user.credits,
+      isAdmin: user.is_admin,
+      isVerified: user.email_verified,
+      createdAt: user.created_at
+    }));
+    
     res.json({
       success: true,
       data: {
-        users: result.rows
+        users: users
       }
     });
   } catch (error) {

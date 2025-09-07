@@ -216,7 +216,12 @@ export default function Generate() {
           updateUserCredits(user.credits - enhancedPromptCost);
         }
         
-        toast.success('Prompt enhanced successfully!');
+        // Show appropriate success message
+        if (response.data.data?.fallback) {
+          toast.info(response.data.data.message || 'Using fallback prompts due to service unavailability');
+        } else {
+          toast.success('Prompt enhanced successfully!');
+        }
       } else {
         if (response.data.message && response.data.message.includes('Insufficient credits')) {
           setError(`Insufficient credits for prompt enhancement. You need ${enhancedPromptCost} credits.`);
@@ -272,7 +277,7 @@ export default function Generate() {
       // Add reference images if available
       uploadedImages.forEach((img, index) => {
         if (img && img.file) {
-          formData.append(`referenceImage${index + 1}`, img.file);
+          formData.append(`image${index + 1}`, img.file);
         }
       });
       
@@ -288,7 +293,14 @@ export default function Generate() {
       if (data.success) {
         // Handle different response structures safely
         const imageData = data.data?.image || (data as any).image;
-        setGeneratedImage(imageData);
+        
+        // Ensure we have the correct image URL field
+        const processedImageData = {
+          ...imageData,
+          imageUrl: imageData?.image_url || imageData?.imageUrl || imageData?.url
+        };
+        
+        setGeneratedImage(processedImageData);
         
         // Update user credits from the response - handle various response structures
         const remainingCredits = data.data?.creditsRemaining || 
@@ -303,13 +315,18 @@ export default function Generate() {
         setError(data.message || 'Failed to generate image');
       }
     } catch (err: any) {
-      console.error('Error generating image:', err);
+      // Log error details for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error generating image:', err);
+      }
       
       // Check for specific error responses
       if (err.response?.status === 403 && err.response?.data?.message?.includes('Insufficient credits')) {
         setError(`Insufficient credits for image generation. You need ${creditCostPerImage} credits.`);
       } else if (err.response?.data?.message) {
         setError(err.response.data.message);
+      } else if (err.response?.status === 500) {
+        setError('Failed to generate image. Please try again later.');
       } else {
         setError('Error connecting to generation service');
       }
@@ -540,7 +557,7 @@ export default function Generate() {
               )}
             </button>
             <p className="mt-2 text-center text-xs text-gray-400">
-              This will consume 1 credit from your account
+              This will consume {creditCostPerImage} credit{creditCostPerImage !== 1 ? 's' : ''} from your account
             </p>
           </div>
         </div>

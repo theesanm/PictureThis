@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { imagesAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { Image as ImageIcon, Plus, RefreshCw } from 'lucide-react';
+import { Image as ImageIcon, Plus, RefreshCw, Shield } from 'lucide-react';
 
 interface Image {
   id: string;
@@ -29,7 +29,7 @@ export default function Dashboard() {
         const response = await imagesAPI.getGallery();
         if (response.data.success) {
           // Check where the images are in the response data structure
-          const images = response.data.data?.images || response.data.images || [];
+          const images = (response.data.data as any)?.images || (response.data as any).images || [];
           // Only take the latest 4 images
           setRecentImages(images.slice(0, 4));
         } else {
@@ -50,8 +50,22 @@ export default function Dashboard() {
     <div>
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome, {user?.full_name || 'Creator'}!</h1>
-        <p className="text-gray-300">Your AI image generation dashboard awaits.</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Welcome, {user?.fullName || 'Creator'}!</h1>
+            <p className="text-gray-300">Your AI image generation dashboard awaits.</p>
+          </div>
+          {/* Admin Button - Only show for admin users */}
+          {user?.isAdmin && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white font-medium transition-colors shadow-lg"
+            >
+              <Shield size={18} className="mr-2" />
+              Admin Panel
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Stats & Quick Actions */}
@@ -176,9 +190,9 @@ export default function Dashboard() {
       <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-6 border border-purple-800/50">
         <h3 className="text-xl font-semibold mb-2">Pro Tips for Better Results</h3>
         <ul className="list-disc pl-5 space-y-2 text-gray-300">
-          <li>Be specific about styles: "oil painting," "watercolor," "3D render"</li>
-          <li>Mention lighting: "dramatic lighting," "golden hour," "soft diffused light"</li>
-          <li>Include composition details: "ultra-wide angle," "aerial view," "close-up"</li>
+          <li>Be specific about styles: &quot;oil painting,&quot; &quot;watercolor,&quot; &quot;3D render&quot;</li>
+          <li>Mention lighting: &quot;dramatic lighting,&quot; &quot;golden hour,&quot; &quot;soft diffused light&quot;</li>
+          <li>Include composition details: &quot;ultra-wide angle,&quot; &quot;aerial view,&quot; &quot;close-up&quot;</li>
           <li>Use our prompt enhancement feature for better results</li>
         </ul>
       </div>

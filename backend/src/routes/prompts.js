@@ -18,32 +18,36 @@ router.post('/enhance', authenticateToken, async (req, res) => {
 
     console.log('Enhancing prompt:', prompt);
     
-    // Check if enhanced prompts are enabled and get cost from settings
+    // Get credit cost from request or settings
     const db = require('../utils/database');
-    const settingsResult = await db.query(
-      'SELECT enhanced_prompt_enabled, enhanced_prompt_cost FROM settings ORDER BY id DESC LIMIT 1'
-    );
+    let enhancedPromptCost = req.body.creditCost ? parseInt(req.body.creditCost) : null;
     
-    // If no settings found or feature disabled, return an error
-    if (settingsResult.rows.length === 0 || !settingsResult.rows[0].enhanced_prompt_enabled) {
+    // If not provided in the request, get from settings
+    if (!enhancedPromptCost) {
+      const settingsResult = await db.query('SELECT enhanced_prompt_cost FROM settings LIMIT 1');
+      enhancedPromptCost = settingsResult.rows.length > 0 ? parseInt(settingsResult.rows[0].enhanced_prompt_cost) : 1;
+    }
+    
+    // Check if prompt enhancement feature is enabled
+    const featureResult = await db.query('SELECT enhanced_prompt_enabled FROM settings LIMIT 1');
+    const isFeatureEnabled = featureResult.rows.length > 0 ? featureResult.rows[0].enhanced_prompt_enabled : true;
+    
+    if (!isFeatureEnabled) {
       return res.status(403).json({
         success: false,
         message: 'Enhanced prompts are currently disabled'
       });
     }
     
-    // Get enhanced prompt cost (0 means free)
-    const enhancedPromptCost = settingsResult.rows[0].enhanced_prompt_cost || 0;
-    
     // If cost is greater than 0, check user credits
     if (enhancedPromptCost > 0) {
       const userResult = await db.query('SELECT credits FROM users WHERE id = $1', [userId]);
-      const userCredits = userResult.rows[0]?.credits || 0;
+      const userCredits = parseInt(userResult.rows[0]?.credits) || 0;
       
       if (userCredits < enhancedPromptCost) {
         return res.status(403).json({
           success: false,
-          message: 'Insufficient credits for prompt enhancement',
+          message: `Insufficient credits. You need ${enhancedPromptCost} credits to enhance prompts.`,
           data: {
             available: userCredits,
             required: enhancedPromptCost
@@ -72,10 +76,24 @@ router.post('/enhance', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('Prompt enhancement error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to enhance prompt',
-      error: error.message
+    
+    // Always return fallback prompts, never fail completely
+    const fallbackPrompts = [
+      `${prompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality`,
+      `${prompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition`,
+      `${prompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting`,
+      `${prompt}, fantasy art style, magical atmosphere, ethereal lighting, detailed environment, atmospheric perspective`,
+      `${prompt}, modern minimalist style, clean lines, balanced composition, soft lighting, professional quality`
+    ];
+    
+    res.json({
+      success: true,
+      data: {
+        originalPrompt: prompt,
+        enhancedPrompts: fallbackPrompts,
+        fallback: true,
+        message: 'Using fallback prompts due to service unavailability'
+      }
     });
   }
 });
@@ -149,6 +167,9 @@ Please enhance this prompt to match its tone and style, then create 5 detailed, 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+      console.error('Error details:', errorText);
       throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
@@ -173,18 +194,18 @@ Please enhance this prompt to match its tone and style, then create 5 detailed, 
       if (Array.isArray(enhancedPromptsWithRatings) && enhancedPromptsWithRatings.length > 0) {
         // Check if the response has the expected format with ratings
         if (enhancedPromptsWithRatings[0].rating && enhancedPromptsWithRatings[0].prompt) {
-          // Sort by rating (1 = best, 10 = least optimal) and return max 10
+          // Sort by rating (1 = best, 5 = good but less optimal) and return max 10
           const sortedPrompts = enhancedPromptsWithRatings
             .sort((a, b) => a.rating - b.rating)
             .slice(0, 10);
-          return sortedPrompts;
+          return sortedPrompts.map(item => item.prompt);
         } else {
-          // Fallback: if it's just an array of strings, add ratings
-          const promptsWithRatings = enhancedPromptsWithRatings.slice(0, 10).map((prompt, index) => ({
-            rating: index + 1,
-            prompt: prompt
-          }));
-          return promptsWithRatings;
+          // Fallback: if it's just an array of strings, return as is
+          // If it's objects, extract the prompt property; if it's strings, return as is
+          const processedPrompts = enhancedPromptsWithRatings.slice(0, 10).map(item => 
+            typeof item === 'string' ? item : (item.prompt || item)
+          );
+          return processedPrompts;
         }
       } else {
         throw new Error('Invalid response format');
@@ -203,12 +224,12 @@ Please enhance this prompt to match its tone and style, then create 5 detailed, 
         prompt: line.replace(/^\d+\.?\s*/, '').replace(/^["\-\*]\s*/, '').replace(/["]*$/, '').trim()
       }));
       
-      return prompts.length > 0 ? prompts : [
-        { rating: 1, prompt: `${userPrompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality` },
-        { rating: 2, prompt: `${userPrompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition` },
-        { rating: 3, prompt: `${userPrompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting` },
-        { rating: 4, prompt: `${userPrompt}, fantasy art style, magical atmosphere, ethereal lighting, detailed environment, atmospheric perspective` },
-        { rating: 5, prompt: `${userPrompt}, modern minimalist style, clean lines, balanced composition, soft lighting, professional quality` }
+      return prompts.length > 0 ? prompts.map(item => item.prompt) : [
+        `${userPrompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality`,
+        `${userPrompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition`,
+        `${userPrompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting`,
+        `${userPrompt}, fantasy art style, magical atmosphere, ethereal lighting, detailed environment, atmospheric perspective`,
+        `${userPrompt}, modern minimalist style, clean lines, balanced composition, soft lighting, professional quality`
       ];
     }
 
@@ -224,11 +245,11 @@ Please enhance this prompt to match its tone and style, then create 5 detailed, 
     
     // Fallback prompts if API fails or times out
     return [
-      { rating: 1, prompt: `${userPrompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality` },
-      { rating: 2, prompt: `${userPrompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition` },
-      { rating: 3, prompt: `${userPrompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting` },
-      { rating: 4, prompt: `${userPrompt}, fantasy art style, magical atmosphere, ethereal lighting, detailed environment, atmospheric perspective` },
-      { rating: 5, prompt: `${userPrompt}, modern minimalist style, clean lines, balanced composition, soft lighting, professional quality` }
+      `${userPrompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality`,
+      `${userPrompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition`,
+      `${userPrompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting`,
+      `${userPrompt}, fantasy art style, magical atmosphere, ethereal lighting, detailed environment, atmospheric perspective`,
+      `${userPrompt}, modern minimalist style, clean lines, balanced composition, soft lighting, professional quality`
     ];
   }
 }

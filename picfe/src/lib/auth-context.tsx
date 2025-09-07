@@ -11,6 +11,7 @@ interface User {
   name?: string;
   fullName?: string;
   role?: string;
+  isAdmin?: boolean;
   credits?: number;
   isVerified?: boolean;
   createdAt?: string;

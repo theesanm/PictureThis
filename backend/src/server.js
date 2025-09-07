@@ -44,6 +44,7 @@ app.use('/api/credits', require('./routes/credits'));
 app.use('/api/users/credits', require('./routes/user-credits'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api/prompts', require('./routes/prompts'));
+app.use('/api/admin/settings', require('./routes/admin-settings'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Development utilities (disabled in production)
@@ -55,8 +56,10 @@ if (process.env.NODE_ENV !== 'production') {
 // Import admin routes
 const adminPermissions = require('./routes/admin-permissions');
 const adminUsers = require('./routes/admin-users');
+const adminCredits = require('./routes/admin-credits');
 app.use('/api/admin', adminPermissions);
 app.use('/api/admin', adminUsers);
+app.use('/api/admin/credits', adminCredits);
 
 // Settings routes
 app.use('/api/admin/settings', require('./routes/settings'));
@@ -81,8 +84,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+    message: 'Something went wrong!'
   });
 });
 

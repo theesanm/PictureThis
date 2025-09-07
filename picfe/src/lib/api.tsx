@@ -163,7 +163,65 @@ export const imagesAPI = {
 export const promptsAPI = {
   enhance: (prompt: string): Promise<AxiosResponse<ApiResponse<{
     enhancedPrompts: string[];
+    fallback?: boolean;
+    message?: string;
   }>>> => api.post('/prompts/enhance', { prompt }),
 };
 
-export default api;
+// Admin API
+export const adminAPI = {
+  // User management
+  getUsers: (): Promise<AxiosResponse<ApiResponse<{
+    users: Array<{
+      id: string;
+      email: string;
+      name?: string;
+      isAdmin: boolean;
+      credits: number;
+      emailVerified: boolean;
+      createdAt: string;
+    }>;
+  }>>> => api.get('/admin/users'),
+  
+  // Credit management
+  getCreditTransactions: (): Promise<AxiosResponse<ApiResponse<{
+    transactions: Array<{
+      id: string;
+      userId: string;
+      userEmail: string;
+      userName?: string;
+      amount: number;
+      type: string;
+      description: string;
+      createdAt: string;
+    }>;
+  }>>> => api.get('/admin/credits/transactions'),
+  
+  getCreditSettings: (): Promise<AxiosResponse<ApiResponse<{
+    settings: {
+      creditCostPerImage: number;
+      maxFreeCredits: number;
+      stripeEnabled: boolean;
+      enhancedPromptEnabled: boolean;
+      enhancedPromptCost: number;
+      aiProvider: string;
+    };
+  }>>> => api.get('/admin/settings/credits'),
+  
+  updateCreditSettings: (settings: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.put('/admin/settings/credits', settings),
+  
+  // System settings
+  getSystemSettings: (): Promise<AxiosResponse<ApiResponse<{
+    settings: {
+      creditCostPerImage: number;
+      maxFreeCredits: number;
+      stripeEnabled: boolean;
+      enhancedPromptEnabled: boolean;
+      aiProvider: string;
+    };
+  }>>> => api.get('/admin/settings'),
+  
+  updateSystemSettings: (settings: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.put('/admin/settings', settings),
+};

@@ -21,7 +21,7 @@ interface ImageData {
 // Create an adapter for any property name differences
 const adaptImageData = (image: any): ImageData => ({
   id: image.id || `img-${Date.now()}`,
-  imageUrl: image.imageUrl || image.url || '',
+  imageUrl: image.imageUrl || image.url || image.image_url || '',
   prompt: image.prompt || '',
   createdAt: image.createdAt || image.created_at || new Date().toISOString()
 });
@@ -39,7 +39,7 @@ export default function Gallery() {
         const response = await imagesAPI.getGallery();
         if (response.data && response.data.success) {
           // Handle both response structures (data.data.images or data.images)
-          const rawImages = response.data.data?.images || response.data.images || [];
+          const rawImages = (response.data as any).data?.images || (response.data as any).images || [];
           // Adapt each image to our format
           const adaptedImages = rawImages.map(adaptImageData);
           setImages(adaptedImages);
@@ -63,15 +63,39 @@ export default function Gallery() {
     setSelectedImage(image);
   };
 
-  const handleDownload = (image: ImageData) => {
-    // Create a download link for the image
-    const link = document.createElement('a');
-    link.href = image.imageUrl || image.url || '';
-    link.download = `generated-image-${image.id}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Image downloading...');
+  const handleDownload = async (image: ImageData) => {
+    try {
+      const imageUrl = image.imageUrl || image.url || '';
+
+      // Fetch the image and create a blob for download
+      const response = await fetch(imageUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `generated-image-${image.id || Date.now()}.png`;
+      link.style.display = 'none'; // Hide the link
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the blob URL after a short delay
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      toast.success('Image downloaded successfully!');
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download image. Please try again.');
+    }
   };
 
   const handleShare = (image: ImageData) => {

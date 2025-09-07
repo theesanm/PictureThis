@@ -288,18 +288,23 @@ router.post('/generate', authenticateToken, upload.fields([
       });
     }
 
-    // Get current credit cost from settings
-    const settingsResult = await query('SELECT credit_cost_per_image FROM settings ORDER BY id DESC LIMIT 1');
-    const creditCost = settingsResult.rows.length > 0 ? settingsResult.rows[0].credit_cost_per_image : 10;
+    // Get credit cost from request or settings
+    let creditCost = req.body.creditCost ? parseInt(req.body.creditCost) : null;
+    
+    // If not provided in the request, get from settings
+    if (!creditCost) {
+      const settingsResult = await query('SELECT credit_cost_per_image FROM settings LIMIT 1');
+      creditCost = settingsResult.rows.length > 0 ? parseInt(settingsResult.rows[0].credit_cost_per_image) : 10;
+    }
     
     // Check user credits
     const userResult = await query('SELECT credits FROM users WHERE id = $1', [currentUserId]);
-    const userCredits = userResult.rows[0]?.credits || 0;
+    const userCredits = parseInt(userResult.rows[0]?.credits) || 0;
     
     if (userCredits < creditCost) {
       return res.status(403).json({
         success: false,
-        message: 'Insufficient credits',
+        message: `Insufficient credits. You need ${creditCost} credits to generate an image.`,
         data: {
           available: userCredits,
           required: creditCost
@@ -332,8 +337,11 @@ router.post('/generate', authenticateToken, upload.fields([
       generatedImageUrl = await generateImageWithGemini(prompt, uploadedImages);
     } catch (error) {
       console.error('Image generation failed:', error);
-      // Fallback to placeholder image
-      generatedImageUrl = `https://picsum.photos/512/512?random=${Date.now()}`;
+      // Return error response without deducting credits or saving to database
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to generate image. Please try again later.'
+      });
     }
 
     // Save image record
@@ -406,8 +414,7 @@ router.post('/generate', authenticateToken, upload.fields([
     console.error('Image generation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Image generation failed',
-      error: error.message
+      message: 'Image generation failed'
     });
   }
 });
