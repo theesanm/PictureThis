@@ -2,7 +2,24 @@
 
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-export const API_BASE_URL = 'http://localhost:3011/api';
+// Dynamic API base URL based on current hostname
+const getApiBaseUrl = (): string => {
+  // Check if we're in browser environment
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // If accessing via ngrok, use the ngrok URL for API calls
+    if (hostname.includes('ngrok-free.app') || hostname.includes('ngrok.app')) {
+      // Use the same ngrok URL that serves the frontend
+      return `${window.location.protocol}//${hostname}/api`;
+    }
+  }
+  
+  // Default to localhost for development
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // Types for API responses
 export interface ApiResponse<T = any> {

@@ -38,13 +38,13 @@ const PAYFAST_CONFIG = {
   passphrase: process.env.PAYFAST_PASSPHRASE,
   return_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/payment/success'
-    : 'https://acefad368307.ngrok-free.app/payment/success',
+    : 'https://1d503f739e4d.ngrok-free.app/payment/success',
   cancel_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/payment/cancelled'
-    : 'https://acefad368307.ngrok-free.app/dashboard',
+    : 'https://1d503f739e4d.ngrok-free.app/dashboard',
   notify_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/api/credits/payfast/notify'
-    : 'https://a2afc515d82b.ngrok-free.app/api/credits/payfast/notify',
+    : 'https://1d503f739e4d.ngrok-free.app/api/credits/payfast/notify',
   pfHost: process.env.NODE_ENV === 'production' ? 'www.payfast.co.za' : 'sandbox.payfast.co.za'
 };
 
@@ -68,33 +68,33 @@ function generatePayFastData(packageId, userId, userEmail, userName = 'User') {
     merchant_key: PAYFAST_CONFIG.merchant_key,
     return_url: process.env.NODE_ENV === 'production'
       ? `https://yourdomain.com/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`
-      : `https://acefad368307.ngrok-free.app/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`,
+      : `https://1d503f739e4d.ngrok-free.app/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`,
     cancel_url: PAYFAST_CONFIG.cancel_url,
     notify_url: PAYFAST_CONFIG.notify_url,
-    name_first: userName.split(' ')[0] || 'User',
-    name_last: userName.split(' ').slice(1).join(' ') || 'Name',
-    email_address: userEmail,
     m_payment_id: paymentId,
     amount: packageData.price.toFixed(2),
     item_name: packageData.name,
-    item_description: `Purchase ${packageData.credits} credits for PictureThis`,
-    custom_str1: userId.toString(),
-    custom_str2: packageId,
-    custom_str3: packageData.credits.toString()
+    custom_int1: packageData.credits.toString() // Use custom_int1 as per working implementation
   };
 
   // Generate signature according to PayFast specifications
   data.signature = generateSignature(data, PAYFAST_CONFIG.passphrase);
 
+  // Debug info (avoid logging sensitive credentials in production)
   console.log('=== PayFast Debug Info ===');
   console.log('Environment:', process.env.NODE_ENV);
   console.log('PayFast Host:', PAYFAST_CONFIG.pfHost);
-  console.log('Merchant ID:', PAYFAST_CONFIG.merchant_id);
-  console.log('Merchant Key:', PAYFAST_CONFIG.merchant_key);
-  console.log('Passphrase:', PAYFAST_CONFIG.passphrase);
-  console.log('Raw Data:', data);
-  console.log('Generated Signature:', data.signature);
+  // Mask merchant id for logs
+  if (PAYFAST_CONFIG.merchant_id) {
+    const m = PAYFAST_CONFIG.merchant_id.toString();
+    console.log('Merchant ID:', m.slice(0, 2) + '...' + m.slice(-2));
+  }
   console.log('Full URL:', `https://${PAYFAST_CONFIG.pfHost}/eng/process`);
+  console.log('Generated Signature (truncated):', data.signature ? data.signature.slice(0, 8) + '...' : '(none)');
+  
+  // Debug: Show the exact string used for signature generation
+  const debugString = buildPayloadString(data, false, PAYFAST_CONFIG.passphrase);
+  console.log('Signature generation string:', debugString);
   console.log('========================');
 
   return data;
@@ -102,30 +102,64 @@ function generatePayFastData(packageId, userId, userEmail, userName = 'User') {
 
 // Generate PayFast signature according to official documentation
 function generateSignature(data, passPhrase = null) {
-  // Create parameter string - parameters must be in alphabetical order
-  let pfOutput = "";
-  const sortedKeys = Object.keys(data).sort();
-  
-  for (let key of sortedKeys) {
-    if (key !== 'signature') { // Exclude signature from calculation
-      if (data[key] !== "") {
-        let value = data[key].toString().trim();
-        // Only URL encode if the value contains spaces, but NOT if it's a URL
-        if (value.includes(' ') && !value.startsWith('http')) {
-          value = encodeURIComponent(value).replace(/%20/g, "+");
-        }
-        pfOutput += `${key}=${value}&`;
-      }
+  // If raw POST string is provided, prefer building signature from it to avoid
+  // discrepancies due to middleware parsing/encoding. If `data` is a string,
+  // treat it as the raw urlencoded payload.
+  let getString = '';
+
+  if (typeof data === 'string') {
+    // The raw body may be provided by express's verify hook (req.rawBody)
+    // PayFast expects the string exactly as received, except we should remove
+    // any trailing signature parameter if present.
+    getString = data;
+    // If signature field present in raw string, remove it
+    getString = getString.replace(/(^|&)signature=[^&]*(&|$)/i, (m, p1, p2) => p1 === '&' && p2 === '&' ? '&' : '').replace(/&$/, '');
+    if (passPhrase !== null && passPhrase.trim() !== '') {
+      getString += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
     }
+    return crypto.createHash('md5').update(getString).digest('hex');
   }
 
-  // Remove last ampersand
-  let getString = pfOutput.slice(0, -1);
-  if (passPhrase !== null && passPhrase.trim() !== "") {
+  // Use the specific field order required by PayFast (NOT alphabetical)
+  const payfastFieldOrder = ['merchant_id', 'merchant_key', 'return_url', 'cancel_url', 'notify_url', 'm_payment_id', 'amount', 'item_name', 'custom_int1'];
+  
+  const parts = [];
+  for (const key of payfastFieldOrder) {
+    if (key === 'signature') continue; // Exclude signature
+    const val = data[key];
+    if (val === undefined || val === null || val === '') continue;
+    let value = val.toString().trim();
+    // Always URL encode values (including URLs) using RFC1738-like replacement of spaces with +
+    value = encodeURIComponent(value).replace(/%20/g, '+');
+    parts.push(`${key}=${value}`);
+  }
+
+  getString = parts.join('&');
+  if (passPhrase !== null && passPhrase.trim() !== '') {
     getString += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
   }
 
-  return crypto.createHash("md5").update(getString).digest("hex");
+  return crypto.createHash('md5').update(getString).digest('hex');
+}
+
+// Build canonical urlencoded payload string from data (PayFast field order)
+function buildPayloadString(data, includeSignature = true, passPhrase = null) {
+  // Use the specific field order required by PayFast
+  const payfastFieldOrder = ['merchant_id', 'merchant_key', 'return_url', 'cancel_url', 'notify_url', 'm_payment_id', 'amount', 'item_name', 'custom_int1'];
+  
+  const parts = [];
+  for (const key of payfastFieldOrder) {
+    if (!includeSignature && key === 'signature') continue;
+    const val = data[key];
+    if (val === undefined || val === null || val === '') continue;
+    const encoded = encodeURIComponent(val.toString().trim()).replace(/%20/g, '+');
+    parts.push(`${key}=${encoded}`);
+  }
+  let getString = parts.join('&');
+  if (passPhrase !== null && passPhrase.toString().trim() !== '') {
+    getString += `&passphrase=${encodeURIComponent(passPhrase.toString().trim()).replace(/%20/g, '+')}`;
+  }
+  return getString;
 }
 
 // Get available credit packages
@@ -170,8 +204,10 @@ router.post('/payfast/initiate', authenticateToken, async (req, res) => {
       });
     }
 
-    // Generate PayFast payment data
-    const payfastData = generatePayFastData(packageId, userId, userEmail, userName);
+  // Generate PayFast payment data
+  const payfastData = generatePayFastData(packageId, userId, userEmail, userName);
+  // Build canonical raw payload (including the signature) so frontend can compare
+  const rawPayload = buildPayloadString(payfastData, true, null);
 
     // Generate HTML form with proper escaping
     let htmlForm = `<form action="https://${PAYFAST_CONFIG.pfHost}/eng/process" method="post" id="payfast-form">`;
@@ -199,7 +235,8 @@ router.post('/payfast/initiate', authenticateToken, async (req, res) => {
       data: {
         payfastData,
         paymentUrl: `https://${PAYFAST_CONFIG.pfHost}/eng/process`,
-        htmlForm
+        htmlForm,
+        rawPayload // for debugging: exact urlencoded payload client will send
       }
     });
   } catch (error) {
@@ -214,31 +251,40 @@ router.post('/payfast/initiate', authenticateToken, async (req, res) => {
 // PayFast ITN (Instant Transaction Notification) webhook
 router.post('/payfast/notify', async (req, res) => {
   try {
-    const postedData = req.body;
+    const postedData = req.body || {};
+    const raw = req.rawBody || '';
 
     console.log('=== PayFast ITN Notification Received ===');
     console.log('Request Method:', req.method);
     console.log('Content-Type:', req.headers['content-type']);
     console.log('User-Agent:', req.headers['user-agent']);
-    console.log('Payment Status:', postedData.payment_status);
-    console.log('Merchant ID:', postedData.merchant_id);
+    console.log('Raw Body:', raw);
+    console.log('Parsed Body:', postedData);
     console.log('=====================================');
 
     // Basic validation - ensure we have data
-    if (!postedData || Object.keys(postedData).length === 0) {
+    if ((!postedData || Object.keys(postedData).length === 0) && !raw) {
       console.error('No data received in PayFast ITN');
       return res.status(400).send('No data received');
     }
 
-    // Verify PayFast signature using the same method as generation
-    const expectedSignature = generateSignature(postedData, PAYFAST_CONFIG.passphrase);
+    // Verify PayFast signature - prefer raw body when available to avoid
+    // discrepancies caused by express parsing/encoding
+    let expectedSignature;
+    if (raw) {
+      expectedSignature = generateSignature(raw, PAYFAST_CONFIG.passphrase);
+      console.log('Computed signature from raw body');
+    } else {
+      expectedSignature = generateSignature(postedData, PAYFAST_CONFIG.passphrase);
+      console.log('Computed signature from parsed body');
+    }
 
     console.log('Expected Signature:', expectedSignature);
-    console.log('Received Signature:', postedData.signature);
-    console.log('Signature Match:', postedData.signature === expectedSignature);
+    console.log('Received Signature:', postedData.signature || '(none)');
+    console.log('Signature Match:', (postedData.signature || '') === expectedSignature);
 
-    if (postedData.signature !== expectedSignature) {
-      console.error('❌ Invalid PayFast signature - ITN rejected');
+    if ((postedData.signature || '') !== expectedSignature) {
+      console.error('\u274c Invalid PayFast signature - ITN rejected');
       return res.status(400).send('Invalid signature');
     }
 
@@ -249,30 +295,43 @@ router.post('/payfast/notify', async (req, res) => {
     }
 
     // Validate required fields for our business logic
-    if (!postedData.m_payment_id || !postedData.custom_str1 || !postedData.custom_str2 || !postedData.custom_str3) {
+    if (!postedData.m_payment_id || !postedData.custom_int1) {
       console.error('❌ Missing required custom fields in PayFast ITN');
       return res.status(400).send('Missing required fields');
     }
 
-    // Validate user ID format
-    const userId = parseInt(postedData.custom_str1);
-    if (isNaN(userId) || userId <= 0) {
-      console.error('❌ Invalid user ID format:', postedData.custom_str1);
-      return res.status(400).send('Invalid user ID');
-    }
-
-    // Validate credits format
-    const credits = parseInt(postedData.custom_str3);
+    // Validate credits format from custom_int1
+    const credits = parseInt(postedData.custom_int1);
     if (isNaN(credits) || credits <= 0) {
-      console.error('❌ Invalid credits format:', postedData.custom_str3);
+      console.error('❌ Invalid credits format:', postedData.custom_int1);
       return res.status(400).send('Invalid credits amount');
     }
 
-    // Validate package ID exists
-    const packageId = postedData.custom_str2;
-    if (!CREDIT_PACKAGES[packageId]) {
-      console.error('❌ Invalid package ID:', packageId);
-      return res.status(400).send('Invalid package');
+    // Find the package that matches the credits amount
+    let packageId = null;
+    for (const [id, pkg] of Object.entries(CREDIT_PACKAGES)) {
+      if (pkg.credits === credits) {
+        packageId = id;
+        break;
+      }
+    }
+
+    if (!packageId) {
+      console.error('❌ No package found for credits amount:', credits);
+      return res.status(400).send('Invalid credits amount');
+    }
+
+    // Extract user ID from payment ID (format: credit_{userId}_{timestamp})
+    const paymentIdParts = postedData.m_payment_id.split('_');
+    if (paymentIdParts.length < 3 || paymentIdParts[0] !== 'credit') {
+      console.error('❌ Invalid payment ID format:', postedData.m_payment_id);
+      return res.status(400).send('Invalid payment ID format');
+    }
+
+    const userId = parseInt(paymentIdParts[1]);
+    if (isNaN(userId) || userId <= 0) {
+      console.error('❌ Invalid user ID in payment ID:', paymentIdParts[1]);
+      return res.status(400).send('Invalid user ID');
     }
 
     // Validate payment amount matches expected amount (if provided)
@@ -368,7 +427,7 @@ router.post('/payfast/test-itn', async (req, res) => {
 
     const postData = querystring.stringify(testData);
     const options = {
-      hostname: 'a2afc515d82b.ngrok-free.app',
+      hostname: '1d503f739e4d.ngrok-free.app',
       port: 443,
       path: '/api/credits/payfast/notify',
       method: 'POST',
@@ -401,4 +460,27 @@ router.post('/payfast/test-itn', async (req, res) => {
   }
 });
 
-module.exports = { router, CREDIT_PACKAGES };
+// Debug endpoint: return canonical urlencoded payload for a package/user
+// NOTE: This endpoint is for local debugging only. Do NOT enable in production.
+router.get('/payfast/debug-payload', async (req, res) => {
+  try {
+    const packageId = req.query.packageId || 'small';
+    const userId = parseInt(req.query.userId || '1');
+    const userEmail = req.query.email || 'test@example.com';
+    const userName = req.query.name || 'Test User';
+
+    if (!CREDIT_PACKAGES[packageId]) {
+      return res.status(400).json({ success: false, message: 'Invalid packageId' });
+    }
+
+    const payfastData = generatePayFastData(packageId, userId, userEmail, userName);
+    const rawPayload = buildPayloadString(payfastData, true, null);
+
+    res.json({ success: true, rawPayload, payfastData });
+  } catch (err) {
+    console.error('Debug payload error:', err);
+    res.status(500).json({ success: false, message: 'Error building payload' });
+  }
+});
+
+module.exports = { router, CREDIT_PACKAGES, generatePayFastData, generateSignature };

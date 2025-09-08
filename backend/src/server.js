@@ -20,14 +20,44 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3010', 'http://localhost:3011', 'http://127.0.0.1:3000', 'http://127.0.0.1:3010', 'http://127.0.0.1:3011'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3010', 
+      'http://localhost:3011',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3010',
+      'http://127.0.0.1:3011'
+    ];
+    
+    // Allow ngrok URLs (they end with ngrok-free.app or ngrok.app)
+    if (origin.includes('ngrok-free.app') || origin.includes('ngrok.app')) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with']
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Capture raw urlencoded body for payment gateway signature verification (PayFast ITN)
+app.use(express.urlencoded({
+  extended: true,
+  verify: (req, res, buf) => {
+    // store raw body as a string for routes that need exact POST payload
+    req.rawBody = buf && buf.toString && buf.toString();
+  }
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -46,6 +76,7 @@ app.use('/api/users/credits', require('./routes/user-credits'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api/prompts', require('./routes/prompts'));
 app.use('/api/admin/settings', require('./routes/admin-settings'));
+app.use('/api/settings', require('./routes/settings-public'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Development utilities (disabled in production)
