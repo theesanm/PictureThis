@@ -44,13 +44,7 @@ export default function Home() {
                     href="/register"
                     className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-500 rounded-md text-white font-medium hover:opacity-90 transition-opacity"
                   >
-                    Get Started For Free
-                  </Link>
-                  <Link
-                    href="/generate"
-                    className="px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-medium transition-colors"
-                  >
-                    Try Demo
+                    Get Started
                   </Link>
                 </div>
               </motion.div>
@@ -62,10 +56,14 @@ export default function Home() {
                 transition={{ duration: 0.7, delay: 0.2 }}
               >
                 <div className="bg-gray-800 p-4 rounded-xl shadow-2xl overflow-hidden">
-                  {/* Placeholder for demo image */}
-                  <div className="aspect-video bg-gradient-to-br from-purple-900 to-pink-800 rounded-lg flex items-center justify-center">
-                    <span className="text-white/80 text-xl font-medium">AI-Generated Image Example</span>
-                  </div>
+                  <Image
+                    src="/generated-image-1.png"
+                    alt="AI-Generated Image Example"
+                    width={800}
+                    height={450}
+                    className="w-full h-auto rounded-lg"
+                    priority
+                  />
                 </div>
                 
                 <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg p-3 shadow-lg">
