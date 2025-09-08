@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { publicSettingsAPI } from '@/lib/api';
 import { toast } from 'react-toastify';
 import { CreditCard, Package, CheckCircle, Clock, DollarSign } from 'lucide-react';
 
@@ -71,19 +72,16 @@ export default function Credits() {
       }
 
       // Fetch system settings for credit description
-      const settingsResponse = await fetch('/api/settings');
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        if (settingsData.data?.settings?.creditCostPerImage) {
-          const cost = settingsData.data.settings.creditCostPerImage;
-          setCreditCostPerImage(cost);
-          
-          // Calculate dynamic description text based on credit cost
-          if (cost === 1) {
-            setCreditDescriptionText('1 credit = 1 image generation');
-          } else {
-            setCreditDescriptionText(`${cost} credits = 1 image generation`);
-          }
+      const settingsResponse = await publicSettingsAPI.getSettings();
+      if (settingsResponse.data.success && settingsResponse.data.data?.settings?.creditCostPerImage) {
+        const cost = settingsResponse.data.data.settings.creditCostPerImage;
+        setCreditCostPerImage(cost);
+        
+        // Calculate dynamic description text based on credit cost
+        if (cost === 1) {
+          setCreditDescriptionText('1 credit = 1 image generation');
+        } else {
+          setCreditDescriptionText(`${cost} credits = 1 image generation`);
         }
       }
 

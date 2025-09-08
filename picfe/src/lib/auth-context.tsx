@@ -165,6 +165,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       console.error('Failed to refresh credits:', error);
       
+      // Check if this is a rate limit error
+      if (error.response?.status === 429) {
+        console.log('Rate limit exceeded, skipping credit refresh');
+        return; // Don't retry immediately
+      }
+      
       // Check if this is a 403 error due to email verification
       if (error.response?.status === 403) {
         const errorData = error.response.data;
@@ -183,8 +189,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Refresh credits immediately
     refreshCredits();
     
-    // Set up interval for periodic refresh (every 30 seconds)
-    const intervalId = setInterval(refreshCredits, 30000);
+    // Set up interval for periodic refresh (every 2 minutes)
+    const intervalId = setInterval(refreshCredits, 120000);
     
     // Clean up on unmount or when auth state changes
     return () => clearInterval(intervalId);

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { promptsAPI, imagesAPI, userAPI } from '@/lib/api';
+import { promptsAPI, imagesAPI, userAPI, publicSettingsAPI } from '@/lib/api';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { Sparkles, Upload, ArrowDown, RefreshCw, Download, Check, Image as ImageIcon } from 'lucide-react';
@@ -51,20 +51,24 @@ export default function Generate() {
     const fetchSettings = async () => {
       try {
         setIsLoadingSettings(true);
-        const response = await fetch('/api/settings');
+        const response = await publicSettingsAPI.getSettings();
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Settings loaded successfully:', data);
-          if (data.data && data.data.settings) {
-            setCreditCostPerImage(data.data.settings.creditCostPerImage);
-            setEnhancedPromptCost(data.data.settings.enhancedPromptCost);
-          }
+        if (response.data.success && response.data.data) {
+          const settings = response.data.data.settings;
+          console.log('Settings loaded successfully:', settings);
+          setCreditCostPerImage(settings.creditCostPerImage);
+          setEnhancedPromptCost(settings.enhancedPromptCost);
         } else {
-          console.error('Failed to load settings:', response.status);
+          console.error('Failed to load settings:', response.data?.message);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading settings:', error);
+        
+        // Check if this is a rate limit error
+        if (error.response?.status === 429) {
+          console.log('Rate limit exceeded for settings, will retry later');
+          // Could add retry logic here if needed
+        }
       } finally {
         setIsLoadingSettings(false);
       }

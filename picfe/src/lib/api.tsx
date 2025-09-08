@@ -2,16 +2,15 @@
 
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-// Dynamic API base URL based on current hostname
 const getApiBaseUrl = (): string => {
   // Check if we're in browser environment
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     
-    // If accessing via ngrok, use the ngrok URL for API calls
-    if (hostname.includes('ngrok-free.app') || hostname.includes('ngrok.app')) {
-      // Use the same ngrok URL that serves the frontend
-      return `${window.location.protocol}//${hostname}/api`;
+    // For both localhost and ngrok, use localhost backend
+    // since ngrok only tunnels the frontend, not the backend
+    if (hostname.includes('ngrok-free.app') || hostname.includes('ngrok.app') || hostname === 'localhost') {
+      return 'http://localhost:3011/api';
     }
   }
   
@@ -73,6 +72,22 @@ const api: AxiosInstance = axios.create({
   },
   withCredentials: true,
 });
+
+// Simple cache for API responses
+const apiCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 seconds
+
+const getCachedResponse = (key: string) => {
+  const cached = apiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedResponse = (key: string, data: any) => {
+  apiCache.set(key, { data, timestamp: Date.now() });
+};
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
@@ -146,7 +161,18 @@ export const userAPI = {
 export const creditsAPI = {
   getBalance: (): Promise<AxiosResponse<ApiResponse<{
     credits: number;
-  }>>> => api.get('/credits/balance'),
+  }>>> => {
+    const cacheKey = 'credits_balance';
+    const cached = getCachedResponse(cacheKey);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    
+    return api.get('/credits/balance').then(response => {
+      setCachedResponse(cacheKey, response);
+      return response;
+    });
+  },
   
   getHistory: (): Promise<AxiosResponse<ApiResponse<{
     history: Array<{
@@ -241,4 +267,26 @@ export const adminAPI = {
   
   updateSystemSettings: (settings: any): Promise<AxiosResponse<ApiResponse>> => 
     api.put('/admin/settings', settings),
+};
+
+// Public settings API
+export const publicSettingsAPI = {
+  getSettings: (): Promise<AxiosResponse<ApiResponse<{
+    settings: {
+      creditCostPerImage: number;
+      enhancedPromptEnabled: boolean;
+      enhancedPromptCost: number;
+    };
+  }>>> => {
+    const cacheKey = 'public_settings';
+    const cached = getCachedResponse(cacheKey);
+    if (cached) {
+      return Promise.resolve(cached);
+    }
+    
+    return api.get('/settings').then(response => {
+      setCachedResponse(cacheKey, response);
+      return response;
+    });
+  },
 };
