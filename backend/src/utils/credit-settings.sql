@@ -33,3 +33,9 @@ INSERT INTO settings (key, value)
 VALUES ('enablePromptEnhancement', 'true')
 ON CONFLICT (key) DO UPDATE 
 SET value = 'true', updated_at = CURRENT_TIMESTAMP;
+
+-- Credit description text for UI
+INSERT INTO settings (key, value) 
+VALUES ('creditDescriptionText', '1 credit = 1 image generation')
+ON CONFLICT (key) DO UPDATE 
+SET value = '1 credit = 1 image generation', updated_at = CURRENT_TIMESTAMP;

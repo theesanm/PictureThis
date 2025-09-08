@@ -4,6 +4,50 @@ const { query } = require('../utils/database');
 
 const router = express.Router();
 
+// Get available credit packages
+router.get('/packages', async (req, res) => {
+  try {
+    // Get credit cost per image from settings (for description purposes only)
+    const settingsResult = await query('SELECT credit_cost_per_image FROM settings ORDER BY id DESC LIMIT 1');
+    const creditCost = settingsResult.rows.length > 0 ? settingsResult.rows[0].credit_cost_per_image : 1;
+
+    // Fixed package prices (not calculated from credit cost)
+    const packages = {
+      'small': { 
+        credits: 50, 
+        price: 200.00, 
+        name: '50 Credits' 
+      },
+      'medium': { 
+        credits: 75, 
+        price: 250.00, 
+        name: '75 Credits (10% off)' 
+      },
+      'large': { 
+        credits: 125, 
+        price: 300.00, 
+        name: '125 Credits (20% off)' 
+      },
+      'premium': { 
+        credits: 200, 
+        price: 350.00, 
+        name: '200 Credits (30% off)' 
+      }
+    };
+
+    res.json({
+      success: true,
+      data: packages
+    });
+  } catch (error) {
+    console.error('Packages fetch error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch credit packages'
+    });
+  }
+});
+
 // Get user credits
 router.get('/balance', authenticateToken, async (req, res) => {
   try {
