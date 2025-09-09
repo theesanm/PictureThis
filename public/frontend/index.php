@@ -7,15 +7,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>PictureThis — Replica</title>
-    <!-- Tailwind CDN for quick styling (suitable for prototype on cPanel) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/css/style.css">
+  <!-- Use exported Tailwind + picfe styles for closer look-and-feel -->
+  <link rel="stylesheet" href="/frontend/globals.css">
+  <link rel="stylesheet" href="/css/style.css">
   </head>
   <body class="bg-gray-900 text-gray-100">
     <header class="sticky top-0 z-50 bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700">
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <img src="/placeholder-image.jpg" alt="logo" class="w-10 h-10 rounded-md object-cover">
+          <img src="/generated-image-1.png" alt="logo" class="w-10 h-10 rounded-md object-cover">
           <h1 class="text-xl font-semibold">PictureThis</h1>
         </div>
         <nav>
