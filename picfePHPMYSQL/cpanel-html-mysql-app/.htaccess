@@ -1,0 +1,19 @@
+# The .htaccess file is used for URL rewriting and other Apache server configurations.
+
+RewriteEngine On
+
+# Redirect to the public directory
+RewriteRule ^$ public/ [L]
+RewriteRule (.*) public/$1 [L]
+
+# Handle PHP files
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
+
+# Disable directory browsing
+Options -Indexes
+
+# Custom error pages
+ErrorDocument 404 /public/404.php
+ErrorDocument 500 /public/500.php
