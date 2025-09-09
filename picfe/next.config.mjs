@@ -1,18 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use regular production build instead of standalone
-  // output: 'standalone',
-  trailingSlash: true,
-  images: {
-    unoptimized: true,
-    remotePatterns: [
+  // Run on port 3010 to match backend CORS configuration
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3010', '127.0.0.1:3010']
+    }
+  },
+  // Proxy API requests to backend
+  async rewrites() {
+    return [
       {
-        protocol: 'http',
-        hostname: 'backend',
-        port: '3011',
-        pathname: '/uploads/**',
+        source: '/api/:path*',
+        destination: 'http://localhost:3011/api/:path*',
       },
+    ];
+  },
+  // Allow images from localhost backend and external sources
+  images: {
+    remotePatterns: [
       {
         protocol: 'http',
         hostname: 'localhost',
@@ -25,31 +31,6 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  experimental: {
-    serverActions: {
-      allowedOrigins: ['localhost:3701', '127.0.0.1:3701']
-    }
-  },
-  // Completely disable static generation
-  generateBuildId: async () => {
-    return 'build-' + Date.now()
-  },
-  // Disable static optimization
-  // optimizeFonts: false,
-  // swcMinify: false,
-  // Proxy API requests to backend (only in development)
-  async rewrites() {
-    // Only apply rewrites in development, not in production Docker
-    if (process.env.NODE_ENV === 'development') {
-      return [
-        {
-          source: '/api/:path*',
-          destination: 'http://backend:3011/api/:path*',
-        },
-      ];
-    }
-    return [];
   },
 };
 

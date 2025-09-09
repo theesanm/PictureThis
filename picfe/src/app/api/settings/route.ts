@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // A simple endpoint to get system settings that doesn't require admin access
 // This allows the frontend to access basic settings like credit costs
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011';
     console.log('Settings API: Fetching from', `${apiUrl}/api/settings`);

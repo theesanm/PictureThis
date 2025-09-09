@@ -1,13 +1,7 @@
-"use client";
+'use client';
 
 import React from 'react';
-
-const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
+import { X } from 'lucide-react';
 
 interface PermissionModalProps {
   isOpen: boolean;
@@ -35,8 +29,8 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
       <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-xl max-w-md w-full animate-fade-in">
         <div className="flex justify-between items-center p-5 border-b border-gray-700">
           <h3 className="text-xl font-semibold text-white">{title}</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-300">
-            <XIcon width={20} height={20} />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-300">
+            <X size={20} />
           </button>
         </div>
         

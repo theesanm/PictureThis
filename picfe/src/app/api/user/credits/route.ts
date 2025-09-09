@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserToken } from '@/lib/auth-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const token = getUserToken();
     if (!token) {

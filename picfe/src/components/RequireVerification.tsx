@@ -1,32 +1,11 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { authAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, Mail, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-
-const AlertCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 48, height = 48, className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
-
-const MailIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 16, height = 16, className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 4h16v16H4z" />
-    <polyline points="22,6 12,13 2,6" />
-  </svg>
-);
-
-const CheckCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M9 12l2 2 4-4" />
-    <circle cx="12" cy="12" r="10" />
-  </svg>
-);
 
 interface RequireVerificationProps {
   email: string;
@@ -71,7 +50,7 @@ export default function RequireVerification({ email }: RequireVerificationProps)
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-center mb-4 text-amber-500">
-          <AlertCircleIcon width={48} height={48} />
+          <AlertCircle size={48} />
         </div>
         <CardTitle className="text-2xl text-center">Email Verification Required</CardTitle>
         <CardDescription className="text-center">
@@ -103,15 +82,15 @@ export default function RequireVerification({ email }: RequireVerificationProps)
               </span>
             ) : (
               <span className="flex items-center">
-                <MailIcon width={16} height={16} className="mr-2 h-4 w-4" />
+                <Mail className="mr-2 h-4 w-4" />
                 Resend Verification Email
               </span>
             )}
           </Button>
         ) : (
           <div className="w-full text-center">
-              <div className="flex justify-center items-center text-green-600 mb-2">
-              <CheckCircleIcon width={20} height={20} className="mr-2" />
+            <div className="flex justify-center items-center text-green-600 mb-2">
+              <CheckCircle className="mr-2" />
               Verification email sent!
             </div>
             <Button 

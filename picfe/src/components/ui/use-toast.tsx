@@ -57,14 +57,6 @@ const ToastContext = React.createContext<ToastContextType | undefined>(undefined
 export const ToastProvider = ({ children }: ToastProviderProps) => {
   const [toasts, setToasts] = React.useState<(ToastActionType & { id: string })[]>([]);
 
-  const dismiss = React.useCallback((id?: string) => {
-    setToasts((prevToasts) => 
-      id 
-        ? prevToasts.filter((toast) => toast.id !== id) 
-        : prevToasts.slice(1)
-    );
-  }, []);
-
   const toast = React.useCallback(
     ({ title, description, variant = 'default' }: ToastActionType) => {
       const id = Math.random().toString(36).substring(2, 9);
@@ -79,8 +71,16 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
       
       return id;
     },
-    [dismiss]
+    []
   );
+
+  const dismiss = React.useCallback((id?: string) => {
+    setToasts((prevToasts) => 
+      id 
+        ? prevToasts.filter((toast) => toast.id !== id) 
+        : prevToasts.slice(1)
+    );
+  }, []);
 
   return (
     <ToastContext.Provider value={{ toast, dismiss }}>
