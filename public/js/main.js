@@ -1,9 +1,20 @@
 // public/js/main.js
 async function apiGet(path, params = {}){
   const url = '/api/' + path + (Object.keys(params).length ? ('?' + new URLSearchParams(params)) : '');
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('API error');
-  return res.json();
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('API error');
+    return await res.json();
+  }catch(e){
+    // fallback to static sample data so the UI can be previewed without PHP
+    try{
+      const res2 = await fetch('/sample-data.json');
+      if(res2.ok) return await res2.json();
+    }catch(err){
+      console.warn('Both API and sample-data.json failed', err);
+    }
+    return [];
+  }
 }
 
 function renderGallery(items){
