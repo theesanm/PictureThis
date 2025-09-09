@@ -1,0 +1,33 @@
+{
+  "name": "picturethis-app",
+  "version": "1.0.0",
+  "description": "A web application that generates images from text descriptions using AI.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "nextjs",
+    "react",
+    "ai",
+    "image generation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "framer-motion": "^6.0.0",
+    "lucide-react": "^0.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-next": "^12.0.0",
+    "typescript": "^4.5.0",
+    "tailwindcss": "^3.0.0"
+  }
+}

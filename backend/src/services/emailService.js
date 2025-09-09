@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-const { v4: uuidv4 } = require('uuid');
 
 class EmailService {
   constructor() {
@@ -34,7 +33,8 @@ class EmailService {
     }
   }
 
-  generateVerificationToken() {
+  async generateVerificationToken() {
+    const { v4: uuidv4 } = await import('uuid');
     return uuidv4();
   }
 

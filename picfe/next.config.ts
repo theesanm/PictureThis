@@ -6,10 +6,13 @@ const nextConfig: NextConfig = {
     return config;
   },
   async rewrites() {
+    // Use NEXT_PUBLIC_API_URL when available so the app inside Docker can
+    // proxy API requests to the correct service (e.g. http://backend:3011/api)
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3011/api').replace(/\/$/, '');
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3011/api/:path*',
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },

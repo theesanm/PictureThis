@@ -1,0 +1,35 @@
+# Override file for development environment
+# This file is automatically merged with docker-compose.yml when running docker-compose
+
+services:
+  # Development overrides for frontend
+  frontend:
+    environment:
+      NODE_ENV: development
+      PORT: 3701
+      HOST: 0.0.0.0
+      NEXT_PUBLIC_API_URL: http://backend:3011/api
+    volumes:
+      - ./picfe:/app
+      # Don't override node_modules to keep container's Next.js binary
+      # - /app/node_modules
+      - /app/.next
+    command: npm run dev
+    ports:
+      - "3701:3701"  # External port 3701, internal port 3701
+
+  # Development overrides for backend
+  backend:
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    # ports:  # Commented out - backend should only be accessible internally
+    #   - "3011:3011"
+
+  # Disable nginx in development
+  nginx:
+    profiles:
+      - production

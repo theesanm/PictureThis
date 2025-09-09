@@ -1,0 +1,11 @@
+{
+  "extends": "./picfe/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["picfe/src/*"]
+    }
+  },
+  "include": ["picfe/src/**/*", "picfe/next-env.d.ts"],
+  "exclude": ["node_modules"]
+}

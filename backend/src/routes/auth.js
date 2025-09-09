@@ -39,7 +39,7 @@ router.post('/register', [
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Generate email verification token
-    const verificationToken = emailService.generateVerificationToken();
+    const verificationToken = await emailService.generateVerificationToken();
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Create user (unverified)
@@ -201,7 +201,7 @@ router.post('/resend-verification', [
     }
 
     // Generate new verification token
-    const verificationToken = emailService.generateVerificationToken();
+    const verificationToken = await emailService.generateVerificationToken();
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Update token

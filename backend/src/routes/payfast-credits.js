@@ -38,13 +38,13 @@ const PAYFAST_CONFIG = {
   passphrase: process.env.PAYFAST_PASSPHRASE,
   return_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/payment/success'
-    : 'https://1d503f739e4d.ngrok-free.app/payment/success',
+    : 'https://a6e129861a74.ngrok-free.app/payment/success',
   cancel_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/payment/cancelled'
-    : 'https://1d503f739e4d.ngrok-free.app/dashboard',
+    : 'https://a6e129861a74.ngrok-free.app/dashboard',
   notify_url: process.env.NODE_ENV === 'production'
     ? 'https://yourdomain.com/api/credits/payfast/notify'
-    : 'https://1d503f739e4d.ngrok-free.app/api/credits/payfast/notify',
+    : 'https://a6e129861a74.ngrok-free.app/api/credits/payfast/notify',
   pfHost: process.env.NODE_ENV === 'production' ? 'www.payfast.co.za' : 'sandbox.payfast.co.za'
 };
 
@@ -68,7 +68,7 @@ function generatePayFastData(packageId, userId, userEmail, userName = 'User') {
     merchant_key: PAYFAST_CONFIG.merchant_key,
     return_url: process.env.NODE_ENV === 'production'
       ? `https://yourdomain.com/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`
-      : `https://1d503f739e4d.ngrok-free.app/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`,
+      : `https://a6e129861a74.ngrok-free.app/payment/success?payment_id=${paymentId}&user_id=${userId}&package_id=${packageId}`,
     cancel_url: PAYFAST_CONFIG.cancel_url,
     notify_url: PAYFAST_CONFIG.notify_url,
     m_payment_id: paymentId,

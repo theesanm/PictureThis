@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/picturethis
+    depends_on:
+      - db
+    networks:
+      - picturethis-network
+
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=picturethis
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - picturethis-network
+
+networks:
+  picturethis-network:
+
+volumes:
+  db_data:

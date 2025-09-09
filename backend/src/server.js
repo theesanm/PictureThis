@@ -25,12 +25,13 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3010', 
+      'http://localhost:3701', 
       'http://localhost:3011',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3010',
-      'http://127.0.0.1:3011'
+      'http://127.0.0.1:3701',
+      'http://127.0.0.1:3011',
+      // Allow local frontend running on port 3000
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
     ];
     
     // Allow ngrok URLs (they end with ngrok-free.app or ngrok.app)

@@ -6,7 +6,7 @@ const PORT = 3011;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3010', 'http://127.0.0.1:3010'],
+  origin: ['http://localhost:3701', 'http://127.0.0.1:3701'],
   credentials: true
 }));
 app.use(express.json());
@@ -72,7 +72,7 @@ app.post('/api/images/generate', (req, res) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Stable Backend Server running on port ${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 CORS enabled for: http://localhost:3010`);
+  console.log(`🔗 CORS enabled for: http://localhost:3701`);
 });
 
 // Graceful shutdown

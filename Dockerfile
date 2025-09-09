@@ -26,9 +26,6 @@ COPY . .
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
-# Allow passing NEXT_PUBLIC_API_URL at build time. If not provided, default to the backend service name so rewrites work inside compose.
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:3011/api}
 
 RUN npm run build
 
@@ -58,5 +55,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-# Use shell form ENTRYPOINT to run npm start
-ENTRYPOINT npm run start
+# Use next start instead of standalone server.js
+CMD ["npx", "next", "start", "-p", "3000"]

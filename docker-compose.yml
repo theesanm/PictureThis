@@ -13,8 +13,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-picturethis_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # ports:  # Uncomment to expose DB to host
-    #   - "5432:5432"
+    ports:
+      - "5432:5432"
     networks:
       - picturethis_network
     healthcheck:
@@ -61,9 +61,10 @@ services:
     env_file:
       - ./.env.docker
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3011/api}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your_nextauth_secret_here}
+      # Inside docker-compose the frontend must talk to the backend service by name
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://backend:3011/api}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-your_nextauth_secret_here}"
     ports:
       - "3000:3000"
     depends_on:
