@@ -1,0 +1,12 @@
+# .htaccess - route API calls to src/api and serve static files from public/
+RewriteEngine On
+
+# If the file exists under public serve it
+RewriteCond %{DOCUMENT_ROOT}/public/%{REQUEST_URI} -f
+RewriteRule ^(.*)$ /public/$1 [L]
+
+# Route /api/* to src/api/*
+RewriteRule ^api/(.*)$ /src/api/$1 [L,QSA]
+
+# Fallback to public/index.php
+RewriteRule ^/?$ /public/index.php [L]
