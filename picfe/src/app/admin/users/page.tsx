@@ -1,11 +1,77 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, Edit, Trash, AlertTriangle, Check, X, RefreshCw, Shield, CreditCard } from 'lucide-react';
+// avoid dynamic lucide-react imports which can resolve undefined during prerender
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
 import { adminAPI } from '../../../lib/api';
+
+const ArrowLeft = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <path d="M19 12H5" />
+    <path d="M12 19l-7-7 7-7" />
+  </svg>
+);
+
+const Search = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const Edit = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <path d="M11 4h7" />
+    <path d="M4 21v-7l11-11 7 7-11 11H4z" />
+  </svg>
+);
+
+const Trash = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+  </svg>
+);
+
+const AlertTriangle = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
+const Check = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
+
+const RefreshCw = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0114.36-3.36L23 10" />
+    <path d="M20.49 15a9 9 0 01-14.36 3.36L1 14" />
+  </svg>
+);
+
+const Shield = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <path d="M12 2l7 4v6c0 5-3.58 9.74-7 11-3.42-1.26-7-6-7-11V6l7-4z" />
+  </svg>
+);
+
+const CreditCard = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+    <rect x="1" y="4" width="22" height="16" rx="2" />
+    <line x1="1" y1="10" x2="23" y2="10" />
+  </svg>
+);
 
 // Define API types for admin operations
 interface User {
@@ -69,8 +135,6 @@ export default function UserManagement() {
         throw new Error('Failed to add credits');
       }
       
-      const data = await response.json();
-      
       // Update local state
       setUsers(users.map(u => 
         u.id === selectedUser.id 
@@ -129,7 +193,7 @@ export default function UserManagement() {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center">
               <Link href="/admin" className="flex items-center text-gray-300 hover:text-white">
-                <ArrowLeft size={16} className="mr-2" />
+                <ArrowLeft width={16} height={16} className="mr-2" />
                 Back to Admin Dashboard
               </Link>
               <h1 className="ml-8 text-xl font-bold text-white">User Management</h1>
@@ -142,7 +206,7 @@ export default function UserManagement() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">All Users</h2>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" width={18} height={18} />
             <input
               type="text"
               placeholder="Search users..."
@@ -155,7 +219,7 @@ export default function UserManagement() {
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <RefreshCw size={24} className="animate-spin text-purple-500" />
+            <RefreshCw width={24} height={24} className="animate-spin text-purple-500" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -190,11 +254,11 @@ export default function UserManagement() {
                     <td className="px-4 py-3">
                       {user.isVerified ? (
                         <span className="inline-flex items-center text-green-400">
-                          <Check size={16} className="mr-1" /> Verified
+                          <Check width={16} height={16} className="mr-1" /> Verified
                         </span>
                       ) : (
                         <span className="inline-flex items-center text-yellow-400">
-                          <AlertTriangle size={16} className="mr-1" /> Pending
+                          <AlertTriangle width={16} height={16} className="mr-1" /> Pending
                         </span>
                       )}
                     </td>
@@ -211,7 +275,7 @@ export default function UserManagement() {
                           className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-green-400"
                           title="Add Credits"
                         >
-                          <CreditCard size={16} />
+                          <CreditCard width={16} height={16} />
                         </button>
                         <button 
                           onClick={() => {
@@ -221,7 +285,7 @@ export default function UserManagement() {
                           className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-yellow-400"
                           title="Reset Permissions"
                         >
-                          <Shield size={16} />
+                          <Shield width={16} height={16} />
                         </button>
                         {user.id !== currentUser?.id && (
                           <>
@@ -229,13 +293,13 @@ export default function UserManagement() {
                               className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-blue-400"
                               title="Edit User"
                             >
-                              <Edit size={16} />
+                              <Edit width={16} height={16} />
                             </button>
                             <button 
                               className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-red-400"
                               title="Delete User"
                             >
-                              <Trash size={16} />
+                              <Trash width={16} height={16} />
                             </button>
                           </>
                         )}

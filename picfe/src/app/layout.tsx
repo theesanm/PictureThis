@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Geist, Geist_Mono } from "next/font/google";
+// import { Inter, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from '@/lib/auth-context';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// import ClientAppProviders from '@/components/ClientAppProviders';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Force dynamic rendering for all pages
+export const dynamic = 'force-dynamic';
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// const inter = Inter({
+//   variable: "--font-inter",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
   title: "PictureThis - AI Image Generation",
@@ -32,13 +33,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
-      >
-        <AuthProvider>
-          {children}
-          <ToastContainer position="top-right" />
-        </AuthProvider>
+      <body className="antialiased">
+        {children}
       </body>
     </html>
   );

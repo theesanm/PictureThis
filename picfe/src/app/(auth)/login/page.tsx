@@ -5,7 +5,37 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+const Eye: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const EyeOff: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.91 21.91 0 0 1 5.06-5.94" />
+    <path d="M1 1l22 22" />
+  </svg>
+);
+
+const Lock: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const Mail: React.FC<React.SVGProps<SVGSVGElement>> = ({ width = 20, height = 20, className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 4h16v16H4z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
 
 export default function Login() {
   const [email, setEmail] = useState('');

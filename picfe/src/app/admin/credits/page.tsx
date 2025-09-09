@@ -1,8 +1,55 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, DollarSign, Settings, RefreshCw, ArrowDown, ArrowUp } from 'lucide-react';
+export const dynamic = 'force-dynamic';
+// Ensure fetches are not cached during build/prerender
+export const fetchCache = 'force-no-store';
+
+// Small local SVG icons to avoid relying on external icon package during prerender
+const ArrowLeft = (props: any) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M19 12H5" />
+    <path d="M12 19l-7-7 7-7" />
+  </svg>
+);
+
+const Search = (props: any) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const Settings = (props: any) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 012.3 16.87l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82L3.21 4.34a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H12a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09c.2.63.7 1.11 1.32 1.32.63.2 1.12.7 1.32 1.32V9a1.65 1.65 0 001 1.51z" />
+  </svg>
+);
+
+const RefreshCw = (props: any) => (
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M23 4v6h-6" />
+    <path d="M1 20v-6h6" />
+    <path d="M3.51 9a9 9 0 0114.13-3.36L23 10" />
+    <path d="M20.49 15a9 9 0 01-14.13 3.36L1 14" />
+  </svg>
+);
+
+const ArrowDown = (props: any) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M12 5v14" />
+    <path d="M19 12l-7 7-7-7" />
+  </svg>
+);
+
+const ArrowUp = (props: any) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M12 19V5" />
+    <path d="M5 12l7-7 7 7" />
+  </svg>
+);
 import { toast } from 'react-toastify';
 import { adminAPI } from '../../../lib/api';
 
@@ -92,15 +139,11 @@ export default function CreditManagement() {
     fetchTransactions();
     fetchCreditSettings();
   }, []);
+
   const filteredTransactions = transactions.filter(transaction => 
     transaction.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  useEffect(() => {
-    fetchTransactions();
-    fetchCreditSettings();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -109,7 +152,7 @@ export default function CreditManagement() {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center">
               <Link href="/admin" className="flex items-center text-gray-300 hover:text-white">
-                <ArrowLeft size={16} className="mr-2" />
+                <ArrowLeft width={16} height={16} className="mr-2" />
                 Back to Admin Dashboard
               </Link>
               <h1 className="ml-8 text-xl font-bold text-white">Credit Management</h1>
@@ -130,12 +173,12 @@ export default function CreditManagement() {
               onClick={() => setShowSettingsModal(true)}
               className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
             >
-              <Settings size={16} className="mr-2" />
+              <Settings width={16} height={16} className="mr-2" />
               Credit Settings
             </button>
             
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" width={18} height={18} />
               <input
                 type="text"
                 placeholder="Search transactions..."
@@ -183,7 +226,7 @@ export default function CreditManagement() {
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <RefreshCw size={24} className="animate-spin text-purple-500" />
+            <RefreshCw width={24} height={24} className="animate-spin text-purple-500" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -224,9 +267,9 @@ export default function CreditManagement() {
                         transaction.amount > 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {transaction.amount > 0 ? (
-                          <ArrowUp size={16} className="mr-1" />
+                          <ArrowUp width={16} height={16} className="mr-1" />
                         ) : (
-                          <ArrowDown size={16} className="mr-1" />
+                          <ArrowDown width={16} height={16} className="mr-1" />
                         )}
                         {Math.abs(transaction.amount)}
                       </span>
