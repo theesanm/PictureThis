@@ -13,7 +13,8 @@
         const originalWarn = console.warn;
         console.warn = function(...args) {
           if (args[0] && typeof args[0] === 'string' &&
-              args[0].includes('cdn.tailwindcss.com should not be used in production')) {
+              (args[0].includes('cdn.tailwindcss.com should not be used in production') ||
+               args[0].includes('You are using a development build of Tailwind CSS'))) {
             return; // Suppress this specific warning
           }
           originalWarn.apply(console, args);

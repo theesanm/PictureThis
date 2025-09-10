@@ -3,15 +3,15 @@
 
 RewriteEngine On
 
-# Handle main application routes (don't redirect to public for API and main routes)
+# Allow direct access to existing files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Handle main application routes - only rewrite if file doesn't exist
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ index.php [QSA,L]
-
-# Handle public directory access (for CSS, JS, images)
-RewriteCond %{REQUEST_URI} ^/public/
-RewriteRule ^public/(.*)$ public/$1 [L]
 
 # Security headers - protect config files
 <Files "config.php">
