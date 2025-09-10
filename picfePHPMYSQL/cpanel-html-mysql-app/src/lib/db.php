@@ -18,16 +18,16 @@ try {
     exit;
 }
 
-function getDb()
+function get_db()
 {
     global $db;
     return $db;
 }
 
 // Backwards-compatible alias used by some action scripts
-function get_db()
+function getDb()
 {
-    return getDb();
+    return get_db();
 }
 
 ?>
