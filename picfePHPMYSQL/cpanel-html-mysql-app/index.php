@@ -1,6 +1,15 @@
 <?php
 // Simple front controller for dev server. Routes payfast return/cancel to views.
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Handle home page
+if ($path === '/' || $path === '') {
+    require_once __DIR__ . '/src/controllers/HomeController.php';
+    $ctrl = new HomeController();
+    $ctrl->index();
+    exit;
+}
+
 if ($path === '/payment/success') {
     include __DIR__ . '/src/views/payment_success.php';
     exit;
@@ -20,6 +29,72 @@ if ($path === '/payment/cancelled/iframe/cancel') {
 if ($path === '/pricing') {
     require_once __DIR__ . '/src/controllers/PricingController.php';
     $ctrl = new PricingController();
+    $ctrl->index();
+    exit;
+}
+
+// Handle other pages
+if ($path === '/about') {
+    require_once __DIR__ . '/src/controllers/HomeController.php';
+    $ctrl = new HomeController();
+    $ctrl->about();
+    exit;
+}
+
+if ($path === '/privacy') {
+    require_once __DIR__ . '/src/controllers/HomeController.php';
+    $ctrl = new HomeController();
+    $ctrl->privacy();
+    exit;
+}
+
+if ($path === '/terms') {
+    require_once __DIR__ . '/src/controllers/HomeController.php';
+    $ctrl = new HomeController();
+    $ctrl->terms();
+    exit;
+}
+
+// Handle authentication pages
+if ($path === '/login') {
+    require_once __DIR__ . '/src/controllers/LoginController.php';
+    $ctrl = new LoginController();
+    $ctrl->index();
+    exit;
+}
+
+if ($path === '/register') {
+    require_once __DIR__ . '/src/controllers/RegisterController.php';
+    $ctrl = new RegisterController();
+    $ctrl->index();
+    exit;
+}
+
+// Handle main app pages (require authentication in controllers)
+if ($path === '/dashboard') {
+    require_once __DIR__ . '/src/controllers/DashboardController.php';
+    $ctrl = new DashboardController();
+    $ctrl->index();
+    exit;
+}
+
+if ($path === '/generate') {
+    require_once __DIR__ . '/src/controllers/GenerateController.php';
+    $ctrl = new GenerateController();
+    $ctrl->index();
+    exit;
+}
+
+if ($path === '/gallery') {
+    require_once __DIR__ . '/src/controllers/GalleryController.php';
+    $ctrl = new GalleryController();
+    $ctrl->index();
+    exit;
+}
+
+if ($path === '/profile') {
+    require_once __DIR__ . '/src/controllers/ProfileController.php';
+    $ctrl = new ProfileController();
     $ctrl->index();
     exit;
 }
