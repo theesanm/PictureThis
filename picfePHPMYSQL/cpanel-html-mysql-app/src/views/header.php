@@ -6,44 +6,19 @@
     <!-- Tailwind CSS - Load FIRST to prevent conflicts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Suppress Tailwind CDN warnings and configure for production
-      if (typeof window !== 'undefined') {
-        // Disable the production warning
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-          if (args[0] && typeof args[0] === 'string' &&
-              (args[0].includes('cdn.tailwindcss.com should not be used in production') ||
-               args[0].includes('You are using a development build of Tailwind CSS'))) {
-            return; // Suppress this specific warning
-          }
-          originalWarn.apply(console, args);
-        };
+      // Simple Tailwind configuration
+      tailwind.config = {
+        darkMode: 'class'
+      };
 
-        // Configure Tailwind
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {
-          darkMode: 'class',
-          content: [],
-          theme: {
-            extend: {}
-          },
-          plugins: []
-        };
-
-        // Detect when Tailwind is loaded and mark the body
-        setTimeout(function() {
-          document.body.classList.add('tailwind-loaded');
-        }, 100);
-      }
+      // Mark body when Tailwind loads
+      setTimeout(function() {
+        document.body.classList.add('tailwind-loaded');
+      }, 100);
     </script>
     <!-- Custom CSS - Load AFTER Tailwind to allow overrides -->
     <link rel="stylesheet" href="/public/css/style.css">
     <title><?php echo APP_NAME ?? 'PictureThis'; ?></title>
-          plugins: []
-        };
-      }
-    </script>
-    <title>Your Application Title</title>
 </head>
 <body class="bg-gray-900 text-gray-200">
     <header class="bg-gray-800 border-b border-gray-700">
