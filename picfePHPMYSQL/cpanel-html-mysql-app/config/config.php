@@ -2,10 +2,10 @@
 // Configuration settings for the application
 
 // Database configuration
-define('DB_HOST', '127.0.0.1'); // Database host - use TCP to reach Docker-published MySQL on macOS
-define('DB_USER', 'pt_user'); // Database username (matches docker .env.docker)
-define('DB_PASS', 'pt_pass'); // Database password
-define('DB_NAME', 'picturethis_dev'); // Database name
+define('DB_HOST', 'localhost:3306'); // cPanel MySQL host with port
+define('DB_USER', 'cfoxcozj_picThisdb'); // cPanel database username
+define('DB_PASS', 'LfUYHI%]{sjb5A*u'); // cPanel database password
+define('DB_NAME', 'cfoxcozj_PictureThis'); // cPanel database name
 
 // Application settings
 define('APP_NAME', 'PictureThis PHP'); // Application name
@@ -14,7 +14,7 @@ $envAppUrl = getenv('APP_URL');
 if ($envAppUrl && $envAppUrl !== false) {
 	define('APP_URL', $envAppUrl);
 } else {
-	define('APP_URL', 'http://localhost:8000'); // Application URL
+	define('APP_URL', 'https://yourdomain.com'); // Update with your actual domain
 }
 
 // Session configuration for better ngrok compatibility
@@ -31,7 +31,7 @@ define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
 
 // OpenRouter API configuration for image generation and prompt enhancement
 define('OPENROUTER_API_KEY', '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');
-define('OPENROUTER_APP_URL', 'http://localhost:8000');
+define('OPENROUTER_APP_URL', 'https://yourdomain.com'); // Update with your actual domain
 define('OPENROUTER_GEMINI_MODEL', 'google/gemini-2.5-flash-image-preview');
 define('OPENROUTER_MODEL', 'openai/gpt-oss-20b:free');
 define('OPENROUTER_API_URL', 'https://openrouter.ai/api/v1/chat/completions');
