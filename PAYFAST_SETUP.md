@@ -47,9 +47,9 @@ PAYFAST_PASSPHRASE=your_payfast_passphrase
 
 #### 3. **Set Up PayFast Settings**
 In your PayFast merchant dashboard:
-- **Return URL**: `http://localhost:3000/dashboard?payment=success`
-- **Cancel URL**: `http://localhost:3000/dashboard?payment=cancelled`
-- **Notify URL**: `http://localhost:3010/api/credits/payfast/notify`
+- **Return URL**: `http://localhost:8000/payment/success`
+- **Cancel URL**: `http://localhost:8000/payment/cancelled`
+- **Notify URL**: `http://localhost:8000/api/credits/payfast/notify`
 - **Enable ITN (Instant Transaction Notification)**
 
 #### 4. **Create Database Table**
@@ -69,7 +69,7 @@ Run this SQL in your PostgreSQL database:
    cd picfe && npm run dev
    ```
 
-2. Visit: `http://localhost:3000/credits`
+2. Visit: `http://localhost:8000/credits`
 3. Try purchasing credits with PayFast
 
 ---
@@ -133,7 +133,7 @@ Run this SQL in your PostgreSQL database:
 ## 🎉 **Ready to Go!**
 
 Once you've configured the environment variables and database, your PayFast integration will be live at:
-**`http://localhost:3000/credits`**
+**`http://localhost:8000/credits`**
 
 The integration handles everything automatically:
 - Payment processing through PayFast
