@@ -1,4 +1,10 @@
-# PictureThis .htaccess - Simple and Reliable Configuration
+# PictureThis .htaccess - cPanel Compatible Static File Serving
+
+# Prevent PHP parsing of static files
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    SetHandler default-handler
+    RemoveHandler .css .js .png .jpg .jpeg .gif .ico .svg .woff .woff2 .ttf .eot
+</FilesMatch>
 
 # Enable rewrite engine
 RewriteEngine On
@@ -17,14 +23,16 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     Deny from all
 </Files>
 
-# Allow access to all files
-<Files "*">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Directory permissions
-<Directory "/">
-    Allow from all
-    Options -Indexes
-</Directory>
+# MIME types for static files
+AddType text/css .css
+AddType application/javascript .js
+AddType image/png .png
+AddType image/jpeg .jpg
+AddType image/jpeg .jpeg
+AddType image/gif .gif
+AddType image/x-icon .ico
+AddType image/svg+xml .svg
+AddType font/woff .woff
+AddType font/woff2 .woff2
+AddType font/ttf .ttf
+AddType application/vnd.ms-fontobject .eot
