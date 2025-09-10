@@ -32,6 +32,11 @@ class ProfileController {
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Fetch recent transactions
+        $stmt = $pdo->prepare('SELECT * FROM credit_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20');
+        $stmt->execute([$userId]);
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         include __DIR__ . '/../views/header.php';
         include __DIR__ . '/../views/profile.php';
         include __DIR__ . '/../views/footer.php';

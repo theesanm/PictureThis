@@ -60,8 +60,8 @@ class PricingController {
             'merchant_key' => getenv('PAYFAST_MERCHANT_KEY') ?: null,
             'passphrase' => getenv('PAYFAST_PASSPHRASE') ?: null,
             'pfHost' => (getenv('NODE_ENV') === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
-            'return_url' => ($backend ?: '') . '/payment/success',
-            'cancel_url' => ($backend ?: '') . '/payment/cancelled',
+            'return_url' => ($backend ?: '') . '/payment/popup/success',
+            'cancel_url' => ($backend ?: '') . '/payment/popup/cancel',
             // notify must point to the backend so the PHP ITN handler receives it
             'notify_url' => ($backend ?: '') . '/api/credits/payfast/notify'
         ];
@@ -263,6 +263,30 @@ class PricingController {
     // Render a simple payment cancelled page
     public function cancelled() {
         include __DIR__ . '/../views/payment_cancelled.php';
+    }
+
+    // Iframe-specific success handler for modal payments
+    public function iframeSuccess() {
+        // Expects GET params: payment_id, user_id, package_id
+        include __DIR__ . '/../views/payment_iframe_success.php';
+    }
+
+        // Iframe-specific cancel handler for modal payments
+    public function iframeCancel() {
+        // Expects GET params: payment_id, user_id, package_id
+        include __DIR__ . '/../views/payment_iframe_cancel.php';
+    }
+
+    // Popup-specific success handler for modal payments
+    public function popupSuccess() {
+        // Expects GET params: payment_id, user_id, package_id
+        include __DIR__ . '/../views/payment_popup_success.php';
+    }
+
+    // Popup-specific cancel handler for modal payments
+    public function popupCancel() {
+        // Expects GET params: payment_id, user_id, package_id
+        include __DIR__ . '/../views/payment_popup_cancel.php';
     }
 
     // Pollable endpoint to check whether a payment has been processed and return user credits

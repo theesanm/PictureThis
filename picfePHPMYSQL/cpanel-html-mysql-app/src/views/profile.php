@@ -39,6 +39,57 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         </div>
       </div>
 
+      <!-- Transaction History -->
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold mb-4">Transaction History</h3>
+        <div class="bg-gray-900 rounded-lg overflow-hidden">
+          <?php if (!empty($transactions)): ?>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-800">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-gray-300">Date</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Description</th>
+                    <th class="px-4 py-3 text-left text-gray-300">Type</th>
+                    <th class="px-4 py-3 text-right text-gray-300">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                  <?php foreach ($transactions as $transaction): ?>
+                    <tr class="hover:bg-gray-800">
+                      <td class="px-4 py-3 text-gray-300">
+                        <?php echo htmlspecialchars(date('M j, Y g:i A', strtotime($transaction['created_at']))); ?>
+                      </td>
+                      <td class="px-4 py-3 text-gray-300">
+                        <?php echo htmlspecialchars($transaction['description']); ?>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded <?php 
+                          echo $transaction['transaction_type'] === 'purchase' ? 'bg-green-900 text-green-200' : 
+                               ($transaction['transaction_type'] === 'usage' ? 'bg-red-900 text-red-200' : 
+                               'bg-blue-900 text-blue-200'); 
+                        ?>">
+                          <?php echo htmlspecialchars(ucfirst($transaction['transaction_type'])); ?>
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-right font-medium <?php 
+                        echo $transaction['amount'] > 0 ? 'text-green-400' : 'text-red-400'; 
+                      ?>">
+                        <?php echo htmlspecialchars(($transaction['amount'] > 0 ? '+' : '') . $transaction['amount']); ?> credits
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php else: ?>
+            <div class="px-4 py-8 text-center text-gray-400">
+              No transactions found.
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
       <div class="mt-4">
         <button type="submit" class="bg-pink-500 text-white px-4 py-2 rounded">Save Changes</button>
       </div>

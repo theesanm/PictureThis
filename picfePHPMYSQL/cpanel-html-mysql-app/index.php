@@ -9,6 +9,20 @@ if ($path === '/payment/cancelled') {
     include __DIR__ . '/src/views/payment_cancelled.php';
     exit;
 }
+if ($path === '/payment/success/iframe/success') {
+    include __DIR__ . '/src/views/payment_iframe_success.php';
+    exit;
+}
+if ($path === '/payment/cancelled/iframe/cancel') {
+    include __DIR__ . '/src/views/payment_iframe_cancel.php';
+    exit;
+}
+if ($path === '/pricing') {
+    require_once __DIR__ . '/src/controllers/PricingController.php';
+    $ctrl = new PricingController();
+    $ctrl->index();
+    exit;
+}
 
 // Minimal API routes for PayFast integration and polling
 if (strpos($path, '/api/') === 0) {
@@ -28,6 +42,11 @@ if (strpos($path, '/api/') === 0) {
 
     if ($path === '/api/credits/payfast/test') {
         $ctrl->testItn();
+        exit;
+    }
+
+    if ($path === '/api/credits/initiate') {
+        $ctrl->initiate();
         exit;
     }
 }

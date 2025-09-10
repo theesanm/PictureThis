@@ -6,6 +6,25 @@ $paymentId = htmlspecialchars($_GET['payment_id'] ?? '');
 <head>
   <meta charset="utf-8">
   <title>Payment Cancelled</title>
+  <script>
+    // Check if we're in an iframe (modal payment)
+    const isInIframe = window.parent !== window;
+
+    if (isInIframe) {
+      // Send cancel message to parent and close
+      window.parent.postMessage({
+        type: 'payment_cancelled',
+        payment_id: '<?php echo $paymentId; ?>',
+        user_id: '<?php echo $userId; ?>',
+        package_id: '<?php echo $packageId; ?>'
+      }, '*');
+
+      // Auto-close after showing message
+      setTimeout(() => {
+        window.location.href = 'about:blank';
+      }, 2000);
+    }
+  </script>
 </head>
 <body>
   <h1>Payment Cancelled</h1>

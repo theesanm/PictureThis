@@ -8,8 +8,11 @@
         <div class="text-sm">
             <div class="font-semibold text-white mb-2">Platform</div>
             <ul class="space-y-2">
-                <li><a href="/generate" class="hover:underline">Generate Images</a></li>
-                <li><a href="/gallery" class="hover:underline">Gallery</a></li>
+                <?php if (session_status() === PHP_SESSION_NONE) { session_start(); } ?>
+                <?php if (!empty($_SESSION['user']) || !empty($user ?? null)): ?>
+                    <li><a href="/generate" class="hover:underline">Generate Images</a></li>
+                    <li><a href="/gallery" class="hover:underline">Gallery</a></li>
+                <?php endif; ?>
                 <li><a href="/pricing" class="hover:underline">Pricing</a></li>
             </ul>
         </div>

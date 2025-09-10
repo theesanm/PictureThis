@@ -15,7 +15,7 @@ class DashboardController {
 
         $userId = $_SESSION['user']['id'];
         // Refresh user info from DB (credits etc)
-        $stmt = $pdo->prepare('SELECT id, full_name, email, credits FROM users WHERE id = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, full_name, email, credits, is_admin FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$user) {
@@ -28,9 +28,15 @@ class DashboardController {
         // Fetch a few recent images for this user
         $recentImages = [];
         try {
-            $stmt = $pdo->prepare('SELECT id, filename, prompt, created_at FROM images WHERE user_id = ? ORDER BY created_at DESC LIMIT 6');
+            $stmt = $pdo->prepare('SELECT id, image_url, prompt, created_at FROM images WHERE user_id = ? AND image_url IS NOT NULL ORDER BY created_at DESC LIMIT 6');
             $stmt->execute([$userId]);
             $recentImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Ensure all required fields have values
+            foreach ($recentImages as &$img) {
+                $img['image_url'] = $img['image_url'] ?? '';
+                $img['prompt'] = $img['prompt'] ?? 'Generated image';
+            }
         } catch (Exception $e) {
             // ignore if images table missing or query fails
             error_log('Could not fetch recent images: ' . $e->getMessage());

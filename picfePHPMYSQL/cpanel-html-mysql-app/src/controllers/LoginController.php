@@ -45,4 +45,15 @@ class LoginController {
         include __DIR__ . '/../views/auth/login.php';
         include __DIR__ . '/../views/footer.php';
     }
+
+    public function logout() {
+        // Clear the session
+        session_start();
+        session_unset();
+        session_destroy();
+        
+        // Redirect to login page
+        header('Location: /login');
+        exit;
+    }
 }

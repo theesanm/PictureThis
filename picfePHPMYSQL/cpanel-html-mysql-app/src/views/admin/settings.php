@@ -7,7 +7,10 @@
     <label class="block text-sm text-gray-400 mb-1">Enhance Prompt Cost</label>
     <input name="enhance_cost" type="number" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white mb-4" value="<?php echo htmlspecialchars($settings['enhance_prompt_cost'] ?? 1); ?>" />
 
-  <!-- Feature Settings removed: only costs are managed here -->
+    <div class="flex items-center mb-4">
+      <input type="checkbox" name="enable_enhance" id="enable_enhance" value="1" <?php echo (!empty($settings['enable_enhance']) ? 'checked' : ''); ?> class="mr-2" />
+      <label for="enable_enhance" class="text-sm text-gray-300">Enable Prompt Enhancement</label>
+    </div>
 
     <h3 class="text-lg font-semibold mb-2">AI Provider Settings</h3>
     <select name="ai_provider" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white mb-4">

@@ -8,7 +8,9 @@
       <p class="text-gray-400 mt-1">Your AI image generation dashboard awaits.</p>
     </div>
     <div class="flex items-center space-x-4">
-      <a href="/admin" class="hidden md:inline-block bg-pink-600 text-white px-3 py-2 rounded">Admin Panel</a>
+      <?php if (!empty($user['is_admin'])): ?>
+        <a href="/admin" class="hidden md:inline-block bg-pink-600 text-white px-3 py-2 rounded">Admin Panel</a>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -49,8 +51,8 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           <?php foreach ($recentImages as $img): ?>
             <div class="bg-gray-900 rounded overflow-hidden border border-gray-700">
-              <img src="/uploads/<?php echo htmlspecialchars($img['filename']); ?>" alt="<?php echo htmlspecialchars($img['prompt']); ?>" class="w-full h-36 object-cover">
-              <div class="p-2 text-sm text-gray-300"><?php echo htmlspecialchars(substr($img['prompt'], 0, 60)); ?></div>
+              <img src="<?php echo htmlspecialchars($img['image_url'] ?? '/placeholder-image.jpg'); ?>" alt="<?php echo htmlspecialchars($img['prompt'] ?? 'Generated image'); ?>" class="w-full h-36 object-cover">
+              <div class="p-2 text-sm text-gray-300"><?php echo htmlspecialchars(substr($img['prompt'] ?? 'No description', 0, 60)); ?><?php echo (isset($img['prompt']) && strlen($img['prompt']) > 60) ? '...' : ''; ?></div>
             </div>
           <?php endforeach; ?>
         </div>
