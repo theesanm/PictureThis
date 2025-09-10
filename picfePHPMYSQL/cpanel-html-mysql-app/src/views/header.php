@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/public/css/style.css">
-    <!-- Tailwind CSS - Full featured CDN with warning suppression -->
+    <!-- Tailwind CSS - Load FIRST to prevent conflicts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       // Suppress Tailwind CDN warnings and configure for production
@@ -28,6 +27,18 @@
           theme: {
             extend: {}
           },
+          plugins: []
+        };
+
+        // Detect when Tailwind is loaded and mark the body
+        setTimeout(function() {
+          document.body.classList.add('tailwind-loaded');
+        }, 100);
+      }
+    </script>
+    <!-- Custom CSS - Load AFTER Tailwind to allow overrides -->
+    <link rel="stylesheet" href="/public/css/style.css">
+    <title><?php echo APP_NAME ?? 'PictureThis'; ?></title>
           plugins: []
         };
       }

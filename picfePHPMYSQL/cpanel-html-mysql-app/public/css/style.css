@@ -1,42 +1,45 @@
-body {
+/* Custom styles - Made specific to avoid Tailwind conflicts */
+
+/* Only apply these styles if Tailwind fails to load */
+body:not(.tailwind-loaded) {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
 }
 
-header {
+.custom-header {
     background: #35424a;
     color: #ffffff;
     padding: 10px 0;
     text-align: center;
 }
 
-h1 {
+.custom-h1 {
     margin: 0;
 }
 
-nav {
+.custom-nav {
     margin: 20px 0;
 }
 
-nav a {
+.custom-nav a {
     color: #ffffff;
     text-decoration: none;
     padding: 10px 15px;
 }
 
-nav a:hover {
+.custom-nav a:hover {
     background: #e8491d;
 }
 
-.container {
+.custom-container {
     width: 80%;
     margin: auto;
     overflow: hidden;
 }
 
-footer {
+.custom-footer {
     background: #35424a;
     color: #ffffff;
     text-align: center;
@@ -46,7 +49,7 @@ footer {
     width: 100%;
 }
 
-.btn {
+.custom-btn {
     display: inline-block;
     font-size: 18px;
     color: #ffffff;
@@ -57,6 +60,39 @@ footer {
     text-decoration: none;
 }
 
-.btn:hover {
+.custom-btn:hover {
     background: #e8491d;
+}
+
+/* Fallback styles in case Tailwind doesn't load */
+.no-tailwind body {
+    font-family: Arial, sans-serif !important;
+    background-color: #f4f4f4 !important;
+}
+
+.no-tailwind .fallback-header {
+    background: #35424a !important;
+    color: white !important;
+    padding: 1rem !important;
+    text-align: center !important;
+}
+
+.no-tailwind .fallback-nav {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    margin: 1rem 0 !important;
+}
+
+.no-tailwind .fallback-nav a {
+    color: white !important;
+    text-decoration: none !important;
+    padding: 0.5rem 1rem !important;
+    background: #e8491d !important;
+    border-radius: 0.25rem !important;
+}
+
+.no-tailwind .fallback-main {
+    padding: 2rem !important;
+    text-align: center !important;
 }
