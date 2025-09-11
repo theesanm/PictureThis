@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/../../lib/db.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 

@@ -3,6 +3,9 @@ class LoginController {
     public function index() {
         // Handle POST - authenticate
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             require_once __DIR__ . '/../lib/db.php';
 
             $email = trim($_POST['email'] ?? '');
