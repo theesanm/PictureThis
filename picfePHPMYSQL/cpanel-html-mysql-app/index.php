@@ -10,6 +10,12 @@ if (file_exists(__DIR__ . '/config/config.php')) {
     }
 }
 
+// Session configuration for better compatibility
+ini_set('session.cookie_domain', ''); // Allow sessions to work across subdomains
+ini_set('session.cookie_secure', 1); // Require HTTPS for sessions
+ini_set('session.cookie_httponly', 1); // Prevent JavaScript access to session cookie
+ini_set('session.use_only_cookies', 1); // Use only cookies for sessions
+
 // Start session early (if possible) so views can rely on it. Guard with headers_sent().
 if (!headers_sent()) {
     if (session_status() === PHP_SESSION_NONE) {
@@ -95,6 +101,13 @@ if ($path === '/register') {
     exit;
 }
 
+if ($path === '/logout') {
+    require_once __DIR__ . '/src/controllers/LoginController.php';
+    $ctrl = new LoginController();
+    $ctrl->logout();
+    exit;
+}
+
 // Handle main app pages (require authentication in controllers)
 if ($path === '/dashboard') {
     require_once __DIR__ . '/src/controllers/DashboardController.php';
@@ -121,6 +134,85 @@ if ($path === '/profile') {
     require_once __DIR__ . '/src/controllers/ProfileController.php';
     $ctrl = new ProfileController();
     $ctrl->index();
+    exit;
+}
+
+if ($path === '/admin') {
+    require_once __DIR__ . '/src/controllers/AdminController.php';
+    $ctrl = new AdminController();
+    $ctrl->index();
+    exit;
+}
+
+if ($path === '/admin/users') {
+    require_once __DIR__ . '/src/controllers/AdminController.php';
+    $ctrl = new AdminController();
+    $ctrl->users();
+    exit;
+}
+
+if ($path === '/admin/credits') {
+    require_once __DIR__ . '/src/controllers/AdminController.php';
+    $ctrl = new AdminController();
+    $ctrl->credits();
+    exit;
+}
+
+if ($path === '/admin/settings') {
+    require_once __DIR__ . '/src/controllers/AdminController.php';
+    $ctrl = new AdminController();
+    $ctrl->settings();
+    exit;
+}
+
+if ($path === '/admin/analytics') {
+    require_once __DIR__ . '/src/controllers/AdminController.php';
+    $ctrl = new AdminController();
+    $ctrl->analytics();
+    exit;
+}
+
+// Handle PayFast popup success (with query params for payment_id, user_id, package_id)
+if ($path === '/payment/popup/success') {
+    session_start(); // Ensure session for flash messages
+
+    $successMessage = 'Payment processed successfully!';
+    $errorMessage = null;
+
+    // NOTE: Credits are added by the ITN handler, not here
+    // This route is only for displaying the success page
+
+    // Try to include success view, fallback to simple HTML if it fails
+    if (file_exists(__DIR__ . '/src/views/payment_popup_success.php')) {
+        include __DIR__ . '/src/views/payment_popup_success.php';
+    } else {
+        // Fallback success page
+        echo '<!DOCTYPE html>
+        <html><head><title>Payment Success</title>
+        <link href="https://cdn.tailwindcss.com" rel="stylesheet"></head>
+        <body class="bg-gray-900 text-white p-8">
+            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg">
+                <h1 class="text-2xl font-bold mb-4">Payment Successful!</h1>';
+        if ($errorMessage) {
+            echo '<p class="text-red-400 mb-4">' . htmlspecialchars($errorMessage) . '</p>';
+        } else {
+            echo '<p class="text-green-400 mb-4">Your payment has been processed successfully.</p>
+            <script>
+                // Send message to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: "payment_success",
+                        payment_id: "' . htmlspecialchars($_GET['payment_id'] ?? '') . '",
+                        user_id: "' . htmlspecialchars($_GET['user_id'] ?? '') . '",
+                        package_id: "' . htmlspecialchars($_GET['package_id'] ?? '') . '"
+                    }, "*");
+                }
+                // Auto-close after 2 seconds
+                setTimeout(() => { window.close(); }, 2000);
+            </script>';
+        }
+        echo '</div></body></html>';
+    }
     exit;
 }
 

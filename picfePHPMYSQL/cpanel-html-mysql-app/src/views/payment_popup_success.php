@@ -22,7 +22,8 @@
 </head>
 <body style="background: #1f2937; color: white; font-family: Arial, sans-serif; text-align: center; padding: 50px;">
   <h1 style="color: #10b981;">Payment Successful!</h1>
-  <p>Your credits have been added to your account.</p>
+  <p>Your payment has been processed successfully.</p>
+  <p>The ITN notification will add your credits shortly.</p>
   <p>Closing payment window...</p>
 </body>
 </html>

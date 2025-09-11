@@ -191,6 +191,33 @@
               checkPaymentStatus();
             }
           }, 1000);
+
+          // Start polling for payment status
+          setTimeout(() => {
+            const pollStatus = () => {
+              fetch('/api/payments/status?payment_id=' + encodeURIComponent(form.querySelector('input[name="m_payment_id"]').value))
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success && (data.status === 'processed' || data.applied > 0)) {
+                    modal.remove();
+                    showNotification('Payment successful! Credits have been added to your account.', 'success');
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 2000);
+                  } else if (data.status === 'cancelled') {
+                    modal.remove();
+                    showNotification('Payment was cancelled.', 'info');
+                  } else {
+                    setTimeout(pollStatus, 2000);
+                  }
+                })
+                .catch(error => {
+                  console.error('Error checking payment status:', error);
+                  setTimeout(pollStatus, 2000);
+                });
+            };
+            pollStatus();
+          }, 5000);
         } else {
           // Popup blocked
           modal.querySelector('.text-center').innerHTML = `
@@ -216,7 +243,7 @@
           fetch('/api/payments/status?payment_id=' + encodeURIComponent(paymentId))
             .then(response => response.json())
             .then(data => {
-              if (data.success && data.status === 'processed') {
+              if (data.success && (data.status === 'processed' || data.applied > 0)) {
                 modal.remove();
                 showNotification('Payment successful! Credits have been added to your account.', 'success');
                 setTimeout(() => {
