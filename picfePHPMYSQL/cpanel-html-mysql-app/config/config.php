@@ -55,15 +55,15 @@ if (getenv('OPENROUTER_MODEL')) {
     define('OPENROUTER_MODEL_RUNTIME', OPENROUTER_MODEL);
 }
 
-// Set environment variables for backward compatibility
+// PayFast configuration (CURRENTLY USING SANDBOX CREDENTIALS)
+// Replace with production credentials for live environment
+define('PAYFAST_MERCHANT_ID', '10041798');
+define('PAYFAST_MERCHANT_KEY', 'vlnqle74tnkl7');
+define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
+
+// Set PayFast environment variables (no longer duplicated)
 putenv('PAYFAST_MERCHANT_ID=' . PAYFAST_MERCHANT_ID);
 putenv('PAYFAST_MERCHANT_KEY=' . PAYFAST_MERCHANT_KEY);
 putenv('PAYFAST_PASSPHRASE=' . PAYFAST_PASSPHRASE);
-putenv('OPENROUTER_API_KEY=' . OPENROUTER_API_KEY_RUNTIME);
-putenv('OPENROUTER_APP_URL=' . OPENROUTER_APP_URL_RUNTIME);
-putenv('OPENROUTER_GEMINI_MODEL=' . OPENROUTER_GEMINI_MODEL_RUNTIME);
-putenv('OPENROUTER_MODEL=' . OPENROUTER_MODEL_RUNTIME);
-
-// Set PayFast environment (production for live, development for sandbox)
 putenv('PAYFAST_ENV=development'); // Currently set to 'development' (sandbox)
 ?>
