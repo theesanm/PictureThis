@@ -149,16 +149,71 @@ class AdminController {
         $this->ensureAdmin();
         require_once __DIR__ . '/../lib/db.php';
         $pdo = get_db();
-    $transactions = $pdo->query('SELECT t.*, u.full_name, u.email FROM credit_transactions t LEFT JOIN users u ON u.id = t.user_id ORDER BY t.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
-    // Totals (use actual column name transaction_type)
-    $totalAdded = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('admin_added','purchase','topup')")->fetchColumn();
-    $totalConsumed = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('consumed','usage')")->fetchColumn();
-    $imagesGenerated = $pdo->query("SELECT COUNT(*) FROM images WHERE 1")->fetchColumn();
-    include __DIR__ . '/../views/header.php';
-    include __DIR__ . '/../views/admin/header.php';
-    // provide $transactions, $totalAdded, $totalConsumed, $imagesGenerated to view
-    include __DIR__ . '/../views/admin/credits.php';
-    include __DIR__ . '/../views/footer.php';
+
+        // Handle search and filtering parameters
+        $search = $_GET['search'] ?? '';
+        $typeFilter = $_GET['type'] ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 50; // Show 50 transactions per page
+        $offset = ($page - 1) * $perPage;
+
+        // Build WHERE clause for filtering
+        $whereConditions = [];
+        $params = [];
+
+        if (!empty($search)) {
+            $whereConditions[] = "(u.full_name LIKE ? OR u.email LIKE ? OR t.description LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if (!empty($typeFilter)) {
+            $whereConditions[] = "t.transaction_type = ?";
+            $params[] = $typeFilter;
+        }
+
+        if (!empty($dateFrom)) {
+            $whereConditions[] = "DATE(t.created_at) >= ?";
+            $params[] = $dateFrom;
+        }
+
+        if (!empty($dateTo)) {
+            $whereConditions[] = "DATE(t.created_at) <= ?";
+            $params[] = $dateTo;
+        }
+
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+
+        // Get total count for pagination
+        $countQuery = "SELECT COUNT(*) FROM credit_transactions t LEFT JOIN users u ON u.id = t.user_id $whereClause";
+        $stmt = $pdo->prepare($countQuery);
+        $stmt->execute($params);
+        $totalRecords = $stmt->fetchColumn();
+        $totalPages = ceil($totalRecords / $perPage);
+
+        // Get paginated transactions
+        $query = "SELECT t.*, u.full_name, u.email FROM credit_transactions t LEFT JOIN users u ON u.id = t.user_id $whereClause ORDER BY t.created_at DESC LIMIT $perPage OFFSET $offset";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute($params);
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get transaction types for filter dropdown
+        $typeQuery = "SELECT DISTINCT transaction_type FROM credit_transactions WHERE transaction_type IS NOT NULL ORDER BY transaction_type";
+        $transactionTypes = $pdo->query($typeQuery)->fetchAll(PDO::FETCH_COLUMN);
+
+        // Totals (use actual column name transaction_type)
+        $totalAdded = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('admin_added','purchase','topup')")->fetchColumn();
+        $totalConsumed = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('consumed','usage')")->fetchColumn();
+        $imagesGenerated = $pdo->query("SELECT COUNT(*) FROM images WHERE 1")->fetchColumn();
+
+        include __DIR__ . '/../views/header.php';
+        include __DIR__ . '/../views/admin/header.php';
+        // provide variables to view
+        include __DIR__ . '/../views/admin/credits.php';
+        include __DIR__ . '/../views/footer.php';
     }
 
     public function settings() {
