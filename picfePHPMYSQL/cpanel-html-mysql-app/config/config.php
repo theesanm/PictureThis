@@ -11,7 +11,7 @@ define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
 putenv('PAYFAST_MERCHANT_ID=' . PAYFAST_MERCHANT_ID);
 putenv('PAYFAST_MERCHANT_KEY=' . PAYFAST_MERCHANT_KEY);
 putenv('PAYFAST_PASSPHRASE=' . PAYFAST_PASSPHRASE);
-putenv('PAYFAST_ENV=production'); // CHANGED TO PRODUCTION - WILL USE LIVE PAYFASTfiguration - cPanel MySQL for production
+putenv('PAYFAST_ENV=development'); // Currently set to 'development' (sandbox)figuration - cPanel MySQL for production
 define('DB_HOST', '127.0.0.1'); // cPanel MySQL host
 define('DB_USER', 'cfoxcozj_picThisdb'); // cPanel database username
 define('DB_PASS', 'LfUYHI%]{sjb5A*u'); // cPanel database password
