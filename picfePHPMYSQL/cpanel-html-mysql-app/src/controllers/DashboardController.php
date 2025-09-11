@@ -38,6 +38,17 @@ class DashboardController {
                 error_log('Dashboard Image: ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
             }
             
+            // Remove duplicates based on image_url to ensure variety
+            $uniqueImages = [];
+            $seenUrls = [];
+            foreach ($recentImages as $img) {
+                if (!in_array($img['image_url'], $seenUrls)) {
+                    $uniqueImages[] = $img;
+                    $seenUrls[] = $img['image_url'];
+                }
+            }
+            $recentImages = array_slice($uniqueImages, 0, 6); // Ensure we still have max 6
+            
             // Ensure all required fields have values
             foreach ($recentImages as &$img) {
                 $img['image_url'] = $img['image_url'] ?? '';
