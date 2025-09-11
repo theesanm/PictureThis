@@ -15,7 +15,7 @@ class DashboardController {
 
         $userId = $_SESSION['user']['id'];
         // Refresh user info from DB (credits etc)
-        $stmt = $pdo->prepare('SELECT id, full_name, email, credits FROM users WHERE id = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, full_name, email, credits, is_admin FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$user) {
