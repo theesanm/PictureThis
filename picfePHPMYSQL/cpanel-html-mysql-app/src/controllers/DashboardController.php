@@ -52,10 +52,22 @@ class DashboardController {
             }
             $recentImages = array_slice($uniqueImages, 0, 6); // Take only the first 6 unique images
             
-            // Ensure all required fields have values
-            foreach ($recentImages as &$img) {
-                $img['image_url'] = $img['image_url'] ?? '';
-                $img['prompt'] = $img['prompt'] ?? 'Generated image';
+            // Ensure all required fields have values (avoid reference issues)
+            $cleanedImages = [];
+            foreach ($recentImages as $img) {
+                $cleanedImages[] = [
+                    'id' => $img['id'] ?? null,
+                    'image_url' => $img['image_url'] ?? '',
+                    'prompt' => $img['prompt'] ?? 'Generated image',
+                    'created_at' => $img['created_at'] ?? null
+                ];
+            }
+            $recentImages = $cleanedImages;
+            
+            // Final debug check before rendering view
+            error_log('Dashboard: Final images before view render: ' . count($recentImages));
+            foreach ($recentImages as $idx => $img) {
+                error_log('Dashboard Final Image ' . $idx . ': ID=' . ($img['id'] ?? 'null') . ', URL=' . substr($img['image_url'] ?? '', 0, 50) . '...');
             }
         } catch (Exception $e) {
             // ignore if images table missing or query fails
