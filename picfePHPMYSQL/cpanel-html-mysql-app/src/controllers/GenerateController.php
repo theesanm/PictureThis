@@ -631,7 +631,25 @@ class GenerateController {
         }
 
         $this->debugLog('Returning external image URL: ' . $imageUrl);
-        return $imageUrl;
+        
+        // Always save external images locally to ensure uniqueness and avoid caching issues
+        $this->debugLog('Downloading and saving external image locally...');
+        $imageData = file_get_contents($imageUrl);
+        if ($imageData !== false) {
+            $filename = 'generated_' . time() . '_' . uniqid() . '.png';
+            $filepath = $this->uploadsDir . $filename;
+            
+            if (file_put_contents($filepath, $imageData)) {
+                $this->debugLog('External image saved locally: ' . $filepath);
+                return '/uploads/' . $filename;
+            } else {
+                $this->debugLog('Failed to save external image locally, returning original URL');
+                return $imageUrl;
+            }
+        } else {
+            $this->debugLog('Failed to download external image, returning original URL');
+            return $imageUrl;
+        }
     }
 
     // Enhance prompt using OpenRouter LLM
