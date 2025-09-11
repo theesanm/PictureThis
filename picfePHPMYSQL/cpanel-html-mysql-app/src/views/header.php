@@ -17,7 +17,7 @@
       }, 100);
     </script>
     <!-- Custom CSS - Load AFTER Tailwind to allow overrides -->
-    <link rel="stylesheet" href="/public/css/style.css">
+    <link rel="stylesheet" href="./css/style.css">
     <title><?php echo APP_NAME ?? 'PictureThis'; ?></title>
 </head>
 <body class="bg-gray-900 text-gray-200">
