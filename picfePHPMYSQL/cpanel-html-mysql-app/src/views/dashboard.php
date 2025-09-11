@@ -51,7 +51,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           <?php foreach ($recentImages as $img): ?>
             <div class="bg-gray-900 rounded overflow-hidden border border-gray-700">
-              <img src="<?php echo htmlspecialchars($img['image_url'] ?? '/placeholder-image.jpg'); ?>?t=<?php echo time(); ?>" alt="<?php echo htmlspecialchars($img['prompt'] ?? 'Generated image'); ?>" class="w-full h-36 object-cover">
+              <img src="<?php echo htmlspecialchars($img['image_url'] ?? '/placeholder-image.jpg'); ?>?t=<?php echo $img['id'] ?? time(); ?>" alt="<?php echo htmlspecialchars($img['prompt'] ?? 'Generated image'); ?>" class="w-full h-36 object-cover">
               <div class="p-2 text-sm text-gray-300"><?php echo htmlspecialchars(substr($img['prompt'] ?? 'No description', 0, 60)); ?><?php echo (isset($img['prompt']) && strlen($img['prompt']) > 60) ? '...' : ''; ?></div>
             </div>
           <?php endforeach; ?>
