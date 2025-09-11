@@ -27,16 +27,21 @@ try {
             'fullName' => $user['full_name'],
             'email' => $user['email']
         ];
+        // Diagnostic logging
+        error_log('[AUTH_LOGIN] success session_id=' . session_id() . ' headers_sent=' . (headers_sent()?1:0) . ' save_path=' . ini_get('session.save_path'));
+        foreach (headers_list() as $h) { error_log('[AUTH_LOGIN] header: ' . $h); }
         header('Location: /dashboard');
         exit;
     } else {
         $_SESSION['auth_error'] = 'Invalid credentials';
+        error_log('[AUTH_LOGIN] invalid credentials for ' . $email . ' session_id=' . session_id() . ' save_path=' . ini_get('session.save_path'));
         header('Location: /login');
         exit;
     }
 } catch (Exception $e) {
-    error_log($e->getMessage());
+    error_log('[AUTH_LOGIN] exception: ' . $e->getMessage());
     $_SESSION['auth_error'] = 'An error occurred';
+    if (session_status() !== PHP_SESSION_NONE) error_log('[AUTH_LOGIN] exception session_id=' . session_id() . ' save_path=' . ini_get('session.save_path'));
     header('Location: /login');
     exit;
 }

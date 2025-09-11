@@ -34,10 +34,19 @@ class LoginController {
                     'fullName' => $user['full_name'],
                     'email' => $user['email']
                 ];
+                // Diagnostic logging - write session + headers info to PHP error log
+                error_log('[LOGIN] success id=' . session_id() . ' headers_sent=' . (headers_sent()?1:0) . ' save_path=' . ini_get('session.save_path'));
+                foreach (headers_list() as $h) { error_log('[LOGIN] header: ' . $h); }
                 header('Location: /dashboard');
                 exit;
             } catch (Exception $e) {
-                error_log($e->getMessage());
+                error_log('[LOGIN] exception: ' . $e->getMessage());
+                // Diagnostics for session state on exception
+                if (session_status() !== PHP_SESSION_NONE) {
+                    error_log('[LOGIN] exception session_id=' . session_id() . ' save_path=' . ini_get('session.save_path'));
+                } else {
+                    error_log('[LOGIN] exception session not started');
+                }
                 $_SESSION['auth_error'] = 'An error occurred during login';
                 header('Location: /login');
                 exit;
