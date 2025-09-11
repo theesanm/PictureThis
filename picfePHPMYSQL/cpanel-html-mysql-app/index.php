@@ -248,6 +248,11 @@ if (strpos($path, '/api/') === 0) {
         $generateCtrl->enhance();
         exit;
     }
+
+    if ($path === '/api/generate') {
+        $generateCtrl->generate();
+        exit;
+    }
 }
 
 // Fall back to existing server files if present (index.php in src or public)
