@@ -63,4 +63,7 @@ putenv('OPENROUTER_API_KEY=' . OPENROUTER_API_KEY_RUNTIME);
 putenv('OPENROUTER_APP_URL=' . OPENROUTER_APP_URL_RUNTIME);
 putenv('OPENROUTER_GEMINI_MODEL=' . OPENROUTER_GEMINI_MODEL_RUNTIME);
 putenv('OPENROUTER_MODEL=' . OPENROUTER_MODEL_RUNTIME);
+
+// Set PayFast environment (production for live, development for sandbox)
+putenv('PAYFAST_ENV=production'); // Change to 'development' for sandbox
 ?>

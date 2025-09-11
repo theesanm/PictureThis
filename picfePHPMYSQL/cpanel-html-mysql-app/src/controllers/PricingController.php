@@ -59,7 +59,7 @@ class PricingController {
             'merchant_id' => getenv('PAYFAST_MERCHANT_ID') ?: null,
             'merchant_key' => getenv('PAYFAST_MERCHANT_KEY') ?: null,
             'passphrase' => getenv('PAYFAST_PASSPHRASE') ?: null,
-            'pfHost' => (getenv('NODE_ENV') === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
+            'pfHost' => (getenv('PAYFAST_ENV') === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
             'return_url' => ($backend ?: '') . '/payment/popup/success',
             'cancel_url' => ($backend ?: '') . '/payment/popup/cancel',
             // notify must point to the backend so the PHP ITN handler receives it
