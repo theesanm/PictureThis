@@ -311,56 +311,8 @@ class GenerateController {
             exit;
         }
 
-        try {
-            // Enhance prompt using OpenRouter API
-            $enhancedPrompts = $this->enhancePromptWithLLM($prompt);
-            $this->debugLog('Successfully enhanced prompt. Number of prompts: ' . count($enhancedPrompts));
-            $this->debugLog('Enhanced prompts: ' . json_encode($enhancedPrompts));
-
-            // Add CORS headers for successful response
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type, Authorization');
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => true,
-                'data' => [
-                    'enhancedPrompts' => $enhancedPrompts,
-                    'updatedCredits' => $updatedCredits ?? $user['credits'] ?? 0
-                ]
-            ]);
-            exit; // Exit here to prevent duplicate response
-
-        } catch (Exception $e) {
-            $this->debugLog('Prompt enhancement failed: ' . $e->getMessage());
-            $this->debugLog('Using fallback prompts due to API error');
-            // Return fallback prompts
-            $fallbackPrompts = [
-                "{$prompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality",
-                "{$prompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition",
-                "{$prompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting"
-            ];
-            $this->debugLog('Fallback prompts: ' . json_encode($fallbackPrompts));
-            $this->debugLog('Updated credits after fallback: ' . ($updatedCredits ?? $user['credits'] ?? 0));
-
-            $fallbackResponse = [
-                'success' => true,
-                'data' => [
-                    'enhancedPrompts' => $fallbackPrompts,
-                    'fallback' => true,
-                    'message' => 'Using fallback prompts due to API parsing error',
-                    'updatedCredits' => $updatedCredits ?? $user['credits'] ?? 0
-                ]
-            ];
-            $this->debugLog('Returning fallback response: ' . json_encode($fallbackResponse));
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type, Authorization');
-            header('Content-Type: application/json');
-            echo json_encode($fallbackResponse);
-        }
-
-        // Deduct credits for enhancement (happens regardless of API success/failure)
+        // Deduct credits for enhancement BEFORE processing
+        $updatedCredits = $user['credits'] ?? 0;
         if ($user && $enhanceCost > 0) {
             $this->debugLog('Deducting ' . $enhanceCost . ' credits for prompt enhancement from user ' . $userId);
             $pdo->prepare('UPDATE users SET credits = credits - ? WHERE id = ?')
@@ -378,6 +330,54 @@ class GenerateController {
                 $updatedCredits = $updatedUser['credits'];
                 $this->debugLog('Credits updated to ' . $updatedCredits . ' after prompt enhancement');
             }
+        }
+
+        try {
+            // Enhance prompt using OpenRouter API
+            $enhancedPrompts = $this->enhancePromptWithLLM($prompt);
+            $this->debugLog('Successfully enhanced prompt. Number of prompts: ' . count($enhancedPrompts));
+            $this->debugLog('Enhanced prompts: ' . json_encode($enhancedPrompts));
+
+            // Add CORS headers for successful response
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'enhancedPrompts' => $enhancedPrompts,
+                    'updatedCredits' => $updatedCredits
+                ]
+            ]);
+            exit; // Exit here to prevent duplicate response
+
+        } catch (Exception $e) {
+            $this->debugLog('Prompt enhancement failed: ' . $e->getMessage());
+            $this->debugLog('Using fallback prompts due to API error');
+            // Return fallback prompts
+            $fallbackPrompts = [
+                "{$prompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality",
+                "{$prompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition",
+                "{$prompt}, oil painting style, rich colors, detailed brushwork, classical art composition, golden hour lighting"
+            ];
+            $this->debugLog('Fallback prompts: ' . json_encode($fallbackPrompts));
+
+            $fallbackResponse = [
+                'success' => true,
+                'data' => [
+                    'enhancedPrompts' => $fallbackPrompts,
+                    'fallback' => true,
+                    'message' => 'Using fallback prompts due to API parsing error',
+                    'updatedCredits' => $updatedCredits
+                ]
+            ];
+            $this->debugLog('Returning fallback response: ' . json_encode($fallbackResponse));
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Content-Type: application/json');
+            echo json_encode($fallbackResponse);
         }
 
         exit; // Exit after processing to prevent any further output

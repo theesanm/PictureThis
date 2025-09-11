@@ -218,27 +218,34 @@ if ($path === '/payment/popup/success') {
 
 // Minimal API routes for PayFast integration and polling
 if (strpos($path, '/api/') === 0) {
-    // Lazy-load controller
+    // Lazy-load controllers
     require_once __DIR__ . '/src/controllers/PricingController.php';
-    $ctrl = new PricingController();
+    require_once __DIR__ . '/src/controllers/GenerateController.php';
+    $pricingCtrl = new PricingController();
+    $generateCtrl = new GenerateController();
 
     if ($path === '/api/payments/status') {
-        $ctrl->paymentStatus();
+        $pricingCtrl->paymentStatus();
         exit;
     }
 
     if ($path === '/api/credits/payfast/notify') {
-        $ctrl->notify();
+        $pricingCtrl->notify();
         exit;
     }
 
     if ($path === '/api/credits/payfast/test') {
-        $ctrl->testItn();
+        $pricingCtrl->testItn();
         exit;
     }
 
     if ($path === '/api/credits/initiate') {
-        $ctrl->initiate();
+        $pricingCtrl->initiate();
+        exit;
+    }
+
+    if ($path === '/api/enhance') {
+        $generateCtrl->enhance();
         exit;
     }
 }
