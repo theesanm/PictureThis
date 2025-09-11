@@ -59,3 +59,5 @@ tmp/*
 # Database files
 *.db
 *.sqlite
+config/config.php
+uploads/

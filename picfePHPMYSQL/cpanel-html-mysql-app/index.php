@@ -1,5 +1,30 @@
 <?php
 // Simple front controller for dev server. Routes payfast return/cancel to views.
+
+// Load app config (defines APP_NAME, DB_* and other settings). Use a safe fallback if missing.
+if (file_exists(__DIR__ . '/config/config.php')) {
+    require_once __DIR__ . '/config/config.php';
+} else {
+    if (!defined('APP_NAME')) {
+        define('APP_NAME', 'PictureThis');
+    }
+}
+
+// Start session early (if possible) so views can rely on it. Guard with headers_sent().
+if (!headers_sent()) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+// Opt-in debug flag: visit any URL with ?__debug=1 to enable full error display temporarily.
+if (isset($_GET['__debug']) && $_GET['__debug']) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+    // Helpful header for debugging via browser
+    header('X-PictureThis-Debug: enabled');
+}
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Handle home page
