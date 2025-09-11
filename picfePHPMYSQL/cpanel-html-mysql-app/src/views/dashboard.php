@@ -52,8 +52,7 @@
           <?php foreach ($recentImages as $index => $img): ?>
             <div class="bg-gray-900 rounded overflow-hidden border border-gray-700">
               <img src="<?php echo htmlspecialchars($img['image_url'] ?? '/placeholder-image.jpg'); ?>?v=<?php echo microtime(true) . '_' . $index; ?>" alt="<?php echo htmlspecialchars($img['prompt'] ?? 'Generated image'); ?>" class="w-full h-36 object-cover">
-              <div class="p-2 text-sm text-gray-300 text-xs"><?php echo htmlspecialchars(substr($img['prompt'] ?? 'No description', 0, 40)); ?><?php echo (isset($img['prompt']) && strlen($img['prompt']) > 40) ? '...' : ''; ?></div>
-              <div class="p-2 text-xs text-gray-500">ID: <?php echo $img['id']; ?> | URL: <?php echo htmlspecialchars(substr($img['image_url'] ?? '', 0, 30)); ?>...</div>
+              <div class="p-2 text-sm text-gray-300"><?php echo htmlspecialchars(substr($img['prompt'] ?? 'No description', 0, 60)); ?><?php echo (isset($img['prompt']) && strlen($img['prompt']) > 60) ? '...' : ''; ?></div>
             </div>
           <?php endforeach; ?>
         </div>
