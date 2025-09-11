@@ -1,20 +1,20 @@
 <?php
 // Configuration settings for the application
 
-// Database configuration - Docker MySQL for local development
-define('DB_HOST', 'localhost:3306'); // Docker MySQL host with port
-define('DB_USER', 'pt_user'); // Docker database username
-define('DB_PASS', 'pt_pass'); // Docker database password
-define('DB_NAME', 'picturethis_dev'); // Docker database name
+// Database configuration - cPanel MySQL for production
+define('DB_HOST', 'localhost:3306'); // cPanel MySQL host with port
+define('DB_USER', 'cfoxcozj_picThisdb'); // cPanel database username
+define('DB_PASS', 'LfUYHI%]{sjb5A*u'); // cPanel database password
+define('DB_NAME', 'cfoxcozj_PictureThis'); // cPanel database name
 
 // Application settings
 define('APP_NAME', 'PictureThis PHP'); // Application name
-// Allow overriding APP_URL via environment. If not set, default to http://localhost:8000
+// Allow overriding APP_URL via environment. If not set, default to production URL
 $envAppUrl = getenv('APP_URL');
 if ($envAppUrl && $envAppUrl !== false) {
 	define('APP_URL', $envAppUrl);
 } else {
-	define('APP_URL', 'http://localhost:8000'); // Local development URL
+	define('APP_URL', 'https://demo.cfox.co.za'); // Production subdomain URL
 }
 
 // Session configuration for better ngrok compatibility
