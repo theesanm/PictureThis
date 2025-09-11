@@ -48,6 +48,13 @@
           <a href="/generate" class="inline-block bg-pink-500 text-white px-4 py-2 rounded">Generate Your First Image</a>
         </div>
       <?php else: ?>
+        <?php 
+        // Debug: Show what images we have
+        error_log('Dashboard View: Displaying ' . count($recentImages) . ' images');
+        foreach ($recentImages as $idx => $img) {
+          error_log('Dashboard View Image ' . $idx . ': ID=' . ($img['id'] ?? 'null') . ', URL=' . substr($img['image_url'] ?? '', 0, 50) . '...');
+        }
+        ?>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           <?php foreach ($recentImages as $index => $img): ?>
             <div class="bg-gray-900 rounded overflow-hidden border border-gray-700">

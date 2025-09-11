@@ -182,14 +182,14 @@ class GenerateController {
             $imageUrl = $this->generateImageWithGemini($prompt, $uploadedImages);
             $this->debugLog('Image generated successfully: ' . $imageUrl);
 
-            // Check if user already has this exact image URL (prevent duplicates)
-            $stmt = $pdo->prepare('SELECT id FROM images WHERE user_id = ? AND image_url = ?');
-            $stmt->execute([$userId, $imageUrl]);
+            // Check if user already has this exact image URL OR the same prompt recently (prevent duplicates)
+            $stmt = $pdo->prepare('SELECT id FROM images WHERE user_id = ? AND (image_url = ? OR (prompt = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)))');
+            $stmt->execute([$userId, $imageUrl, $prompt]);
             $existingImage = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($existingImage) {
-                $this->debugLog('Duplicate image detected, skipping save: ' . $imageUrl);
-                $_SESSION['generate_error'] = 'This image has already been generated. Try a different prompt!';
+                $this->debugLog('Duplicate image or recent same prompt detected, skipping save: ' . $imageUrl);
+                $_SESSION['generate_error'] = 'You recently generated an image with this prompt. Try a different prompt or wait a bit!';
                 header('Location: /generate');
                 exit;
             }

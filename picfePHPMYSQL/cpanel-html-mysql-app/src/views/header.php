@@ -54,7 +54,7 @@
                     
                     <!-- Desktop Navigation -->
                     <nav class="hidden md:flex items-center space-x-2">
-                        <?php if (!headers_sent() && session_status() === PHP_SESSION_NONE) { session_start(); } ?>
+                        <?php // session_start() removed - handled in index.php ?>
                         <?php if (!empty($_SESSION['user']) || !empty($user)): ?>
                             <a href="/dashboard" class="px-3 py-1 rounded bg-gray-900 text-gray-100 hover:bg-gray-700">Dashboard</a>
                             <a href="/generate" class="px-3 py-1 rounded hover:bg-gray-700">Generate</a>
@@ -65,7 +65,7 @@
 
                 <!-- Desktop User Info -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <?php if (!headers_sent() && session_status() === PHP_SESSION_NONE) { session_start(); } ?>
+                    <?php // session_start() removed - handled in index.php ?>
                     <?php if (!empty($_SESSION['user']) || !empty($user)): ?>
                         <?php
                         // Prefer a fresh read from DB for credits and name to avoid stale session values.
@@ -122,7 +122,7 @@
             <!-- Mobile Navigation Menu -->
                     <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4 border-t border-gray-700 pt-4">
                 <nav class="flex flex-col space-y-2">
-                    <?php if (!headers_sent() && session_status() === PHP_SESSION_NONE) { session_start(); } ?>
+                    <?php // session_start() removed - handled in index.php ?>
                     <?php if (!empty($_SESSION['user']) || !empty($user)): ?>
                         <a href="/dashboard" class="px-3 py-2 rounded bg-gray-900 text-gray-100 hover:bg-gray-700">Dashboard</a>
                         <a href="/generate" class="px-3 py-2 rounded hover:bg-gray-700">Generate</a>

@@ -25,10 +25,10 @@ class DashboardController {
             exit;
         }
 
-        // Fetch a few recent images for this user
+        // Fetch a few recent images for this user (fetch more than needed to account for duplicates)
         $recentImages = [];
         try {
-            $stmt = $pdo->prepare('SELECT id, image_url, prompt, created_at FROM images WHERE user_id = ? AND image_url IS NOT NULL AND image_url != "" ORDER BY created_at DESC LIMIT 6');
+            $stmt = $pdo->prepare('SELECT id, image_url, prompt, created_at FROM images WHERE user_id = ? AND image_url IS NOT NULL AND image_url != "" ORDER BY created_at DESC LIMIT 12');
             $stmt->execute([$userId]);
             $recentImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
@@ -45,9 +45,12 @@ class DashboardController {
                 if (!in_array($img['image_url'], $seenUrls)) {
                     $uniqueImages[] = $img;
                     $seenUrls[] = $img['image_url'];
+                    error_log('Dashboard: Added unique image ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
+                } else {
+                    error_log('Dashboard: Skipped duplicate image ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
                 }
             }
-            $recentImages = array_slice($uniqueImages, 0, 6); // Ensure we still have max 6
+            $recentImages = array_slice($uniqueImages, 0, 6); // Take only the first 6 unique images
             
             // Ensure all required fields have values
             foreach ($recentImages as &$img) {
