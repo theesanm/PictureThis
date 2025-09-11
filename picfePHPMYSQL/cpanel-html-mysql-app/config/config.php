@@ -17,7 +17,7 @@ if ($envAppUrl && $envAppUrl !== false) {
 	define('APP_URL', 'https://demo.cfox.co.za'); // Production subdomain URL
 }
 
-// PayFast configuration (sandbox credentials for development)
+// PayFast configuration (CURRENTLY USING SANDBOX CREDENTIALS)
 // Replace with production credentials for live environment
 define('PAYFAST_MERCHANT_ID', '10041798');
 define('PAYFAST_MERCHANT_KEY', 'vlnqle74tnkl7');
@@ -65,5 +65,5 @@ putenv('OPENROUTER_GEMINI_MODEL=' . OPENROUTER_GEMINI_MODEL_RUNTIME);
 putenv('OPENROUTER_MODEL=' . OPENROUTER_MODEL_RUNTIME);
 
 // Set PayFast environment (production for live, development for sandbox)
-putenv('PAYFAST_ENV=production'); // Change to 'development' for sandbox
+putenv('PAYFAST_ENV=development'); // Currently set to 'development' (sandbox)
 ?>
