@@ -57,6 +57,18 @@ if ($path === '/payment/cancelled/iframe/cancel') {
     include __DIR__ . '/src/views/payment_iframe_cancel.php';
     exit;
 }
+if ($path === '/payment/popup/success') {
+    require_once __DIR__ . '/src/controllers/PricingController.php';
+    $ctrl = new PricingController();
+    $ctrl->popupSuccess();
+    exit;
+}
+if ($path === '/payment/popup/cancel') {
+    require_once __DIR__ . '/src/controllers/PricingController.php';
+    $ctrl = new PricingController();
+    $ctrl->popupCancel();
+    exit;
+}
 if ($path === '/pricing') {
     require_once __DIR__ . '/src/controllers/PricingController.php';
     $ctrl = new PricingController();
