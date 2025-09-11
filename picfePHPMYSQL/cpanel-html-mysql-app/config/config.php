@@ -1,17 +1,7 @@
 <?php
 // Configuration settings for the application
 
-// D// PayFast configuration (CURRENTLY USING SANDBOX CREDENTIALS)
-// Replace with production credentials for live environment
-define('PAYFAST_MERCHANT_ID', '10041798');
-define('PAYFAST_MERCHANT_KEY', 'vlnqle74tnkl7');
-define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
-
-// Set PayFast environment variables
-putenv('PAYFAST_MERCHANT_ID=' . PAYFAST_MERCHANT_ID);
-putenv('PAYFAST_MERCHANT_KEY=' . PAYFAST_MERCHANT_KEY);
-putenv('PAYFAST_PASSPHRASE=' . PAYFAST_PASSPHRASE);
-putenv('PAYFAST_ENV=development'); // Currently set to 'development' (sandbox)figuration - cPanel MySQL for production
+// Database configuration - cPanel MySQL for production
 define('DB_HOST', '127.0.0.1'); // cPanel MySQL host
 define('DB_USER', 'cfoxcozj_picThisdb'); // cPanel database username
 define('DB_PASS', 'LfUYHI%]{sjb5A*u'); // cPanel database password
@@ -65,15 +55,14 @@ if (getenv('OPENROUTER_MODEL')) {
     define('OPENROUTER_MODEL_RUNTIME', OPENROUTER_MODEL);
 }
 
-// PayFast configuration (CURRENTLY USING SANDBOX CREDENTIALS)
-// Replace with production credentials for live environment
-define('PAYFAST_MERCHANT_ID', '10041798');
-define('PAYFAST_MERCHANT_KEY', 'vlnqle74tnkl7');
-define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
-
-// Set PayFast environment variables (no longer duplicated)
+// Set environment variables for PayFast and other services
 putenv('PAYFAST_MERCHANT_ID=' . PAYFAST_MERCHANT_ID);
 putenv('PAYFAST_MERCHANT_KEY=' . PAYFAST_MERCHANT_KEY);
 putenv('PAYFAST_PASSPHRASE=' . PAYFAST_PASSPHRASE);
 putenv('PAYFAST_ENV=development'); // Currently set to 'development' (sandbox)
+
+putenv('OPENROUTER_API_KEY=' . OPENROUTER_API_KEY_RUNTIME);
+putenv('OPENROUTER_APP_URL=' . OPENROUTER_APP_URL_RUNTIME);
+putenv('OPENROUTER_GEMINI_MODEL=' . OPENROUTER_GEMINI_MODEL_RUNTIME);
+putenv('OPENROUTER_MODEL=' . OPENROUTER_MODEL_RUNTIME);
 ?>
