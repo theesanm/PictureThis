@@ -3,18 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CSS - Load FIRST to prevent conflicts -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS with error handling -->
     <script>
-      // Simple Tailwind configuration
-      tailwind.config = {
-        darkMode: 'class'
-      };
-
-      // Mark body when Tailwind loads
-      setTimeout(function() {
-        document.body.classList.add('tailwind-loaded');
-      }, 100);
+      // Load Tailwind with fallback
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.tailwindcss.com';
+        script.onload = function() {
+          // Tailwind loaded successfully
+          tailwind.config = { darkMode: 'class' };
+          setTimeout(function() {
+            document.body.classList.add('tailwind-loaded');
+          }, 100);
+        };
+        script.onerror = function() {
+          // Tailwind failed to load, add fallback CSS
+          console.log('Tailwind CDN failed, using fallback styles');
+          var fallbackCSS = document.createElement('style');
+          fallbackCSS.textContent = `
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #1a202c; color: #e2e8f0; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .header { background: #2d3748; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+            .nav { display: flex; gap: 1rem; margin-top: 0.5rem; }
+            .nav a { color: #e2e8f0; text-decoration: none; padding: 0.5rem 1rem; background: #4a5568; border-radius: 4px; }
+            .hero { text-align: center; padding: 3rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; margin: 1rem 0; }
+            .btn { display: inline-block; padding: 0.75rem 1.5rem; background: #3182ce; color: white; text-decoration: none; border-radius: 6px; margin: 0.5rem; }
+            .stats { display: flex; justify-content: space-around; margin: 2rem 0; }
+            .stat { text-align: center; }
+            .stat-number { font-size: 2rem; font-weight: bold; }
+          `;
+          document.head.appendChild(fallbackCSS);
+          document.body.classList.add('fallback-loaded');
+        };
+        document.head.appendChild(script);
+      })();
     </script>
     <!-- Custom CSS - Load AFTER Tailwind to allow overrides -->
     <link rel="stylesheet" href="/public/css/style.css">

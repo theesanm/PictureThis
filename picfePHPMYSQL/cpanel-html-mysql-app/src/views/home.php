@@ -17,64 +17,60 @@ try {
 }
 ?>
 
-<main class="min-h-screen">
+<main class="min-h-screen" style="min-height: 100vh; background: #1a202c; color: #e2e8f0; padding: 20px;">
   <!-- Hero Section -->
-  <section class="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white">
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 bg-black/20"></div>
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+  <section class="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 3rem 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32" style="max-width: 1200px; margin: 0 auto;">
       <div class="text-center">
         <!-- Badge -->
-        <div class="inline-flex items-center px-4 py-2 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-sm font-medium mb-8">
-          <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></span>
+        <div class="inline-flex items-center px-4 py-2 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-sm font-medium mb-8" style="display: inline-flex; align-items: center; padding: 0.5rem 1rem; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.3); color: #fbb6ce; border-radius: 9999px; margin-bottom: 2rem;">
+          <span class="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse" style="width: 8px; height: 8px; background: #a855f7; border-radius: 50%; margin-right: 0.5rem;"></span>
           AI-Powered Image Generation
         </div>
 
         <!-- Main Headline -->
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2;">
           Transform Your Ideas Into
-          <span class="bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+          <span class="bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent" style="background: linear-gradient(to right, #f472b6, #a855f7, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
             Stunning Images
           </span>
         </h1>
 
         <!-- Subheadline -->
-        <p class="text-lg sm:text-xl text-purple-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+        <p class="text-lg sm:text-xl text-purple-100 mb-8 max-w-3xl mx-auto leading-relaxed" style="font-size: 1.125rem; color: #e9d5ff; margin-bottom: 2rem; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6;">
           PictureThis harnesses the power of advanced AI to turn your creative prompts into beautiful,
           high-quality images. From concept to creation in seconds.
         </p>
 
         <!-- CTA Buttons -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <a href="/register" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12" style="display: flex; flex-direction: column; gap: 1rem; justify-content: center; margin-bottom: 3rem;">
+          <a href="/register" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200" style="display: inline-flex; align-items: center; padding: 1rem 2rem; background: linear-gradient(to right, #ec4899, #9333ea); color: white; font-weight: 600; border-radius: 0.75rem; text-decoration: none; margin: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.2s;">
             <span>Start Creating Free</span>
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-left: 0.5rem;">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
             </svg>
           </a>
-          <a href="/generate" class="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 backdrop-blur-sm transition-all duration-200">
+          <a href="/generate" class="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 backdrop-blur-sm transition-all duration-200" style="display: inline-flex; align-items: center; padding: 1rem 2rem; background: rgba(255, 255, 255, 0.1); color: white; font-weight: 600; border-radius: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); text-decoration: none; margin: 0.5rem; backdrop-filter: blur(4px);">
             <span>Try Generator</span>
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-left: 0.5rem;">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
           </a>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto">
-          <div class="text-center">
-            <div class="text-3xl font-bold text-white mb-1"><?php echo number_format($totalImages); ?>+</div>
-            <div class="text-purple-200 text-sm">Images Generated</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto" style="display: flex; justify-content: space-around; max-width: 42rem; margin: 0 auto 2rem auto;">
+          <div class="text-center" style="text-align: center;">
+            <div class="text-3xl font-bold text-white mb-1" style="font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 0.25rem;"><?php echo number_format($totalImages); ?>+</div>
+            <div class="text-purple-200 text-sm" style="color: #e9d5ff; font-size: 0.875rem;">Images Generated</div>
           </div>
-          <div class="text-center">
-            <div class="text-3xl font-bold text-white mb-1"><?php echo number_format($totalUsers); ?>+</div>
-            <div class="text-purple-200 text-sm">Creative Users</div>
+          <div class="text-center" style="text-align: center;">
+            <div class="text-3xl font-bold text-white mb-1" style="font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 0.25rem;"><?php echo number_format($totalUsers); ?>+</div>
+            <div class="text-purple-200 text-sm" style="color: #e9d5ff; font-size: 0.875rem;">Creative Users</div>
           </div>
-          <div class="text-center">
-            <div class="text-3xl font-bold text-white mb-1">∞</div>
-            <div class="text-purple-200 text-sm">Possibilities</div>
+          <div class="text-center" style="text-align: center;">
+            <div class="text-3xl font-bold text-white mb-1" style="font-size: 1.875rem; font-weight: 700; color: white; margin-bottom: 0.25rem;">∞</div>
+            <div class="text-purple-200 text-sm" style="color: #e9d5ff; font-size: 0.875rem;">Possibilities</div>
           </div>
         </div>
       </div>
