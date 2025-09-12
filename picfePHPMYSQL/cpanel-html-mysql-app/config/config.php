@@ -24,7 +24,7 @@ define('PAYFAST_MERCHANT_KEY', 'vlnqle74tnkl7');
 define('PAYFAST_PASSPHRASE', 'ThisIsATestFromPictureThis');
 
 // OpenRouter API configuration for image generation and prompt enhancement
-define('OPENROUTER_API_KEY', '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');
+define('OPENROUTER_API_KEY', '');
 define('OPENROUTER_APP_URL', 'https://demo.cfox.co.za'); // Update with your subdomain
 define('OPENROUTER_GEMINI_MODEL', 'google/gemini-2.5-flash-image-preview');
 define('OPENROUTER_MODEL', 'openai/gpt-oss-20b:free');
