@@ -1,6 +1,6 @@
 <?php
 // Configuration settings for the application
-
+define('OPENROUTER_APP_TITLE', 'PictureThis AI');
 // Set timezone to UTC for consistent server time
 date_default_timezone_set('UTC');
 
@@ -11,7 +11,7 @@ define('DB_PASS', getenv('DB_PASS') ?: ''); // Set via .htaccess
 define('DB_NAME', getenv('DB_NAME') ?: 'cfoxcozj_PictureThis');
 
 // Application settings
-define('APP_NAME', 'PictureThis PHP');
+define('APP_NAME', 'PictureThis');
 
 // Environment detection - more reliable than getenv() for some setups
 $appEnv = getenv('APP_ENV') ?: 'development';

@@ -113,6 +113,13 @@ if ($path === '/register') {
     exit;
 }
 
+if ($path === '/check-email') {
+    require_once __DIR__ . '/src/controllers/CheckEmailController.php';
+    $ctrl = new CheckEmailController();
+    $ctrl->index();
+    exit;
+}
+
 // Handle email verification and password reset
 if ($path === '/verify-email') {
     require_once __DIR__ . '/src/controllers/EmailVerificationController.php';

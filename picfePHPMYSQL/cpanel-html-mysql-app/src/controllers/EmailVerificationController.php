@@ -29,8 +29,9 @@ class EmailVerificationController {
             }
 
             // Check if token has expired
-            $now = new DateTime();
-            $expires = new DateTime($user['email_verification_expires']);
+            require_once __DIR__ . '/../lib/timezone.php';
+            $now = get_utc_now();
+            $expires = new DateTime($user['email_verification_expires'], new DateTimeZone('UTC'));
 
             if ($now > $expires) {
                 $_SESSION['auth_error'] = 'Verification link has expired. Please register again.';
@@ -75,10 +76,11 @@ class EmailVerificationController {
         require_once __DIR__ . '/../lib/db.php';
 
         $email = trim($_POST['email'] ?? '');
+        $returnUrl = $_POST['return_url'] ?? '/login';
 
         if (!$email) {
             $_SESSION['auth_error'] = 'Email address is required.';
-            header('Location: /login');
+            header('Location: ' . $returnUrl . (!empty($email) ? '?email=' . urlencode($email) : ''));
             exit;
         }
 
@@ -92,7 +94,7 @@ class EmailVerificationController {
 
             if (!$user) {
                 $_SESSION['auth_error'] = 'No account found with this email address.';
-                header('Location: /login');
+                header('Location: ' . $returnUrl . (!empty($email) ? '?email=' . urlencode($email) : ''));
                 exit;
             }
 
@@ -103,8 +105,9 @@ class EmailVerificationController {
             }
 
             // Generate new verification token
+            require_once __DIR__ . '/../lib/timezone.php';
             $verificationToken = bin2hex(random_bytes(32));
-            $tokenExpiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
+            $tokenExpiry = get_utc_now()->modify('+24 hours')->format('Y-m-d H:i:s');
 
             // Update user with new token
             $updateStmt = $pdo->prepare('UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?');
@@ -127,7 +130,7 @@ class EmailVerificationController {
             $_SESSION['auth_error'] = 'An error occurred. Please try again.';
         }
 
-        header('Location: /login');
+        header('Location: ' . $returnUrl . (!empty($email) ? '?email=' . urlencode($email) : ''));
         exit;
     }
 }

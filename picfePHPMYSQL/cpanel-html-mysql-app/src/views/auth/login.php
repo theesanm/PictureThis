@@ -11,6 +11,12 @@
       </div>
     <?php endif; ?>
 
+    <?php if (!empty($_SESSION['auth_success'])): ?>
+      <div class="mb-4 p-3 bg-green-900/40 border border-green-500 text-green-200 rounded-md text-sm">
+        <?php echo htmlspecialchars($_SESSION['auth_success']); unset($_SESSION['auth_success']); ?>
+      </div>
+    <?php endif; ?>
+
   <form action="/login" method="POST" class="space-y-6">
       <div>
         <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>

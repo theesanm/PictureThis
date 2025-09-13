@@ -569,7 +569,7 @@ class GenerateController {
             'Authorization: Bearer ' . $apiKey,
             'Content-Type: application/json',
             'HTTP-Referer: ' . (defined('OPENROUTER_APP_URL_RUNTIME') ? OPENROUTER_APP_URL_RUNTIME : (getenv('OPENROUTER_APP_URL') ?: 'http://localhost:8000')),
-            'X-Title: PictureThis AI Image Generator'
+            'X-Title: PictureThis'
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
@@ -734,7 +734,7 @@ Response format:
             'Authorization: Bearer ' . $apiKey,
             'Content-Type: application/json',
             'HTTP-Referer: ' . (defined('OPENROUTER_APP_URL_RUNTIME') ? OPENROUTER_APP_URL_RUNTIME : (getenv('OPENROUTER_APP_URL') ?: 'http://localhost:8000')),
-            'X-Title: PictureThis AI Image Generator'
+            'X-Title: PictureThis'
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);

@@ -81,7 +81,7 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
               name="prompt"
               rows="4"
               class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white resize-y min-h-[100px]"
-              placeholder="Describe the image you want to generate..."
+              placeholder="Example: A photorealistic portrait of a young woman with flowing red hair, studio lighting, golden hour, highly detailed skin texture, professional photography, 8K resolution..."
               required
             ></textarea>
           </div>
@@ -105,7 +105,7 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
                 </span>
               <?php endif; ?>
             </button>
-          </div>
+          </div>    
           <?php endif; ?>
 
           <!-- Enhanced Prompts -->
@@ -192,6 +192,83 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
         </form>
       </div>
 
+      <!-- Prompt Writing Guide -->
+      <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 mt-6">
+        <div class="bg-gray-700/50 rounded-lg border border-gray-600">
+          <div class="flex items-center justify-between p-4 cursor-pointer" onclick="toggleGuidance()">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <h3 class="text-sm font-semibold text-purple-300">Prompt Writing Guide</h3>
+            </div>
+            <svg id="guidance-chevron" class="w-4 h-4 text-purple-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+
+          <div id="guidance-content" class="px-4 pb-4 space-y-3 text-sm text-gray-300">
+            <div>
+              <h4 class="font-medium text-white mb-1">🎨 Style & Realism</h4>
+              <p class="text-xs text-gray-400">Specify the artistic style to help the enhance function optimize for the right model:</p>
+              <ul class="mt-1 space-y-1 text-xs">
+                <li>• <strong>Photo realistic:</strong> "photorealistic, high detail, professional photography"</li>
+                <li>• <strong>Pixar style:</strong> "Pixar animation style, 3D rendered, vibrant colors"</li>
+                <li>• <strong>Digital art:</strong> "digital painting, concept art, stylized illustration"</li>
+                <li>• <strong>Cartoon:</strong> "cartoon style, animated, vibrant and playful"</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 class="font-medium text-white mb-1">📸 Composition & Framing</h4>
+              <p class="text-xs text-gray-400">Describe camera angle, perspective, and composition:</p>
+              <ul class="mt-1 space-y-1 text-xs">
+                <li>• <strong>Angle:</strong> "wide angle, close-up, aerial view, eye-level"</li>
+                <li>• <strong>Composition:</strong> "centered, rule of thirds, dynamic pose"</li>
+                <li>• <strong>Focus:</strong> "sharp focus, shallow depth of field, bokeh background"</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 class="font-medium text-white mb-1">💡 Lighting & Mood</h4>
+              <p class="text-xs text-gray-400">Set the atmosphere and lighting conditions:</p>
+              <ul class="mt-1 space-y-1 text-xs">
+                <li>• <strong>Lighting:</strong> "golden hour, studio lighting, dramatic shadows"</li>
+                <li>• <strong>Mood:</strong> "serene, energetic, mysterious, warm and inviting"</li>
+                <li>• <strong>Time:</strong> "sunset, midnight, bright daylight, candlelit"</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 class="font-medium text-white mb-1">✨ Quality & Details</h4>
+              <p class="text-xs text-gray-400">Add technical specifications for better results:</p>
+              <ul class="mt-1 space-y-1 text-xs">
+                <li>• <strong>Quality:</strong> "highly detailed, 8K, sharp focus, professional"</li>
+                <li>• <strong>Medium:</strong> "oil painting, watercolor, digital art, photography"</li>
+                <li>• <strong>Resolution:</strong> "ultra high resolution, crisp details, fine textures"</li>
+              </ul>
+            </div>
+
+            <div class="mt-3 p-3 bg-purple-900/20 border border-purple-600/30 rounded">
+              <h4 class="font-medium text-purple-300 mb-2">🚀 Pro Tip for Enhancement</h4>
+              <p class="text-xs text-gray-300">
+                The enhance button uses AI to transform your prompt into multiple professional versions. Include both your subject AND desired style for the best enhancement results!
+              </p>
+            </div>
+
+            <div class="mt-2 p-2 bg-blue-900/20 border border-blue-600/30 rounded">
+              <h4 class="font-medium text-blue-300 mb-1">💡 Enhancement Examples</h4>
+              <div class="text-xs text-gray-300 space-y-1">
+                <div><strong>Simple:</strong> "❌cat on a chair"</div>
+                <div><strong>Enhance:</strong> "✅A photorealistic image of a cat on a chair, 8K resolution"</div>
+                <div class="mt-2"><strong>Simple:</strong> "❌robot in city"</div>
+                <div><strong>Enhance:</strong> "✅robot in futuristic city, digital art style cinematic composition"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Recent Images -->
       <?php if (!empty($recentImages)): ?>
       <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -256,6 +333,19 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
 <script>
 // Wrap all JavaScript in DOM ready event
 document.addEventListener('DOMContentLoaded', function() {
+  // Toggle guidance function
+  window.toggleGuidance = function() {
+    const content = document.getElementById('guidance-content');
+    const chevron = document.getElementById('guidance-chevron');
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      chevron.style.transform = 'rotate(0deg)';
+    } else {
+      content.classList.add('hidden');
+      chevron.style.transform = 'rotate(180deg)';
+    }
+  };
+
   // Image upload handling
   const image1Input = document.getElementById('image1');
   const image2Input = document.getElementById('image2');

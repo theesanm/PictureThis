@@ -40,8 +40,9 @@ class RegisterController {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
                 // Generate verification token
+                require_once __DIR__ . '/../lib/timezone.php';
                 $verificationToken = bin2hex(random_bytes(32));
-                $tokenExpiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
+                $tokenExpiry = get_utc_now()->modify('+24 hours')->format('Y-m-d H:i:s');
 
                 $stmt = $pdo->prepare('INSERT INTO users (full_name, email, password_hash, email_verification_token, email_verification_expires, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
                 $stmt->execute([$fullName, $email, $hash, $verificationToken, $tokenExpiry]);
@@ -53,13 +54,14 @@ class RegisterController {
                 $emailService = new EmailService();
 
                 if ($emailService->sendVerificationEmail($email, $fullName, $verificationToken)) {
-                    $_SESSION['auth_success'] = 'Registration successful! Please check your email to verify your account.';
+                    // Redirect to check email page with email parameter
+                    header('Location: /check-email?email=' . urlencode($email));
+                    exit;
                 } else {
                     $_SESSION['auth_error'] = 'Registration successful but verification email could not be sent. Please contact support.';
+                    header('Location: /login');
+                    exit;
                 }
-
-                header('Location: /login');
-                exit;
             } catch (Exception $e) {
                 error_log($e->getMessage());
                 $_SESSION['auth_error'] = 'An error occurred during registration';

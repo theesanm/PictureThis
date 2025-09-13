@@ -34,7 +34,7 @@
         <p class="text-sm text-gray-400">Transform your ideas into stunning visual content with AI.</p>
       </div>
       <div>
-        <a href="/generate" class="bg-pink-500 text-white px-4 py-2 rounded">+ Start</a>
+        <a href="/generate" class="bg-pink-500 text-white px-4 py-2 rounded">+</a>
       </div>
     </div>
   </div>
