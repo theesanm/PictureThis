@@ -22,12 +22,15 @@ class GalleryController {
                 $stmt = $pdo->prepare('SELECT id, prompt, image_url, created_at, generation_cost FROM images WHERE user_id = ? ORDER BY created_at DESC');
                 $stmt->execute([$userId]);
                 $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                error_log('GalleryController: Found ' . count($images) . ' images for user ' . $userId);
             } catch (Exception $e) {
-                error_log('Error fetching gallery images: ' . $e->getMessage());
+                if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
+                    error_log('Error fetching gallery images: ' . $e->getMessage());
+                }
             }
         } else {
-            error_log('GalleryController: No user session or user ID');
+            if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
+                error_log('GalleryController: No user session or user ID');
+            }
         }
 
         // Get current user info

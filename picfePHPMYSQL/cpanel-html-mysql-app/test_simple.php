@@ -111,7 +111,7 @@
         </ul>
 
         <footer style="background: #333; color: white; padding: 20px; margin: 20px -20px -20px -20px; border-radius: 0 0 8px 8px; text-align: center;">
-            <p>&copy; <?php echo date('Y'); ?> PictureThis. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> PictureThis@cfox. All rights reserved.</p>
         </footer>
     </div>
 </body>

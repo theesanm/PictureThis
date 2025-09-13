@@ -32,12 +32,6 @@ class DashboardController {
             $stmt->execute([$userId]);
             $recentImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Debug logging
-            error_log('Dashboard: Found ' . count($recentImages) . ' recent images for user ' . $userId);
-            foreach ($recentImages as $img) {
-                error_log('Dashboard Image: ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
-            }
-            
             // Remove duplicates based on image_url to ensure variety
             $uniqueImages = [];
             $seenUrls = [];
@@ -45,9 +39,6 @@ class DashboardController {
                 if (!in_array($img['image_url'], $seenUrls)) {
                     $uniqueImages[] = $img;
                     $seenUrls[] = $img['image_url'];
-                    error_log('Dashboard: Added unique image ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
-                } else {
-                    error_log('Dashboard: Skipped duplicate image ID=' . $img['id'] . ', URL=' . substr($img['image_url'], 0, 50) . '...');
                 }
             }
             $recentImages = array_slice($uniqueImages, 0, 6); // Take only the first 6 unique images
@@ -63,15 +54,11 @@ class DashboardController {
                 ];
             }
             $recentImages = $cleanedImages;
-            
-            // Final debug check before rendering view
-            error_log('Dashboard: Final images before view render: ' . count($recentImages));
-            foreach ($recentImages as $idx => $img) {
-                error_log('Dashboard Final Image ' . $idx . ': ID=' . ($img['id'] ?? 'null') . ', URL=' . substr($img['image_url'] ?? '', 0, 50) . '...');
-            }
         } catch (Exception $e) {
             // ignore if images table missing or query fails
-            error_log('Could not fetch recent images: ' . $e->getMessage());
+            if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
+                error_log('Could not fetch recent images: ' . $e->getMessage());
+            }
             $recentImages = [];
         }
 

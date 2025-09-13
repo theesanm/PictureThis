@@ -89,10 +89,20 @@ INSERT IGNORE INTO `settings` (`k`, `v`, `credit_cost_per_image`, `enhanced_prom
 ('enhanced_prompt_enabled', 'true', 10, 1, TRUE, 'openrouter'),
 ('ai_provider', 'openrouter', 10, 1, TRUE, 'openrouter');
 
+-- Add email verification and password reset fields to users table
+ALTER TABLE `users`
+ADD COLUMN `email_verified` BOOLEAN NOT NULL DEFAULT FALSE AFTER `password_hash`,
+ADD COLUMN `email_verification_token` VARCHAR(255) NULL AFTER `email_verified`,
+ADD COLUMN `email_verification_expires` DATETIME NULL AFTER `email_verification_token`,
+ADD COLUMN `reset_password_token` VARCHAR(255) NULL AFTER `email_verification_expires`,
+ADD COLUMN `reset_password_expires` DATETIME NULL AFTER `reset_password_token`,
+ADD INDEX `users_email_verification_token_index` (`email_verification_token`),
+ADD INDEX `users_reset_password_token_index` (`reset_password_token`);
+
 -- Create test admin user (optional - remove in production)
 -- Password hash for 'admin123'
-INSERT IGNORE INTO `users` (`full_name`, `email`, `password_hash`, `credits`, `created_at`) VALUES
-('Admin User', 'admin@picturethis.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 100, NOW());
+INSERT IGNORE INTO `users` (`full_name`, `email`, `password_hash`, `email_verified`, `credits`, `created_at`) VALUES
+('Admin User', 'admin@picturethis.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE, 100, NOW());
 
 -- Show success message
 SELECT 'Database setup completed successfully!' as status;

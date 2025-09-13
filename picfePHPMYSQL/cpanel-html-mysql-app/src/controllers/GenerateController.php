@@ -17,7 +17,10 @@ class GenerateController {
     private function debugLog($message) {
         $logMessage = '[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL;
         file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
-        error_log('DEBUG: ' . $message);
+        // Only log to PHP error_log in development
+        if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
+            error_log('DEBUG: ' . $message);
+        }
     }
 
     public function index() {
@@ -323,25 +326,14 @@ class GenerateController {
             exit;
         }
 
-        // Deduct credits for enhancement BEFORE processing
-        $updatedCredits = $user['credits'] ?? 0;
-        if ($user && $enhanceCost > 0) {
-            $this->debugLog('Deducting ' . $enhanceCost . ' credits for prompt enhancement from user ' . $userId);
-            $pdo->prepare('UPDATE users SET credits = credits - ? WHERE id = ?')
-                ->execute([$enhanceCost, $userId]);
-
-            $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, description) VALUES (?, ?, ?, ?)')
-                ->execute([$userId, -$enhanceCost, 'usage', 'Prompt enhancement']);
-
-            // Update session with new credit balance
-            $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
-            $stmt->execute([$userId]);
-            $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($updatedUser) {
-                $_SESSION['user']['credits'] = $updatedUser['credits'];
-                $updatedCredits = $updatedUser['credits'];
-                $this->debugLog('Credits updated to ' . $updatedCredits . ' after prompt enhancement');
-            }
+        // Check if user has enough credits (but don't deduct yet)
+        if ($user && $enhanceCost > 0 && $user['credits'] < $enhanceCost) {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => "Insufficient credits. You need {$enhanceCost} credits."]);
+            exit;
         }
 
         try {
@@ -349,6 +341,27 @@ class GenerateController {
             $enhancedPrompts = $this->enhancePromptWithLLM($prompt);
             $this->debugLog('Successfully enhanced prompt. Number of prompts: ' . count($enhancedPrompts));
             $this->debugLog('Enhanced prompts: ' . json_encode($enhancedPrompts));
+
+            // Only deduct credits AFTER successful API call
+            $updatedCredits = $user['credits'] ?? 0;
+            if ($user && $enhanceCost > 0) {
+                $this->debugLog('Deducting ' . $enhanceCost . ' credits for prompt enhancement from user ' . $userId);
+                $pdo->prepare('UPDATE users SET credits = credits - ? WHERE id = ?')
+                    ->execute([$enhanceCost, $userId]);
+
+                $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, description) VALUES (?, ?, ?, ?)')
+                    ->execute([$userId, -$enhanceCost, 'usage', 'Prompt enhancement']);
+
+                // Update session with new credit balance
+                $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
+                $stmt->execute([$userId]);
+                $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($updatedUser) {
+                    $_SESSION['user']['credits'] = $updatedUser['credits'];
+                    $updatedCredits = $updatedUser['credits'];
+                    $this->debugLog('Credits updated to ' . $updatedCredits . ' after prompt enhancement');
+                }
+            }
 
             // Add CORS headers for successful response
             header('Access-Control-Allow-Origin: *');
@@ -366,8 +379,8 @@ class GenerateController {
 
         } catch (Exception $e) {
             $this->debugLog('Prompt enhancement failed: ' . $e->getMessage());
-            $this->debugLog('Using fallback prompts due to API error');
-            // Return fallback prompts
+            $this->debugLog('Using fallback prompts due to API error - NO CREDITS DEDUCTED');
+            // Return fallback prompts WITHOUT deducting credits
             $fallbackPrompts = [
                 "{$prompt}, highly detailed, photorealistic, professional photography, dramatic lighting, sharp focus, masterpiece quality",
                 "{$prompt}, digital art style, vibrant colors, concept art, artstation trending, detailed textures, cinematic composition",
@@ -380,8 +393,8 @@ class GenerateController {
                 'data' => [
                     'enhancedPrompts' => $fallbackPrompts,
                     'fallback' => true,
-                    'message' => 'Using fallback prompts due to API parsing error',
-                    'updatedCredits' => $updatedCredits
+                    'message' => 'Using fallback prompts due to API error - no credits charged',
+                    'updatedCredits' => $user['credits'] ?? 0  // No change to credits
                 ]
             ];
             $this->debugLog('Returning fallback response: ' . json_encode($fallbackResponse));

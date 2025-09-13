@@ -1,5 +1,29 @@
 # PictureThis .htaccess - cPanel Compatible Static File Serving
 
+# Environment Variables for Secure Configuration
+# IMPORTANT: Replace the placeholder values below with your actual credentials
+SetEnv DB_HOST "127.0.0.1"
+SetEnv DB_USER "cfoxcozj_picThisdb"
+SetEnv DB_PASS "LfUYHI%]{sjb5A*u"
+SetEnv DB_NAME "cfoxcozj_PictureThis"
+SetEnv APP_URL "https://demo.cfox.co.za"
+SetEnv APP_ENV "development"
+SetEnv PAYFAST_MERCHANT_ID "10041798"
+SetEnv PAYFAST_MERCHANT_KEY "vlnqle74tnkl7"
+SetEnv PAYFAST_PASSPHRASE "ThisIsATestFromPictureThis"
+SetEnv PAYFAST_ENV "development"
+SetEnv OPENROUTER_API_KEY "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"
+SetEnv OPENROUTER_APP_URL "https://demo.cfox.co.za"
+
+# Email Configuration for PHPMailer with Hosting Provider SMTP
+SetEnv SMTP_HOST "metallurgix.aserv.co.za"
+SetEnv SMTP_USERNAME "cfoxcozj"
+SetEnv SMTP_PASSWORD "Runx141kw007@"
+SetEnv SMTP_PORT "587"
+SetEnv FROM_EMAIL "picturethis@cfox.co.za"
+# Test environment variable (remove after testing)
+# SetEnv TEST_VAR "environment_variables_working"
+
 # Prevent PHP parsing of static files
 <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
     SetHandler default-handler

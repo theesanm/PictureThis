@@ -40,6 +40,13 @@
     </script>
     <!-- Custom CSS - Load AFTER Tailwind to allow overrides -->
     <link rel="stylesheet" href="/public/css/style.css">
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/public/favicon.ico">
+    <link rel="apple-touch-icon" href="/public/favicon.svg">
+    <link rel="manifest" href="/public/site.webmanifest">
+    
     <title><?php echo (defined('APP_NAME') ? APP_NAME : 'PictureThis'); ?></title>
 </head>
 <body class="bg-gray-900 text-gray-200">

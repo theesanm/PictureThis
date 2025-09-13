@@ -38,17 +38,27 @@ class RegisterController {
                 }
 
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('INSERT INTO users (full_name, email, password_hash, created_at) VALUES (?, ?, ?, NOW())');
-                $stmt->execute([$fullName, $email, $hash]);
+
+                // Generate verification token
+                $verificationToken = bin2hex(random_bytes(32));
+                $tokenExpiry = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+                $stmt = $pdo->prepare('INSERT INTO users (full_name, email, password_hash, email_verification_token, email_verification_expires, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
+                $stmt->execute([$fullName, $email, $hash, $verificationToken, $tokenExpiry]);
 
                 $userId = $pdo->lastInsertId();
-                // Log the user in
-                $_SESSION['user'] = [
-                    'id' => $userId,
-                    'fullName' => $fullName,
-                    'email' => $email
-                ];
-                header('Location: /dashboard');
+
+                // Send verification email
+                require_once __DIR__ . '/../lib/EmailService.php';
+                $emailService = new EmailService();
+
+                if ($emailService->sendVerificationEmail($email, $fullName, $verificationToken)) {
+                    $_SESSION['auth_success'] = 'Registration successful! Please check your email to verify your account.';
+                } else {
+                    $_SESSION['auth_error'] = 'Registration successful but verification email could not be sent. Please contact support.';
+                }
+
+                header('Location: /login');
                 exit;
             } catch (Exception $e) {
                 error_log($e->getMessage());

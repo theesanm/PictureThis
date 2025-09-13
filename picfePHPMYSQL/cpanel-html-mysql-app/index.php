@@ -113,6 +113,35 @@ if ($path === '/register') {
     exit;
 }
 
+// Handle email verification and password reset
+if ($path === '/verify-email') {
+    require_once __DIR__ . '/src/controllers/EmailVerificationController.php';
+    $ctrl = new EmailVerificationController();
+    $ctrl->verify();
+    exit;
+}
+
+if ($path === '/resend-verification') {
+    require_once __DIR__ . '/src/controllers/EmailVerificationController.php';
+    $ctrl = new EmailVerificationController();
+    $ctrl->resend();
+    exit;
+}
+
+if ($path === '/forgot-password') {
+    require_once __DIR__ . '/src/controllers/PasswordResetController.php';
+    $ctrl = new PasswordResetController();
+    $ctrl->forgot();
+    exit;
+}
+
+if ($path === '/reset-password') {
+    require_once __DIR__ . '/src/controllers/PasswordResetController.php';
+    $ctrl = new PasswordResetController();
+    $ctrl->reset();
+    exit;
+}
+
 if ($path === '/logout') {
     require_once __DIR__ . '/src/controllers/LoginController.php';
     $ctrl = new LoginController();

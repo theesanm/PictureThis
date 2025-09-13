@@ -34,7 +34,7 @@
         <p class="text-sm text-gray-400">Transform your ideas into stunning visual content with AI.</p>
       </div>
       <div>
-        <a href="/generate" class="bg-pink-500 text-white px-4 py-2 rounded">+ Generate Image</a>
+        <a href="/generate" class="bg-pink-500 text-white px-4 py-2 rounded">+ Start</a>
       </div>
     </div>
   </div>
@@ -48,18 +48,10 @@
           <a href="/generate" class="inline-block bg-pink-500 text-white px-4 py-2 rounded">Generate Your First Image</a>
         </div>
       <?php else: ?>
-        <?php 
-        // Debug: Show what images we have
-        error_log('Dashboard View: Displaying ' . count($recentImages) . ' images');
-        foreach ($recentImages as $idx => $img) {
-          error_log('Dashboard View Image ' . $idx . ': ID=' . ($img['id'] ?? 'null') . ', URL=' . substr($img['image_url'] ?? '', 0, 50) . '...');
-        }
-        ?>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           <?php foreach ($recentImages as $index => $img): ?>
             <div class="bg-gray-900 rounded overflow-hidden border border-gray-700">
               <img src="<?php echo htmlspecialchars($img['image_url'] ?? '/placeholder-image.jpg'); ?>?v=<?php echo microtime(true) . '_' . $index; ?>" alt="<?php echo htmlspecialchars($img['prompt'] ?? 'Generated image'); ?>" class="w-full h-36 object-cover">
-              <div class="p-2 text-sm text-gray-300"><?php echo htmlspecialchars(substr($img['prompt'] ?? 'No description', 0, 60)); ?><?php echo (isset($img['prompt']) && strlen($img['prompt']) > 60) ? '...' : ''; ?></div>
             </div>
           <?php endforeach; ?>
         </div>

@@ -39,6 +39,36 @@
       <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-500">Sign in</button>
     </form>
 
+    <!-- Resend Verification Email Section -->
+    <div class="mt-6">
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-600"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-gray-800 text-gray-400">Didn't receive verification email?</span>
+        </div>
+      </div>
+
+      <form action="/resend-verification" method="POST" class="mt-4">
+        <div class="flex space-x-2">
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            class="flex-1 pl-3 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm"
+            required
+          />
+          <button
+            type="submit"
+            class="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700"
+          >
+            Resend
+          </button>
+        </div>
+      </form>
+    </div>
+
     <div class="mt-6">
       <div class="relative">
         <div class="absolute inset-0 flex items-center">

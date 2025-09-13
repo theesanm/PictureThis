@@ -40,13 +40,14 @@
               <img
                 src="<?php echo htmlspecialchars($image['image_url']); ?>"
                 alt="<?php echo htmlspecialchars(substr($image['prompt'], 0, 50) . (strlen($image['prompt']) > 50 ? '...' : '')); ?>"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover cursor-pointer"
                 loading="lazy"
+                onclick="openImageModal('<?php echo addslashes($image['image_url']); ?>', '<?php echo addslashes($image['prompt']); ?>')"
               />
 
               <!-- Overlay with actions -->
-              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <div class="flex gap-2">
+              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                <div class="flex gap-2 pointer-events-auto">
                   <!-- Download Button -->
                   <a
                     href="<?php echo htmlspecialchars($image['image_url']); ?>"
@@ -61,7 +62,7 @@
 
                   <!-- View Full Size Button -->
                   <button
-                    onclick="openImageModal('<?php echo htmlspecialchars($image['image_url']); ?>', '<?php echo htmlspecialchars($image['prompt']); ?>')"
+                    onclick="openImageModal('<?php echo addslashes($image['image_url']); ?>', '<?php echo addslashes($image['prompt']); ?>')"
                     class="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
                     title="View Full Size"
                   >

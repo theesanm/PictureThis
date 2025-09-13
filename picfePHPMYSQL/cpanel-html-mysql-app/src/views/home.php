@@ -45,15 +45,9 @@ try {
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12" style="display: flex; flex-direction: column; gap: 1rem; justify-content: center; margin-bottom: 3rem;">
           <a href="/register" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200" style="display: inline-flex; align-items: center; padding: 1rem 2rem; background: linear-gradient(to right, #ec4899, #9333ea); color: white; font-weight: 600; border-radius: 0.75rem; text-decoration: none; margin: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.2s;">
-            <span>Start Creating Free</span>
+            <span>Start Creating</span>
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-left: 0.5rem;">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-            </svg>
-          </a>
-          <a href="/generate" class="inline-flex items-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 backdrop-blur-sm transition-all duration-200" style="display: inline-flex; align-items: center; padding: 1rem 2rem; background: rgba(255, 255, 255, 0.1); color: white; font-weight: 600; border-radius: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); text-decoration: none; margin: 0.5rem; backdrop-filter: blur(4px);">
-            <span>Try Generator</span>
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; margin-left: 0.5rem;">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
           </a>
         </div>
@@ -236,7 +230,7 @@ try {
       </p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
         <a href="/register" class="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
-          <span>Get Started Free</span>
+          <span>Get Started</span>
           <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
           </svg>

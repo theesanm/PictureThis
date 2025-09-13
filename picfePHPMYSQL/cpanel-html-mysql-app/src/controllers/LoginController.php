@@ -19,11 +19,18 @@ class LoginController {
 
             try {
                 $pdo = get_db();
-                $stmt = $pdo->prepare('SELECT id, full_name, email, password_hash FROM users WHERE email = ? LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, full_name, email, password_hash, email_verified FROM users WHERE email = ? LIMIT 1');
                 $stmt->execute([$email]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$user || !password_verify($password, $user['password_hash'])) {
                     $_SESSION['auth_error'] = 'Invalid credentials';
+                    header('Location: /login');
+                    exit;
+                }
+
+                // Check if email is verified
+                if (!$user['email_verified']) {
+                    $_SESSION['auth_error'] = 'Please verify your email address before logging in. Check your email for the verification link.';
                     header('Location: /login');
                     exit;
                 }
@@ -34,18 +41,17 @@ class LoginController {
                     'fullName' => $user['full_name'],
                     'email' => $user['email']
                 ];
-                // Diagnostic logging - write session + headers info to PHP error log
-                error_log('[LOGIN] success id=' . session_id() . ' headers_sent=' . (headers_sent()?1:0) . ' save_path=' . ini_get('session.save_path'));
-                foreach (headers_list() as $h) { error_log('[LOGIN] header: ' . $h); }
                 header('Location: /dashboard');
                 exit;
             } catch (Exception $e) {
-                error_log('[LOGIN] exception: ' . $e->getMessage());
-                // Diagnostics for session state on exception
-                if (session_status() !== PHP_SESSION_NONE) {
-                    error_log('[LOGIN] exception session_id=' . session_id() . ' save_path=' . ini_get('session.save_path'));
-                } else {
-                    error_log('[LOGIN] exception session not started');
+                if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
+                    error_log('[LOGIN] exception: ' . $e->getMessage());
+                    // Diagnostics for session state on exception
+                    if (session_status() !== PHP_SESSION_NONE) {
+                        error_log('[LOGIN] exception session_id=' . session_id() . ' save_path=' . ini_get('session.save_path'));
+                    } else {
+                        error_log('[LOGIN] exception session not started');
+                    }
                 }
                 $_SESSION['auth_error'] = 'An error occurred during login';
                 header('Location: /login');
