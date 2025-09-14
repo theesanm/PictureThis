@@ -1,4 +1,9 @@
-# PictureThis Deployment Guide
+# PictureThis DeploymeThis will:
+- Copy application files directly to your public_html root
+- Create necessary directories (uploads, logs, tmp, cache)
+- Set proper permissions
+- Create production-ready .htaccess with PHP limits
+- Copy production config templatede
 
 ## Overview
 PictureThis is a PHP/MySQL web application for AI-powered image generation with PayFast payment integration.
@@ -61,7 +66,7 @@ SetEnv PAYFAST_SANDBOX "false"
 
 If you prefer manual deployment:
 
-1. Copy all files from `github/picfePHPMYSQL/cpanel-html-mysql-app/` to `picturethis/`
+1. Copy all files from `github/picfePHPMYSQL/cpanel-html-mysql-app/` to your `public_html/` root
 2. Create directories: `uploads/`, `logs/`, `tmp/`, `cache/`
 3. Set permissions: 755 for directories, 644 for files
 4. Copy `config/production.php` to `config/config.php`
@@ -72,15 +77,14 @@ If you prefer manual deployment:
 ```
 public_html/
 ├── github/           # Git repository
-├── picturethis/      # Deployed application
-│   ├── config/
-│   ├── src/
-│   ├── uploads/
-│   ├── logs/
-│   ├── tmp/
-│   ├── cache/
-│   ├── .htaccess
-│   └── index.php
+├── config/           # Application configuration
+├── src/              # Application source code
+├── uploads/          # User uploaded files
+├── logs/             # Application logs
+├── tmp/              # Temporary files
+├── cache/            # Cache directory
+├── .htaccess         # Apache configuration
+├── index.php         # Main application entry point
 └── deploy.php        # Deployment script
 ```
 

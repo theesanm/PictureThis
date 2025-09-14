@@ -9,7 +9,6 @@
 // Configuration
 define('GITHUB_FOLDER', __DIR__ . '/github');
 define('WEB_ROOT', __DIR__);
-define('APP_FOLDER', 'picturethis');
 
 echo "🚀 PictureThis Quick Deploy\n";
 echo "==========================\n\n";
@@ -33,15 +32,8 @@ if (!is_dir($sourceApp)) {
 
 echo "✅ Application source found\n";
 
-// Create destination folder
-$destApp = WEB_ROOT . '/' . APP_FOLDER;
-if (!is_dir($destApp)) {
-    if (!mkdir($destApp, 0755, true)) {
-        echo "❌ Error: Cannot create destination folder: " . $destApp . "\n";
-        exit(1);
-    }
-    echo "✅ Created destination folder: " . APP_FOLDER . "\n";
-}
+// Deploy directly to web root
+$destApp = WEB_ROOT;
 
 // Copy files
 echo "📁 Copying application files...\n";
@@ -73,16 +65,9 @@ echo "✅ .htaccess created\n";
 $prodConfigSrc = $destApp . '/config/production.php';
 $prodConfigDest = $destApp . '/config/config.php';
 
-if (file_exists($prodConfigSrc)) {
-    copy($prodConfigSrc, $prodConfigDest);
-    echo "✅ Production config copied\n";
-} else {
-    echo "⚠️  Warning: Production config template not found\n";
-}
-
 echo "\n🎉 Deployment completed successfully!\n";
-echo "📍 Application URL: https://" . $_SERVER['HTTP_HOST'] . "/" . APP_FOLDER . "\n";
-echo "⚙️  Remember to configure your database settings in: " . $prodConfigDest . "\n";
+echo "📍 Application URL: https://" . $_SERVER['HTTP_HOST'] . "\n";
+echo "⚙️  Remember to configure your database settings in: config/config.php\n";
 echo "\nNext steps:\n";
 echo "1. Edit config.php with your database credentials\n";
 echo "2. Visit the application URL\n";
