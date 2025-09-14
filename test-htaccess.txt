@@ -1,0 +1,9 @@
+# Test .htaccess processing
+SetEnv TEST_VAR "htaccess_is_working"
+
+# Basic rewrite
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^(.*)$ index.php [QSA,L]
