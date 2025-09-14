@@ -6,8 +6,8 @@
 # ==========================================
 # ENVIRONMENT SETTING - CHANGE THIS ONLY
 # ==========================================
-SetEnv APP_ENV "development"
-# SetEnv APP_ENV "production"  # Uncomment for production
+# SetEnv APP_ENV "development"
+SetEnv APP_ENV "production"  # Uncomment for production
 
 # ==========================================
 # PRODUCTION ENVIRONMENT VARIABLES
@@ -16,26 +16,26 @@ SetEnv APP_ENV "development"
 # For development, these are ignored and defaults from config/development.php are used
 
 # Database Configuration (Production)
-# SetEnv DB_HOST "your-production-db-host"
-# SetEnv DB_USER "your-production-db-user"
-# SetEnv DB_PASS "your-production-db-password"
-# SetEnv DB_NAME "your-production-db-name"
+SetEnv DB_HOST "127.0.0.1"
+SetEnv DB_USER "cfoxcozj_picThisdb"
+SetEnv DB_PASS "YOUR_DB_PASSWORD_HERE"
+SetEnv DB_NAME "cfoxcozj_PictureThis"
 
 # Application Configuration (Production)
-# SetEnv APP_URL "https://your-production-domain.com"
+SetEnv APP_URL "https://demo.cfox.co.za"
 
 # PayFast Configuration (Production)
-# SetEnv PAYFAST_MERCHANT_ID "your-production-merchant-id"
-# SetEnv PAYFAST_MERCHANT_KEY "your-production-merchant-key"
-# SetEnv PAYFAST_PASSPHRASE "your-production-passphrase"
-# SetEnv PAYFAST_ENV "production"
+SetEnv PAYFAST_MERCHANT_ID "YOUR_PAYFAST_MERCHANT_ID"
+SetEnv PAYFAST_MERCHANT_KEY "YOUR_PAYFAST_MERCHANT_KEY"
+SetEnv PAYFAST_PASSPHRASE "YOUR_PAYFAST_PASSPHRASE"
+SetEnv PAYFAST_ENV "production"
 
 # OpenRouter Configuration (Production)
-# SetEnv OPENROUTER_API_KEY "your-production-api-key"
-# SetEnv OPENROUTER_APP_URL "https://your-production-domain.com"
+SetEnv OPENROUTER_API_KEY "YOUR_OPENROUTER_API_KEY"
+SetEnv OPENROUTER_APP_URL "https://demo.cfox.co.za"
 
 # Email Configuration (Production)
-# SetEnv SMTP_PASSWORD "your-production-smtp-password"
+SetEnv SMTP_PASSWORD "YOUR_SMTP_PASSWORD"
 
 # Image Retention Configuration
 SetEnv IMAGE_RETENTION_DAYS "7"
