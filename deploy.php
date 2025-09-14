@@ -81,6 +81,16 @@ if (file_exists($webDeploySrc)) {
     echo "⚠️  Warning: Web deploy script not found in repository\n";
 }
 
+// Copy config test script from repository root
+$configTestSrc = GITHUB_FOLDER . '/config-test.php';
+$configTestDest = $destApp . '/config-test.php';
+if (file_exists($configTestSrc)) {
+    copy($configTestSrc, $configTestDest);
+    echo "✅ Config test script copied\n";
+} else {
+    echo "⚠️  Warning: Config test script not found in repository\n";
+}
+
 // Create necessary directories
 $directories = ['uploads', 'logs', 'tmp', 'cache'];
 foreach ($directories as $dir) {
