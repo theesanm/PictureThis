@@ -71,6 +71,16 @@ if (file_exists($simpleDiagSrc)) {
     echo "⚠️  Warning: Simple diagnostic script not found in repository\n";
 }
 
+// Copy web deploy script from repository root
+$webDeploySrc = GITHUB_FOLDER . '/web-deploy.php';
+$webDeployDest = $destApp . '/web-deploy.php';
+if (file_exists($webDeploySrc)) {
+    copy($webDeploySrc, $webDeployDest);
+    echo "✅ Web deploy script copied\n";
+} else {
+    echo "⚠️  Warning: Web deploy script not found in repository\n";
+}
+
 // Create necessary directories
 $directories = ['uploads', 'logs', 'tmp', 'cache'];
 foreach ($directories as $dir) {
