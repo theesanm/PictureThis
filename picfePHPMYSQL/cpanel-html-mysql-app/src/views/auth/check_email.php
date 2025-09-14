@@ -65,6 +65,7 @@
 
             <!-- Resend Verification Email Form -->
             <form action="/resend-verification" method="POST" class="space-y-4">
+                <?php echo CSRF::getTokenField(); ?>
                 <input type="hidden" name="return_url" value="/check-email">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">

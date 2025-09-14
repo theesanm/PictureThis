@@ -5,7 +5,15 @@
 <div class="max-w-6xl mx-auto px-4 py-8">
   <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold">Your Gallery</h2>
+      <div>
+        <h2 class="text-2xl font-bold">Your Gallery</h2>
+        <?php
+        $retentionDays = getenv('IMAGE_RETENTION_DAYS') ?: 7;
+        ?>
+        <p class="text-sm text-gray-400 mt-1">
+          Images are automatically cleaned up after <?php echo htmlspecialchars($retentionDays); ?> days to manage storage space
+        </p>
+      </div>
       <div class="flex items-center gap-2">
         <div class="text-yellow-300">*</div>
         <div class="text-sm">

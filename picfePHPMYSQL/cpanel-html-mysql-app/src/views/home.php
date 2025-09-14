@@ -6,10 +6,12 @@ $totalImages = 0;
 try {
     require_once __DIR__ . '/../lib/db.php';
     $pdo = get_db();
-    $userCount = $pdo->query("SELECT COUNT(*) as count FROM users")->fetch(PDO::FETCH_ASSOC);
-    $imageCount = $pdo->query("SELECT COUNT(*) as count FROM images")->fetch(PDO::FETCH_ASSOC);
-    $totalUsers = $userCount['count'] ?? 0;
-    $totalImages = $imageCount['count'] ?? 0;
+    if ($pdo) {
+        $userCount = $pdo->query("SELECT COUNT(*) as count FROM users")->fetch(PDO::FETCH_ASSOC);
+        $imageCount = $pdo->query("SELECT COUNT(*) as count FROM images WHERE has_usage_permission IS NULL OR has_usage_permission != -1")->fetch(PDO::FETCH_ASSOC);
+        $totalUsers = $userCount['count'] ?? 0;
+        $totalImages = $imageCount['count'] ?? 0;
+    }
 } catch (Exception $e) {
     // Fallback values if database connection fails
     $totalUsers = 0;

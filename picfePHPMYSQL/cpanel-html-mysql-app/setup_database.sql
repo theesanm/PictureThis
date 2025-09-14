@@ -3,8 +3,8 @@
 -- Or run via command line: mysql -h localhost -P 3306 -u cfoxcozj_picThisdb -p cfoxcozj_PictureThis < setup_database.sql
 
 -- Create database (if not exists)
-CREATE DATABASE IF NOT EXISTS `cfoxcozj_PictureThis` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `cfoxcozj_PictureThis`;
+CREATE DATABASE IF NOT EXISTS `picturethis_dev` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `picturethis_dev`;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS `users` (

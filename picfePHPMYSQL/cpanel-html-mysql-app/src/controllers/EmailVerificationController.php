@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class EmailVerificationController {
     public function verify() {
         if (session_status() === PHP_SESSION_NONE) {
@@ -73,6 +75,14 @@ class EmailVerificationController {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
+        // Validate CSRF token
+        if (!CSRF::validateRequest()) {
+            $_SESSION['auth_error'] = 'Invalid request. Please try again.';
+            header('Location: ' . ($_POST['return_url'] ?? '/login'));
+            exit;
+        }
+
         require_once __DIR__ . '/../lib/db.php';
 
         $email = trim($_POST['email'] ?? '');

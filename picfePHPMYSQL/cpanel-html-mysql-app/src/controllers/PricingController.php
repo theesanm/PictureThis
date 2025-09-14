@@ -1,12 +1,13 @@
 <?php
 require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../utils/CSRF.php';
 
 class PricingController {
     protected $CREDIT_PACKAGES = [
         'small' => ['credits' => 250, 'price' => 200.00, 'name' => '250 Credits'],
-        'medium' => ['credits' => 375, 'price' => 250.00, 'name' => '375 Credits (10% off)'],
-        'large' => ['credits' => 625, 'price' => 300.00, 'name' => '625 Credits (20% off)'],
-        'premium' => ['credits' => 1000, 'price' => 350.00, 'name' => '1000 Credits (30% off)']
+        'medium' => ['credits' => 375, 'price' => 250.00, 'name' => '375 Credits'],
+        'large' => ['credits' => 500, 'price' => 300.00, 'name' => '500 Credits'],
+        'premium' => ['credits' => 800, 'price' => 450.00, 'name' => '800 Credits']
     ];
 
     protected function getPayfastConfig() {
@@ -56,10 +57,10 @@ class PricingController {
         error_log('X-Forwarded-Host: ' . ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? 'none'));
 
         return [
-            'merchant_id' => getenv('PAYFAST_MERCHANT_ID') ?: null,
-            'merchant_key' => getenv('PAYFAST_MERCHANT_KEY') ?: null,
-            'passphrase' => getenv('PAYFAST_PASSPHRASE') ?: null,
-            'pfHost' => (getenv('PAYFAST_ENV') === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
+            'merchant_id' => PAYFAST_MERCHANT_ID ?: null,
+            'merchant_key' => PAYFAST_MERCHANT_KEY ?: null,
+            'passphrase' => PAYFAST_PASSPHRASE ?: null,
+            'pfHost' => (PAYFAST_ENV === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
             'return_url' => ($backend ?: '') . '/payment/popup/success',
             'cancel_url' => ($backend ?: '') . '/payment/popup/cancel',
             // notify must point to the backend so the PHP ITN handler receives it
@@ -112,6 +113,13 @@ class PricingController {
         if (empty($_SESSION['user'])) {
             http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+
+        // Validate CSRF token
+        if (!CSRF::validateRequest()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Invalid request']);
             exit;
         }
 

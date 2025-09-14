@@ -1,28 +1,57 @@
-# PictureThis .htaccess - cPanel Compatible Static File Serving
+# PictureThis .htaccess - Environment-Based Configuration
+# To switch between development and production, simply change APP_ENV below
+# development = Uses config/development.php with local settings
+# production = Uses config/production.php with production settings
 
-# Environment Variables for Secure Configuration
-# IMPORTANT: Replace the placeholder values below with your actual credentials
-SetEnv DB_HOST "127.0.0.1"
-SetEnv DB_USER "cfoxcozj_picThisdb"
-SetEnv DB_PASS "LfUYHI%]{sjb5A*u"
-SetEnv DB_NAME "cfoxcozj_PictureThis"
-SetEnv APP_URL "https://demo.cfox.co.za"
+# ==========================================
+# ENVIRONMENT SETTING - CHANGE THIS ONLY
+# ==========================================
 SetEnv APP_ENV "development"
-SetEnv PAYFAST_MERCHANT_ID "10041798"
-SetEnv PAYFAST_MERCHANT_KEY "vlnqle74tnkl7"
-SetEnv PAYFAST_PASSPHRASE "ThisIsATestFromPictureThis"
-SetEnv PAYFAST_ENV "development"
-SetEnv OPENROUTER_API_KEY "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"
-SetEnv OPENROUTER_APP_URL "https://demo.cfox.co.za"
+# SetEnv APP_ENV "production"  # Uncomment for production
 
-# Email Configuration for PHPMailer with Hosting Provider SMTP
-SetEnv SMTP_HOST "metallurgix.aserv.co.za"
-SetEnv SMTP_USERNAME "cfoxcozj"
-SetEnv SMTP_PASSWORD "Runx141kw007@"
-SetEnv SMTP_PORT "587"
-SetEnv FROM_EMAIL "picturethis@cfox.co.za"
+# ==========================================
+# PRODUCTION ENVIRONMENT VARIABLES
+# ==========================================
+# Only set these when APP_ENV is "production"
+# For development, these are ignored and defaults from config/development.php are used
+
+# Database Configuration (Production)
+# SetEnv DB_HOST "your-production-db-host"
+# SetEnv DB_USER "your-production-db-user"
+# SetEnv DB_PASS "your-production-db-password"
+# SetEnv DB_NAME "your-production-db-name"
+
+# Application Configuration (Production)
+# SetEnv APP_URL "https://your-production-domain.com"
+
+# PayFast Configuration (Production)
+# SetEnv PAYFAST_MERCHANT_ID "your-production-merchant-id"
+# SetEnv PAYFAST_MERCHANT_KEY "your-production-merchant-key"
+# SetEnv PAYFAST_PASSPHRASE "your-production-passphrase"
+# SetEnv PAYFAST_ENV "production"
+
+# OpenRouter Configuration (Production)
+# SetEnv OPENROUTER_API_KEY "your-production-api-key"
+# SetEnv OPENROUTER_APP_URL "https://your-production-domain.com"
+
+# Email Configuration (Production)
+# SetEnv SMTP_PASSWORD "your-production-smtp-password"
+
+# Image Retention Configuration
+SetEnv IMAGE_RETENTION_DAYS "7"
+SetEnv MIN_IMAGES_PER_USER "3"
 # Test environment variable (remove after testing)
 # SetEnv TEST_VAR "environment_variables_working"
+
+# ==========================================
+# PHP UPLOAD CONFIGURATION
+# ==========================================
+# Increase PHP upload limits for image uploads
+php_value upload_max_filesize 20M
+php_value post_max_size 25M
+php_value memory_limit 128M
+php_value max_execution_time 300
+php_value max_input_time 300
 
 # Prevent PHP parsing of static files
 <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">

@@ -207,7 +207,7 @@ class AdminController {
         // Totals (use actual column name transaction_type)
         $totalAdded = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('admin_added','purchase','topup')")->fetchColumn();
         $totalConsumed = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM credit_transactions WHERE transaction_type IN ('consumed','usage')")->fetchColumn();
-        $imagesGenerated = $pdo->query("SELECT COUNT(*) FROM images WHERE 1")->fetchColumn();
+        $imagesGenerated = $pdo->query("SELECT COUNT(*) FROM images WHERE has_usage_permission IS NULL OR has_usage_permission != -1")->fetchColumn();
 
         include __DIR__ . '/../views/header.php';
         include __DIR__ . '/../views/admin/header.php';

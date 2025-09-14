@@ -5,16 +5,23 @@
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+    <?php $firstPrice = null; $firstCredits = null; ?>
     <?php foreach ($packages as $id => $pkg): ?>
       <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-purple-500 transition-colors">
+        <?php
+        if ($firstPrice === null) {
+            $firstPrice = $pkg['price'];
+            $firstCredits = $pkg['credits'];
+        }
+        ?>
+
         <div class="text-center mb-4">
           <div class="mx-auto text-purple-400 mb-2" style="font-size:32px">📦</div>
-          <h3 class="text-lg font-semibold"><?=htmlspecialchars($pkg['name'])?></h3>
+          <h3 class="text-lg font-semibold"><?=$pkg['credits']?> Credits<?php if ($pkg['price'] !== $firstPrice && $firstCredits > 0 && $pkg['credits'] > 0): ?> <span class="text-green-400">(<?=number_format((1 - ($pkg['price'] / $pkg['credits']) / ($firstPrice / $firstCredits)) * 100, 0)?>% off)</span><?php endif; ?></h3>
         </div>
 
         <div class="text-center mb-4">
           <div class="text-3xl font-bold text-purple-400 mb-1">R<?=number_format($pkg['price'],2)?></div>
-          <div class="text-sm text-gray-400"><?=number_format($pkg['price'] / $pkg['credits'],2)?>c per credit</div>
         </div>
 
         <button data-package-id="<?=htmlspecialchars($id)?>" class="buy-now w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition-all" <?php if (empty($_SESSION['user'])): ?>onclick="window.location.href='/login'"<?php endif; ?>>Buy Now</button>
@@ -91,9 +98,13 @@
         btn.textContent = 'Processing...';
 
         try {
+          const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
           const res = await fetch('/api/credits/initiate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken
+            },
             body: JSON.stringify({ packageId })
           });
           if (!res.ok) {

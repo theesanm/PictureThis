@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class PasswordResetController {
     public function forgot() {
         if (session_status() === PHP_SESSION_NONE) {
@@ -7,6 +9,13 @@ class PasswordResetController {
 
         // Handle POST - send reset email
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validate CSRF token
+            if (!CSRF::validateRequest()) {
+                $_SESSION['auth_error'] = 'Invalid request. Please try again.';
+                header('Location: /forgot-password');
+                exit;
+            }
+
             require_once __DIR__ . '/../lib/db.php';
 
             $email = trim($_POST['email'] ?? '');
@@ -75,6 +84,13 @@ class PasswordResetController {
 
         // Handle POST - reset password
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validate CSRF token
+            if (!CSRF::validateRequest()) {
+                $_SESSION['auth_error'] = 'Invalid request. Please try again.';
+                header('Location: /reset-password?token=' . urlencode($_POST['token'] ?? ''));
+                exit;
+            }
+
             require_once __DIR__ . '/../lib/db.php';
 
             $token = $_POST['token'] ?? '';

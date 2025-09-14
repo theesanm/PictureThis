@@ -1,5 +1,6 @@
 <?php
 // Minimal register form ported from picfe register UI
+require_once __DIR__ . '/../../utils/CSRF.php';
 ?>
 <div class="w-full max-w-md mx-auto">
   <div class="bg-gray-800 shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
@@ -12,6 +13,7 @@
     <?php endif; ?>
 
   <form action="/register" method="POST" class="space-y-6">
+      <?php echo CSRF::getTokenField(); ?>
       <div>
         <label for="fullName" class="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
         <input id="fullName" name="fullName" type="text" class="block w-full pl-3 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="John Doe" required />

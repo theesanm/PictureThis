@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class GenerateController {
     private $openRouterUrl;
     private $uploadsDir;
@@ -20,6 +22,154 @@ class GenerateController {
         // Only log to PHP error_log in development
         if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
             error_log('DEBUG: ' . $message);
+        }
+    }
+
+    /**
+     * Validate uploaded images for security
+     * Checks file type, size, and content
+     */
+    private function validateUploadedImages($uploadedImages) {
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxFileSize = 10 * 1024 * 1024; // 10MB
+
+        foreach ($uploadedImages as $index => $image) {
+            // Check for upload errors
+            if ($image['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('Upload error for image ' . ($index + 1) . ': ' . $this->getUploadErrorMessage($image['error']));
+            }
+
+            // Check file size
+            if ($image['size'] > $maxFileSize) {
+                throw new Exception('Image ' . ($index + 1) . ' is too large. Maximum size is 10MB.');
+            }
+
+            // Check MIME type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $image['tmp_name']);
+            finfo_close($finfo);
+
+            if (!in_array($mimeType, $allowedMimeTypes)) {
+                throw new Exception('Image ' . ($index + 1) . ' has invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
+            }
+
+            // Verify MIME type matches file extension
+            $extension = strtolower(pathinfo($image['name'], PATHINFO_EXTENSION));
+            $expectedExtensions = [
+                'image/jpeg' => ['jpg', 'jpeg'],
+                'image/png' => ['png'],
+                'image/gif' => ['gif'],
+                'image/webp' => ['webp']
+            ];
+
+            if (!isset($expectedExtensions[$mimeType]) || !in_array($extension, $expectedExtensions[$mimeType])) {
+                throw new Exception('Image ' . ($index + 1) . ' file extension does not match its content type.');
+            }
+
+            // Validate image content using getimagesize
+            $imageInfo = getimagesize($image['tmp_name']);
+            if ($imageInfo === false) {
+                throw new Exception('Image ' . ($index + 1) . ' is not a valid image file.');
+            }
+
+            // Additional check: ensure image dimensions are reasonable
+            if ($imageInfo[0] > 4096 || $imageInfo[1] > 4096) {
+                throw new Exception('Image ' . ($index + 1) . ' dimensions are too large. Maximum 4096x4096 pixels.');
+            }
+
+            $this->debugLog('Image ' . ($index + 1) . ' validation passed: ' . $mimeType . ', ' . $image['size'] . ' bytes, ' . $imageInfo[0] . 'x' . $imageInfo[1]);
+        }
+    }
+
+    /**
+     * Get human-readable upload error message
+     */
+    private function getUploadErrorMessage($errorCode) {
+        switch ($errorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+                return 'The uploaded file exceeds the upload_max_filesize directive in php.ini';
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form';
+            case UPLOAD_ERR_PARTIAL:
+                return 'The uploaded file was only partially uploaded';
+            case UPLOAD_ERR_NO_FILE:
+                return 'No file was uploaded';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Missing a temporary folder';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Failed to write file to disk';
+            case UPLOAD_ERR_EXTENSION:
+                return 'A PHP extension stopped the file upload';
+            default:
+                return 'Unknown upload error';
+        }
+    }
+
+    /**
+     * Mark old images as soft deleted based on retention policy
+     * Uses has_usage_permission = -1 to indicate soft deletion
+     */
+    private function markOldImagesAsDeleted($pdo, $userId) {
+        $retentionDays = getenv('IMAGE_RETENTION_DAYS') ?: 7;
+        $minImages = getenv('MIN_IMAGES_PER_USER') ?: 3;
+
+        try {
+            // Count current non-deleted images for this user
+            $stmt = $pdo->prepare('SELECT COUNT(*) as count FROM images WHERE user_id = ? AND (has_usage_permission IS NULL OR has_usage_permission != -1)');
+            $stmt->execute([$userId]);
+            $currentCount = $stmt->fetch()['count'];
+
+            // If user has minimum images or fewer, don't delete any
+            if ($currentCount <= $minImages) {
+                return;
+            }
+
+            // Mark images older than retention period as soft deleted
+            // But keep enough to maintain minimum count
+            $imagesToKeep = max($minImages, $currentCount - 10); // Keep minimum + some buffer
+
+            $stmt = $pdo->prepare("
+                UPDATE images
+                SET has_usage_permission = -1
+                WHERE user_id = ?
+                AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
+                AND (has_usage_permission IS NULL OR has_usage_permission != -1)
+                ORDER BY created_at ASC
+                LIMIT ?
+            ");
+            $stmt->execute([$userId, $retentionDays, $currentCount - $imagesToKeep]);
+
+            $affectedRows = $stmt->rowCount();
+            if ($affectedRows > 0) {
+                $this->debugLog("Marked $affectedRows old images as soft deleted for user $userId");
+            }
+        } catch (Exception $e) {
+            $this->debugLog('Error marking old images as deleted: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get recent images excluding soft deleted ones
+     */
+    private function getRecentImages($pdo, $userId, $limit = 5) {
+        try {
+            // First, mark old images as deleted if needed
+            $this->markOldImagesAsDeleted($pdo, $userId);
+
+            // Then get recent non-deleted images
+            $stmt = $pdo->prepare('
+                SELECT id, prompt, image_url, created_at
+                FROM images
+                WHERE user_id = ?
+                AND (has_usage_permission IS NULL OR has_usage_permission != -1)
+                ORDER BY created_at DESC
+                LIMIT ?
+            ');
+            $stmt->execute([$userId, $limit]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $this->debugLog('Error fetching recent images: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -59,18 +209,12 @@ class GenerateController {
             'ai_provider' => 'openrouter'
         ], $settings);
 
-        // Get user's recent images
+        // Get user's recent images (excluding soft deleted ones)
         $recentImages = [];
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (!empty($_SESSION['user']) && !empty($_SESSION['user']['id'])) {
             $userId = (int)$_SESSION['user']['id'];
-            try {
-                $stmt = $pdo->prepare('SELECT id, prompt, image_url, created_at FROM images WHERE user_id = ? ORDER BY created_at DESC LIMIT 5');
-                $stmt->execute([$userId]);
-                $recentImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            } catch (Exception $e) {
-                $this->debugLog('Error fetching recent images: ' . $e->getMessage());
-            }
+            $recentImages = $this->getRecentImages($pdo, $userId, 5);
         }
 
         // Get current user info
@@ -106,6 +250,25 @@ class GenerateController {
             header('Location: /generate');
             exit;
         }
+
+        // Validate CSRF token
+        if (!CSRF::validateRequest()) {
+            $_SESSION['generate_error'] = 'Invalid request. Please try again.';
+            header('Location: /generate');
+            exit;
+        }
+
+        $this->debugLog('=== GENERATE REQUEST START ===');
+        $this->debugLog('POST data received: ' . json_encode($_POST));
+        $this->debugLog('FILES data received: ' . json_encode(array_map(function($file) {
+            return [
+                'name' => $file['name'] ?? 'none',
+                'type' => $file['type'] ?? 'none',
+                'size' => $file['size'] ?? 0,
+                'error' => $file['error'] ?? -1,
+                'tmp_name' => !empty($file['tmp_name']) ? 'present' : 'empty'
+            ];
+        }, $_FILES)));
 
         $prompt = trim($_POST['prompt'] ?? '');
         $userId = $_SESSION['user']['id'];
@@ -154,10 +317,31 @@ class GenerateController {
         // Handle uploaded images
         $uploadedImages = [];
         if (!empty($_FILES['image1']['tmp_name'])) {
+            $this->debugLog('Image1 detected: ' . $_FILES['image1']['name'] . ' (' . $_FILES['image1']['size'] . ' bytes)');
+            $this->debugLog('Image1 upload details: type=' . $_FILES['image1']['type'] . ', error=' . $_FILES['image1']['error'] . ', tmp_name=' . $_FILES['image1']['tmp_name']);
             $uploadedImages[] = $_FILES['image1'];
+        } else {
+            $this->debugLog('No image1 detected - tmp_name is empty');
+            if (isset($_FILES['image1']['error']) && $_FILES['image1']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $this->debugLog('Image1 upload error: ' . $this->getUploadErrorMessage($_FILES['image1']['error']));
+            }
         }
         if (!empty($_FILES['image2']['tmp_name'])) {
+            $this->debugLog('Image2 detected: ' . $_FILES['image2']['name'] . ' (' . $_FILES['image2']['size'] . ' bytes)');
+            $this->debugLog('Image2 upload details: type=' . $_FILES['image2']['type'] . ', error=' . $_FILES['image2']['error'] . ', tmp_name=' . $_FILES['image2']['tmp_name']);
             $uploadedImages[] = $_FILES['image2'];
+        } else {
+            $this->debugLog('No image2 detected - tmp_name is empty');
+            if (isset($_FILES['image2']['error']) && $_FILES['image2']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $this->debugLog('Image2 upload error: ' . $this->getUploadErrorMessage($_FILES['image2']['error']));
+            }
+        }
+
+        $this->debugLog('Total uploaded images detected: ' . count($uploadedImages));
+
+        // Validate uploaded images for security
+        if (!empty($uploadedImages)) {
+            $this->validateUploadedImages($uploadedImages);
         }
 
         $this->debugLog('Image generation request for user ' . $userId . ' with prompt: ' . substr($prompt, 0, 100) . (strlen($prompt) > 100 ? '...' : ''));
@@ -171,6 +355,7 @@ class GenerateController {
         // Check if images are uploaded and user has permission
         if (!empty($uploadedImages)) {
             $hasPermission = isset($_POST['hasUsagePermission']) && $_POST['hasUsagePermission'] === 'true';
+            $this->debugLog('Image usage permission check: hasUsagePermission POST value = ' . ($_POST['hasUsagePermission'] ?? 'NOT SET'));
             $this->debugLog('Image usage permission: ' . ($hasPermission ? 'GRANTED' : 'DENIED'));
 
             if (!$hasPermission) {
@@ -275,6 +460,16 @@ class GenerateController {
             header('Access-Control-Allow-Headers: Content-Type, Authorization');
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+
+        // Validate CSRF token
+        if (!CSRF::validateRequest()) {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Invalid request']);
             exit;
         }
 
@@ -410,33 +605,54 @@ class GenerateController {
 
     // Get current user credits
     public function getUserCredits() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-
-        if (empty($_SESSION['user'])) {
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type, Authorization');
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Authentication required']);
-            exit;
+        // Clear any previous output
+        if (ob_get_level()) {
+            ob_clean();
         }
 
-        require_once __DIR__ . '/../lib/db.php';
-        $pdo = get_db();
-        $userId = $_SESSION['user']['id'];
+        if (session_status() === PHP_SESSION_NONE) session_start();
 
-        $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Debug logging
+        error_log('getUserCredits called - Session user: ' . json_encode($_SESSION['user'] ?? 'no session'));
+        error_log('getUserCredits called - Request method: ' . $_SERVER['REQUEST_METHOD']);
+        error_log('getUserCredits called - Request URI: ' . $_SERVER['REQUEST_URI']);
 
+        // Set headers first
         header('Access-Control-Allow-Origin: *');
         header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
         header('Content-Type: application/json');
-        if ($user) {
-            echo json_encode(['success' => true, 'credits' => $user['credits']]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'User not found']);
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+
+        if (empty($_SESSION['user'])) {
+            $response = json_encode(['success' => false, 'message' => 'Authentication required']);
+            error_log('getUserCredits: No user session, returning: ' . $response);
+            echo $response;
+            exit;
+        }
+
+        try {
+            require_once __DIR__ . '/../lib/db.php';
+            $pdo = get_db();
+            $userId = $_SESSION['user']['id'];
+
+            $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user) {
+                $response = json_encode(['success' => true, 'credits' => (int)$user['credits']]);
+                error_log('getUserCredits: Success, returning: ' . $response);
+                echo $response;
+            } else {
+                $response = json_encode(['success' => false, 'message' => 'User not found']);
+                error_log('getUserCredits: User not found, returning: ' . $response);
+                echo $response;
+            }
+        } catch (Exception $e) {
+            error_log('Error fetching user credits: ' . $e->getMessage());
+            $response = json_encode(['success' => false, 'message' => 'Database error']);
+            echo $response;
         }
         exit;
     }
@@ -453,7 +669,7 @@ class GenerateController {
 
         // Determine which API structure to use based on whether images are provided
         if (!empty($uploadedImages)) {
-            $this->debugLog('Using image-enhanced generation mode');
+            $this->debugLog('CONFIRMED: Using image-enhanced generation mode with ' . count($uploadedImages) . ' images');
 
             // Use image-enhanced generation with max 2 images
             $content = [
@@ -504,7 +720,7 @@ class GenerateController {
                 ]
             ];
         } else {
-            $this->debugLog('Using text-only generation mode');
+            $this->debugLog('CONFIRMED: Using text-only generation mode (no images provided)');
 
             // Use text-only generation
             $requestBody = [

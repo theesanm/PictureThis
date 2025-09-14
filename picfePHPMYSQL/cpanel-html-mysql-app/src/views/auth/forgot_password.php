@@ -19,6 +19,7 @@
             <?php endif; ?>
 
             <form class="mt-8 space-y-6" action="/forgot-password" method="POST">
+                <?php echo CSRF::getTokenField(); ?>
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
                         Email Address

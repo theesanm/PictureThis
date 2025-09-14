@@ -6,6 +6,12 @@
     <div>
       <h1 class="text-3xl font-bold">Welcome, <?php echo htmlspecialchars($user['full_name'] ?? ($_SESSION['user']['fullName'] ?? 'User')); ?>!</h1>
       <p class="text-gray-400 mt-1">Your AI image generation dashboard awaits.</p>
+      <?php
+      $retentionDays = getenv('IMAGE_RETENTION_DAYS') ?: 7;
+      ?>
+      <p class="text-xs text-gray-500 mt-1">
+        💡 Images are kept for <?php echo htmlspecialchars($retentionDays); ?> days to manage storage
+      </p>
     </div>
     <div class="flex items-center space-x-4">
       <?php if (!empty($user['is_admin'])): ?>

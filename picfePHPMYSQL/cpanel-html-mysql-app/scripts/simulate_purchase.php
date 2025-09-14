@@ -23,10 +23,10 @@ if (!isset($CREDIT_PACKAGES[$pkg])) {
 $pdo = get_db();
 
 $cfg = [
-    'merchant_id' => getenv('PAYFAST_MERCHANT_ID') ?: null,
-    'merchant_key' => getenv('PAYFAST_MERCHANT_KEY') ?: null,
-    'passphrase' => getenv('PAYFAST_PASSPHRASE') ?: null,
-    'pfHost' => (getenv('PAYFAST_ENV') === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
+    'merchant_id' => PAYFAST_MERCHANT_ID ?: null,
+    'merchant_key' => PAYFAST_MERCHANT_KEY ?: null,
+    'passphrase' => PAYFAST_PASSPHRASE ?: null,
+    'pfHost' => (PAYFAST_ENV === 'production') ? 'www.payfast.co.za' : 'sandbox.payfast.co.za',
     'return_url' => defined('APP_URL') ? APP_URL . '/payment/success' : 'http://localhost:8000/payment/success',
     'cancel_url' => defined('APP_URL') ? APP_URL . '/payment/cancelled' : 'http://localhost:8000/payment/cancelled',
     'notify_url' => defined('APP_URL') ? APP_URL . '/api/credits/payfast/notify' : 'http://localhost:8000/api/credits/payfast/notify'

@@ -1,8 +1,17 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class RegisterController {
     public function index() {
         // Handle POST - create user
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validate CSRF token
+            if (!CSRF::validateRequest()) {
+                $_SESSION['auth_error'] = 'Invalid request. Please try again.';
+                header('Location: /register');
+                exit;
+            }
+
             require_once __DIR__ . '/../lib/db.php';
 
             $fullName = trim($_POST['fullName'] ?? '');
@@ -54,6 +63,9 @@ class RegisterController {
                 $emailService = new EmailService();
 
                 if ($emailService->sendVerificationEmail($email, $fullName, $verificationToken)) {
+                    // Regenerate CSRF token after successful registration
+                    CSRF::regenerateToken();
+
                     // Redirect to check email page with email parameter
                     header('Location: /check-email?email=' . urlencode($email));
                     exit;

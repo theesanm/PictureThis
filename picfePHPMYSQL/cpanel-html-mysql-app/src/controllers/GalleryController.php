@@ -19,7 +19,7 @@ class GalleryController {
         if (!empty($_SESSION['user']) && !empty($_SESSION['user']['id'])) {
             $userId = (int)$_SESSION['user']['id'];
             try {
-                $stmt = $pdo->prepare('SELECT id, prompt, image_url, created_at, generation_cost FROM images WHERE user_id = ? ORDER BY created_at DESC');
+                $stmt = $pdo->prepare('SELECT id, prompt, image_url, created_at, generation_cost FROM images WHERE user_id = ? AND (has_usage_permission IS NULL OR has_usage_permission != -1) ORDER BY created_at DESC');
                 $stmt->execute([$userId]);
                 $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (Exception $e) {

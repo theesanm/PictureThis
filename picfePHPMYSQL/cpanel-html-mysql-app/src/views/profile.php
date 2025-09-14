@@ -14,6 +14,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     <?php endif; ?>
 
     <form action="/profile" method="POST" class="space-y-6">
+      <?php echo CSRF::getTokenField(); ?>
       <div>
         <label class="block text-sm text-gray-300 mb-1">Name</label>
         <input type="text" name="fullName" value="<?php echo htmlspecialchars($user['full_name'] ?? $_SESSION['user']['fullName'] ?? ''); ?>" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white" />

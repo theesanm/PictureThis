@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class ProfileController {
     public function index() {
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
@@ -13,6 +15,13 @@ class ProfileController {
 
         // Handle POST - update name
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validate CSRF token
+            if (!CSRF::validateRequest()) {
+                $_SESSION['profile_error'] = 'Invalid request. Please try again.';
+                header('Location: /profile');
+                exit;
+            }
+
             $newName = trim($_POST['fullName'] ?? '');
             if ($newName) {
                 $stmt = $pdo->prepare('UPDATE users SET full_name = ? WHERE id = ?');

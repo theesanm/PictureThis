@@ -266,6 +266,9 @@ if ($path === '/payment/popup/success') {
 
 // Minimal API routes for PayFast integration and polling
 if (strpos($path, '/api/') === 0) {
+    // Debug logging
+    error_log('API Request: ' . $path . ' Method: ' . $_SERVER['REQUEST_METHOD']);
+
     // Lazy-load controllers
     require_once __DIR__ . '/src/controllers/PricingController.php';
     require_once __DIR__ . '/src/controllers/GenerateController.php';
@@ -299,6 +302,11 @@ if (strpos($path, '/api/') === 0) {
 
     if ($path === '/api/generate') {
         $generateCtrl->generate();
+        exit;
+    }
+
+    if ($path === '/api/user/credits') {
+        $generateCtrl->getUserCredits();
         exit;
     }
 }

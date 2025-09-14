@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../utils/CSRF.php';
+
 class LoginController {
     public function index() {
         // Handle POST - authenticate
@@ -6,6 +8,14 @@ class LoginController {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
+
+            // Validate CSRF token
+            if (!CSRF::validateRequest()) {
+                $_SESSION['auth_error'] = 'Invalid request. Please try again.';
+                header('Location: /login');
+                exit;
+            }
+
             require_once __DIR__ . '/../lib/db.php';
 
             $email = trim($_POST['email'] ?? '');
@@ -41,6 +51,10 @@ class LoginController {
                     'fullName' => $user['full_name'],
                     'email' => $user['email']
                 ];
+
+                // Regenerate CSRF token after successful login
+                CSRF::regenerateToken();
+
                 header('Location: /dashboard');
                 exit;
             } catch (Exception $e) {

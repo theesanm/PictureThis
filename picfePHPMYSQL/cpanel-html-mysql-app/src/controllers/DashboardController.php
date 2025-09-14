@@ -28,7 +28,7 @@ class DashboardController {
         // Fetch a few recent images for this user (fetch more than needed to account for duplicates)
         $recentImages = [];
         try {
-            $stmt = $pdo->prepare('SELECT id, image_url, prompt, created_at FROM images WHERE user_id = ? AND image_url IS NOT NULL AND image_url != "" ORDER BY created_at DESC LIMIT 12');
+            $stmt = $pdo->prepare('SELECT id, image_url, prompt, created_at FROM images WHERE user_id = ? AND image_url IS NOT NULL AND image_url != "" AND (has_usage_permission IS NULL OR has_usage_permission != -1) ORDER BY created_at DESC LIMIT 12');
             $stmt->execute([$userId]);
             $recentImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             

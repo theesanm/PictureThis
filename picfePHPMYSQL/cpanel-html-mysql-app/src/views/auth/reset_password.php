@@ -13,6 +13,7 @@
             <?php endif; ?>
 
             <form class="mt-8 space-y-6" action="/reset-password" method="POST">
+                <?php echo CSRF::getTokenField(); ?>
                 <input type="hidden" name="token" value="<?php echo htmlspecialchars($_GET['token'] ?? ''); ?>">
 
                 <div>

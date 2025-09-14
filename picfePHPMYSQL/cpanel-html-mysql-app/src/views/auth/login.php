@@ -1,5 +1,6 @@
 <?php
 // Minimal login form ported from picfe login UI
+require_once __DIR__ . '/../../utils/CSRF.php';
 ?>
 <div class="w-full max-w-md mx-auto">
   <div class="bg-gray-800 shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
@@ -18,6 +19,7 @@
     <?php endif; ?>
 
   <form action="/login" method="POST" class="space-y-6">
+      <?php echo CSRF::getTokenField(); ?>
       <div>
         <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
         <div class="relative">
@@ -57,6 +59,7 @@
       </div>
 
       <form action="/resend-verification" method="POST" class="mt-4">
+        <?php echo CSRF::getTokenField(); ?>
         <div class="flex space-x-2">
           <input
             type="email"
