@@ -41,6 +41,36 @@ copyDirectory($sourceApp, $destApp, ['.git', '.gitignore', 'README.md', 'debug.l
 
 echo "✅ Application files copied\n";
 
+// Copy diagnostic script from repository root
+$diagnosticSrc = GITHUB_FOLDER . '/diagnostic.php';
+$diagnosticDest = $destApp . '/diagnostic.php';
+if (file_exists($diagnosticSrc)) {
+    copy($diagnosticSrc, $diagnosticDest);
+    echo "✅ Diagnostic script copied\n";
+} else {
+    echo "⚠️  Warning: Diagnostic script not found in repository\n";
+}
+
+// Copy test script from repository root
+$testSrc = GITHUB_FOLDER . '/test.php';
+$testDest = $destApp . '/test.php';
+if (file_exists($testSrc)) {
+    copy($testSrc, $testDest);
+    echo "✅ Test script copied\n";
+} else {
+    echo "⚠️  Warning: Test script not found in repository\n";
+}
+
+// Copy simple diagnostic script from repository root
+$simpleDiagSrc = GITHUB_FOLDER . '/simple-diagnostic.php';
+$simpleDiagDest = $destApp . '/simple-diagnostic.php';
+if (file_exists($simpleDiagSrc)) {
+    copy($simpleDiagSrc, $simpleDiagDest);
+    echo "✅ Simple diagnostic script copied\n";
+} else {
+    echo "⚠️  Warning: Simple diagnostic script not found in repository\n";
+}
+
 // Create necessary directories
 $directories = ['uploads', 'logs', 'tmp', 'cache'];
 foreach ($directories as $dir) {
