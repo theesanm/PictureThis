@@ -1,0 +1,15 @@
+# Minimal .htaccess for testing
+SetEnv APP_ENV "production"
+
+# Basic PHP settings
+php_value upload_max_filesize 20M
+php_value post_max_size 25M
+php_value memory_limit 128M
+php_value max_execution_time 300
+
+# Basic rewrite
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^(.*)$ index.php [QSA,L]
