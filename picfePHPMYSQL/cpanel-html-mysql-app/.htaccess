@@ -21,9 +21,9 @@ php_value max_input_time 300
 # Enable rewrite engine
 RewriteEngine On
 
-# Allow direct access to test files and web_install.php
-RewriteCond %{REQUEST_URI} !^/test_.*\.php$
-RewriteCond %{REQUEST_URI} !^/web_install\.php$
+# Allow direct access to specific test and utility files
+RewriteRule ^test_.*\.php$ - [L]
+RewriteRule ^web_install\.php$ - [L]
 
 # Allow direct access to all files and directories first
 RewriteCond %{REQUEST_FILENAME} -f [OR]
