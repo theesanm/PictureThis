@@ -10,34 +10,34 @@ return [
         'debug' => false,
     ],
     'database' => [
-        'host' => getenv('DB_HOST') ?: '127.0.0.1',
-        'user' => getenv('DB_USER') ?: 'cfoxcozj_picThisdb',
-        'pass' => getenv('DB_PASS') ?: '',
-        'name' => getenv('DB_NAME') ?: 'cfoxcozj_PictureThis',
+        'host' => '127.0.0.1', // Your production database host
+        'user' => 'cfoxcozj_picThisdb', // Your production database user
+        'pass' => 'YOUR_DB_PASSWORD_HERE', // 🔴 REPLACE WITH YOUR ACTUAL DB PASSWORD
+        'name' => 'cfoxcozj_PictureThis', // Your production database name
     ],
     'payfast' => [
-        'merchant_id' => getenv('PAYFAST_MERCHANT_ID') ?: '',
-        'merchant_key' => getenv('PAYFAST_MERCHANT_KEY') ?: '',
-        'passphrase' => getenv('PAYFAST_PASSPHRASE') ?: '',
-        'env' => getenv('PAYFAST_ENV') ?: 'production',
+        'merchant_id' => 'YOUR_PAYFAST_MERCHANT_ID', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT ID
+        'merchant_key' => 'YOUR_PAYFAST_MERCHANT_KEY', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT KEY
+        'passphrase' => 'YOUR_PAYFAST_PASSPHRASE', // 🔴 REPLACE WITH YOUR PAYFAST PASSPHRASE
+        'env' => 'production',
     ],
     'openrouter' => [
-        'api_key' => getenv('OPENROUTER_API_KEY') ?: '',
-        'app_url' => getenv('OPENROUTER_APP_URL') ?: 'https://demo.cfox.co.za',
-        'gemini_model' => getenv('GEMINI_MODEL') ?: 'google/gemini-2.5-flash-image-preview',
-        'model' => getenv('DEFAULT_MODEL') ?: 'openai/gpt-oss-20b:free',
+        'api_key' => 'YOUR_OPENROUTER_API_KEY', // 🔴 REPLACE WITH YOUR OPENROUTER API KEY
+        'app_url' => 'https://demo.cfox.co.za',
+        'gemini_model' => 'google/gemini-2.5-flash-image-preview',
+        'model' => 'openai/gpt-oss-20b:free',
     ],
     'email' => [
-        'smtp_host' => getenv('SMTP_HOST') ?: 'metallurgix.aserv.co.za',
-        'smtp_username' => getenv('SMTP_USER') ?: 'cfoxcozj',
-        'smtp_password' => getenv('SMTP_PASS') ?: '',
-        'smtp_port' => getenv('SMTP_PORT') ?: '587',
-        'from_email' => getenv('FROM_EMAIL') ?: 'picturethis@cfox.co.za',
+        'smtp_host' => 'metallurgix.aserv.co.za',
+        'smtp_username' => 'cfoxcozj',
+        'smtp_password' => 'YOUR_SMTP_PASSWORD', // 🔴 REPLACE WITH YOUR SMTP PASSWORD
+        'smtp_port' => '587',
+        'from_email' => 'picturethis@cfox.co.za',
     ],
     'images' => [
-        'retention_days' => getenv('IMAGE_RETENTION_DAYS') ?: 7,
-        'min_images_per_user' => getenv('MIN_IMAGES_PER_USER') ?: 3,
-        'upload_max_size' => getenv('UPLOAD_MAX_SIZE') ?: 20971520,
+        'retention_days' => 7,
+        'min_images_per_user' => 3,
+        'upload_max_size' => 20971520,
     ],
 ];
 ?>
