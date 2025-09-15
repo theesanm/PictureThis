@@ -224,42 +224,6 @@ if (!empty($_SESSION['user']) || !empty($user)) {
         </div>
     </header>
 
-                <!-- Mobile Menu Button -->
-                <button type="button" id="mobile-menu-button" class="md:hidden flex items-center px-3 py-2 border rounded text-gray-200 border-gray-400 hover:text-white hover:border-white">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Mobile Navigation Menu -->
-                    <div id="mobile-menu" class="md:hidden hidden mt-4 pb-4 border-t border-gray-700 pt-4">
-                <nav class="flex flex-col space-y-2">
-                    <?php // session_start() removed - handled in index.php ?>
-                    <?php if (!empty($_SESSION['user']) || !empty($user)): ?>
-                        <a href="/dashboard" class="px-3 py-2 rounded bg-gray-900 text-gray-100 hover:bg-gray-700">Dashboard</a>
-                        <a href="/generate" class="px-3 py-2 rounded hover:bg-gray-700">Generate</a>
-                        <a href="/gallery" class="px-3 py-2 rounded hover:bg-gray-700">Gallery</a>
-                        
-                        <!-- Mobile User Info -->
-                        <div class="border-t border-gray-700 pt-4 mt-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <a href="/profile" class="flex items-center space-x-2 px-2 py-1 bg-gray-900 rounded hover:bg-gray-700">
-                                    <span class="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center text-gray-900 font-bold text-sm">💳</span>
-                                    <span class="text-yellow-300 font-semibold"><?php echo htmlspecialchars($displayCredits); ?></span>
-                                </a>
-                            </div>
-                            <a href="/profile" class="block px-3 py-2 text-sm hover:underline"><?php echo htmlspecialchars($displayName); ?></a>
-                            <a href="/logout" class="block px-3 py-2 text-sm text-pink-400 hover:underline">Logout</a>
-                        </div>
-                    <?php else: ?>
-                        <a href="/login" class="px-3 py-2 rounded bg-purple-600 text-white">Login</a>
-                    <?php endif; ?>
-                </nav>
-            </div>
-        </div>
-    </header>
-
     <script>
         // Mobile menu toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
