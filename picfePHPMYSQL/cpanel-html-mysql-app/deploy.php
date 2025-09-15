@@ -14,18 +14,45 @@ echo "<pre>";
 echo "📝 Step 1: Switching to production configuration...\n";
 
 $configFile = __DIR__ . '/config/config.php';
+
+// Check if config file exists and is readable
+if (!file_exists($configFile)) {
+    echo "❌ Config file not found: {$configFile}\n";
+    exit;
+}
+
+if (!is_readable($configFile)) {
+    echo "❌ Config file not readable: {$configFile}\n";
+    exit;
+}
+
 $configContent = file_get_contents($configFile);
 
-// Check current mode
-if (strpos($configContent, "define('IS_PRODUCTION', false)") !== false) {
+if ($configContent === false) {
+    echo "❌ Could not read config file\n";
+    exit;
+}
+
+// Check current mode with more flexible pattern matching
+if (preg_match('/define\s*\(\s*[\'"]IS_PRODUCTION[\'"]\s*,\s*false\s*\)/i', $configContent)) {
     // Switch to production
-    $configContent = str_replace("define('IS_PRODUCTION', false)", "define('IS_PRODUCTION', true)", $configContent);
-    file_put_contents($configFile, $configContent);
-    echo "✅ Switched to PRODUCTION mode\n";
-} else if (strpos($configContent, "define('IS_PRODUCTION', true)") !== false) {
+    $configContent = preg_replace('/define\s*\(\s*[\'"]IS_PRODUCTION[\'"]\s*,\s*false\s*\)/i', "define('IS_PRODUCTION', true)", $configContent);
+    $result = file_put_contents($configFile, $configContent);
+    if ($result !== false) {
+        echo "✅ Switched to PRODUCTION mode\n";
+    } else {
+        echo "❌ Failed to write config file\n";
+    }
+} else if (preg_match('/define\s*\(\s*[\'"]IS_PRODUCTION[\'"]\s*,\s*true\s*\)/i', $configContent)) {
     echo "✅ Already in PRODUCTION mode\n";
 } else {
-    echo "❌ Could not determine current mode\n";
+    echo "❌ Could not determine current mode in config file\n";
+    echo "   Config file content around IS_PRODUCTION:\n";
+    if (preg_match('/IS_PRODUCTION.*$/m', $configContent, $matches)) {
+        echo "   Found: " . htmlspecialchars($matches[0]) . "\n";
+    } else {
+        echo "   No IS_PRODUCTION line found\n";
+    }
 }
 
 echo "\n";
