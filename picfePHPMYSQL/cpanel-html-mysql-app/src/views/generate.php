@@ -586,21 +586,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Check file sizes before submission
       if (hasImages) {
-        const maxSize = 2 * 1024 * 1024; // 2MB (PHP limit)
+        const maxSize = 8 * 1024 * 1024; // 8MB (increased from 2MB)
         let tooLarge = false;
 
         if (image1 && image1.files[0] && image1.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 1 too large: ${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB > 2MB`);
+          console.error(`Image 1 too large: ${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
         }
         if (image2 && image2.files[0] && image2.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 2 too large: ${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB > 2MB`);
+          console.error(`Image 2 too large: ${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
         }
 
         if (tooLarge) {
           e.preventDefault();
-          alert('One or more images are still too large after compression. Please try smaller images or different formats.');
+          alert('One or more images are too large. Maximum size is 8MB per image. Please try smaller images or different formats.');
           return;
         }
       }
@@ -627,15 +627,15 @@ function handleImageUpload(input, index) {
       return;
     }
 
-    // Check for extremely large files (over 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Image is too large (>50MB). Please choose a smaller image.');
+    // Check for extremely large files (over 15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Image is too large (>15MB). Please choose a smaller image.');
       input.value = '';
       return;
     }
 
-    // If file is larger than 1.5MB, compress it
-    if (file.size > 1.5 * 1024 * 1024) {
+    // If file is larger than 3MB, compress it
+    if (file.size > 3 * 1024 * 1024) {
       console.log(`Compressing image ${index} (${(file.size / 1024 / 1024).toFixed(2)}MB)...`);
       showCompressionStatus(index, true);
       compressImage(file, index, input);
