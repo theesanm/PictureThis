@@ -1,47 +1,21 @@
 <?php
-// Environment-Based Configuration System
-// This file automatically loads the appropriate configuration based on APP_ENV
+// Simple Environment Configuration System
+// Change IS_PRODUCTION to switch between development and production
 
 // ==========================================
-// ENVIRONMENT DETECTION
+// ENVIRONMENT SETTING - CHANGE THIS ONLY
 // ==========================================
-
-// Load .env file if it exists (for local development overrides)
-$envFile = __DIR__ . '/.env';
-if (file_exists($envFile)) {
-    $envLines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($envLines as $line) {
-        if (strpos($line, '#') === 0 || empty(trim($line))) continue; // Skip comments and empty lines
-        if (strpos($line, '=') === false) continue; // Skip lines without =
-
-        list($key, $value) = explode('=', $line, 2);
-        $key = trim($key);
-        $value = trim($value);
-
-        // Remove quotes if present
-        if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
-            (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
-            $value = substr($value, 1, -1);
-        }
-
-        putenv("$key=$value");
-        $_ENV[$key] = $value;
-
-        // Override APP_ENV if set in .env
-        if ($key === 'APP_ENV') {
-            $appEnv = $value;
-        }
-    }
-} else {
-    // If no .env file, try to get from server environment or .htaccess
-    $appEnv = getenv('APP_ENV') ?: 'development';
-}
+// For local development: set to false
+// For production server: set to true
+define('IS_PRODUCTION', false); // true = production, false = development
 
 // ==========================================
 // LOAD ENVIRONMENT CONFIGURATION
 // ==========================================
 
+$appEnv = IS_PRODUCTION ? 'production' : 'development';
 $configFile = __DIR__ . "/{$appEnv}.php";
+
 if (!file_exists($configFile)) {
     die("Configuration file for environment '{$appEnv}' not found: {$configFile}");
 }
@@ -49,18 +23,20 @@ if (!file_exists($configFile)) {
 $config = require $configFile;
 
 // ==========================================
-// ENVIRONMENT VARIABLE OVERRIDES
+// ENVIRONMENT VARIABLE OVERRIDES (Production Only)
 // ==========================================
 // Allow environment variables to override config values (useful for production)
 
 function getConfigValue($section, $key, $default = null) {
     global $config;
 
-    // First check environment variables
-    $envKey = strtoupper($section . '_' . $key);
-    $envValue = getenv($envKey);
-    if ($envValue !== false) {
-        return $envValue;
+    // First check environment variables (only in production)
+    if (IS_PRODUCTION) {
+        $envKey = strtoupper($section . '_' . $key);
+        $envValue = getenv($envKey);
+        if ($envValue !== false) {
+            return $envValue;
+        }
     }
 
     // Then check config array
@@ -73,7 +49,6 @@ function getConfigValue($section, $key, $default = null) {
 
 // Application settings
 define('APP_ENV', $appEnv);
-define('IS_PRODUCTION', $appEnv === 'production');
 define('APP_NAME', getConfigValue('app', 'name', 'PictureThis'));
 define('APP_URL', getConfigValue('app', 'url', 'http://localhost:8000'));
 define('APP_DEBUG', getConfigValue('app', 'debug', !IS_PRODUCTION));

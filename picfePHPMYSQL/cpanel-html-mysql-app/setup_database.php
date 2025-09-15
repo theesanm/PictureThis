@@ -9,14 +9,20 @@
  * 3. Via command line: php setup_database.php
  */
 
-// Database configuration - update these with your actual credentials
-$host = 'localhost:3306';
-$dbname = 'cfoxcozj_PictureThis';
-$username = 'cfoxcozj_picThisdb';
-$password = 'LfUYHI%]{sjb5A*u';
+// Load configuration
+require_once __DIR__ . '/config/config.php';
+
+// Get database config from loaded configuration
+$dbConfig = $config['database'];
+$host = $dbConfig['host'];
+$dbname = $dbConfig['name'];
+$username = $dbConfig['user'];
+$password = $dbConfig['pass'];
 
 echo "<h1>PictureThis Database Setup</h1>";
 echo "<pre>";
+echo "🔍 Using database: $dbname on $host\n";
+echo "👤 Using user: $username\n\n";
 
 // Connect to MySQL (without selecting a database first)
 try {

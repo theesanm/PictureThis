@@ -4,14 +4,21 @@
  * Run this to verify your database connection is working
  */
 
-// Database configuration
-$host = 'localhost:3306';
-$dbname = 'cfoxcozj_PictureThis';
-$username = 'cfoxcozj_picThisdb';
-$password = 'LfUYHI%]{sjb5A*u';
+// Load configuration
+require_once __DIR__ . '/config/config.php';
 
 echo "<h1>Database Connection Test</h1>";
 echo "<pre>";
+
+// Get database config from loaded configuration
+$dbConfig = $config['database'];
+$host = $dbConfig['host'];
+$dbname = $dbConfig['name'];
+$username = $dbConfig['user'];
+$password = $dbConfig['pass'];
+
+echo "🔍 Testing connection to: mysql:host=$host;dbname=$dbname\n";
+echo "👤 Using user: $username\n\n";
 
 try {
     // Test connection

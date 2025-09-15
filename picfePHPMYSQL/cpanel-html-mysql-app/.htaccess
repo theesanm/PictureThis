@@ -1,47 +1,6 @@
-# PictureThis .htaccess - Environment-Based Configuration
-# To switch between development and production, simply change APP_ENV below
-# development = Uses config/development.php with local settings
-# production = Uses config/production.php with production settings
-
-# ==========================================
-# ENVIRONMENT SETTING - CHANGE THIS ONLY
-# ==========================================
-# SetEnv APP_ENV "development"
-SetEnv APP_ENV "production"  # Uncomment for production
-
-# ==========================================
-# PRODUCTION ENVIRONMENT VARIABLES
-# ==========================================
-# Only set these when APP_ENV is "production"
-# For development, these are ignored and defaults from config/development.php are used
-
-# Database Configuration (Production)
-SetEnv DB_HOST "127.0.0.1"
-SetEnv DB_USER "cfoxcozj_picThisdb"
-SetEnv DB_PASS "YOUR_DB_PASSWORD_HERE"
-SetEnv DB_NAME "cfoxcozj_PictureThis"
-
-# Application Configuration (Production)
-SetEnv APP_URL "https://demo.cfox.co.za"
-
-# PayFast Configuration (Production)
-SetEnv PAYFAST_MERCHANT_ID "YOUR_PAYFAST_MERCHANT_ID"
-SetEnv PAYFAST_MERCHANT_KEY "YOUR_PAYFAST_MERCHANT_KEY"
-SetEnv PAYFAST_PASSPHRASE "YOUR_PAYFAST_PASSPHRASE"
-SetEnv PAYFAST_ENV "production"
-
-# OpenRouter Configuration (Production)
-SetEnv OPENROUTER_API_KEY "YOUR_OPENROUTER_API_KEY"
-SetEnv OPENROUTER_APP_URL "https://demo.cfox.co.za"
-
-# Email Configuration (Production)
-SetEnv SMTP_PASSWORD "YOUR_SMTP_PASSWORD"
-
-# Image Retention Configuration
-SetEnv IMAGE_RETENTION_DAYS "7"
-SetEnv MIN_IMAGES_PER_USER "3"
-# Test environment variable (remove after testing)
-# SetEnv TEST_VAR "environment_variables_working"
+# PictureThis .htaccess - Production Configuration
+# Environment variables are now handled by .env file
+# This file contains only Apache/PHP configuration
 
 # ==========================================
 # PHP UPLOAD CONFIGURATION
