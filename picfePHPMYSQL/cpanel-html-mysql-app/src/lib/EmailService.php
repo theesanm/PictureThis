@@ -282,13 +282,19 @@ class EmailService {
         }
 
         if ($isDevelopment) {
+            // Ensure logs directory exists
+            $logDir = __DIR__ . '/../../logs';
+            if (!is_dir($logDir)) {
+                mkdir($logDir, 0755, true);
+            }
+            
             if ($result) {
                 error_log("Email sent successfully to: $to");
-                file_put_contents(__DIR__ . '/../../logs/email_debug.log', 
+                file_put_contents($logDir . '/email_debug.log', 
                     date('Y-m-d H:i:s') . " SUCCESS: Email sent to $to\n", FILE_APPEND);
             } else {
                 error_log("Email failed to send to: $to");
-                file_put_contents(__DIR__ . '/../../logs/email_debug.log', 
+                file_put_contents($logDir . '/email_debug.log', 
                     date('Y-m-d H:i:s') . " FAILED: Email to $to failed\n", FILE_APPEND);
             }
             error_log("=== END EMAIL DEBUG ===\n");
