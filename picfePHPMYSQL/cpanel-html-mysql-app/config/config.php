@@ -7,7 +7,7 @@
 // ==========================================
 // For local development: set to false
 // For production server: set to true
-define('IS_PRODUCTION', false); // true = production, false = development
+define('IS_PRODUCTION', true); // true = production, false = development
 
 // ==========================================
 // LOAD ENVIRONMENT CONFIGURATION

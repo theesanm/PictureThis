@@ -63,7 +63,9 @@ class CSRF {
         }
 
         return self::validateToken($token);
-    }    /**
+    }
+
+    /**
      * Regenerate the CSRF token (useful after login/logout)
      */
     public static function regenerateToken() {

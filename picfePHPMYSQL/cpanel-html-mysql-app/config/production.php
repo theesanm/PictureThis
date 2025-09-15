@@ -12,17 +12,17 @@ return [
     'database' => [
         'host' => '127.0.0.1', // Your production database host
         'user' => 'cfoxcozj_picThisdb', // Your production database user
-        'pass' => 'YOUR_DB_PASSWORD_HERE', // 🔴 REPLACE WITH YOUR ACTUAL DB PASSWORD
+        'pass' => 'LfUYHI%]{sjb5A*u', // Actual production database password
         'name' => 'cfoxcozj_PictureThis', // Your production database name
     ],
     'payfast' => [
-        'merchant_id' => 'YOUR_PAYFAST_MERCHANT_ID', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT ID
-        'merchant_key' => 'YOUR_PAYFAST_MERCHANT_KEY', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT KEY
-        'passphrase' => 'YOUR_PAYFAST_PASSPHRASE', // 🔴 REPLACE WITH YOUR PAYFAST PASSPHRASE
+        'merchant_id' => 'YOUR_ACTUAL_PAYFAST_MERCHANT_ID', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT ID
+        'merchant_key' => 'YOUR_ACTUAL_PAYFAST_MERCHANT_KEY', // 🔴 REPLACE WITH YOUR PAYFAST MERCHANT KEY
+        'passphrase' => 'YOUR_ACTUAL_PAYFAST_PASSPHRASE', // 🔴 REPLACE WITH YOUR PAYFAST PASSPHRASE
         'env' => 'production',
     ],
     'openrouter' => [
-        'api_key' => 'YOUR_OPENROUTER_API_KEY', // 🔴 REPLACE WITH YOUR OPENROUTER API KEY
+        'api_key' => 'YOUR_ACTUAL_OPENROUTER_API_KEY', // 🔴 REPLACE WITH YOUR OPENROUTER API KEY
         'app_url' => 'https://demo.cfox.co.za',
         'gemini_model' => 'google/gemini-2.5-flash-image-preview',
         'model' => 'openai/gpt-oss-20b:free',
@@ -30,7 +30,7 @@ return [
     'email' => [
         'smtp_host' => 'metallurgix.aserv.co.za',
         'smtp_username' => 'cfoxcozj',
-        'smtp_password' => 'YOUR_SMTP_PASSWORD', // 🔴 REPLACE WITH YOUR SMTP PASSWORD
+        'smtp_password' => 'YOUR_ACTUAL_SMTP_PASSWORD', // 🔴 REPLACE WITH YOUR SMTP PASSWORD
         'smtp_port' => '587',
         'from_email' => 'picturethis@cfox.co.za',
     ],
