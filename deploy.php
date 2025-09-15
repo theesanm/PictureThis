@@ -61,14 +61,14 @@ if (file_exists($testSrc)) {
     echo "⚠️  Warning: Test script not found in repository\n";
 }
 
-// Copy simple diagnostic script from repository root
-$simpleDiagSrc = GITHUB_FOLDER . '/simple-diagnostic.php';
-$simpleDiagDest = $destApp . '/simple-diagnostic.php';
-if (file_exists($simpleDiagSrc)) {
-    copy($simpleDiagSrc, $simpleDiagDest);
-    echo "✅ Simple diagnostic script copied\n";
+// Copy install script from repository root
+$installSrc = GITHUB_FOLDER . '/install.php';
+$installDest = $destApp . '/install.php';
+if (file_exists($installSrc)) {
+    copy($installSrc, $installDest);
+    echo "✅ Install script copied\n";
 } else {
-    echo "⚠️  Warning: Simple diagnostic script not found in repository\n";
+    echo "⚠️  Warning: Install script not found in repository\n";
 }
 
 // Copy web deploy script from repository root
@@ -115,7 +115,23 @@ echo "✅ .htaccess created\n";
 $prodConfigSrc = $destApp . '/config/production.php';
 $prodConfigDest = $destApp . '/config/config.php';
 
-echo "\n🎉 Deployment completed successfully!\n";
+if (file_exists($prodConfigSrc)) {
+    copy($prodConfigSrc, $prodConfigDest);
+    echo "✅ Production config copied\n";
+} else {
+    echo "⚠️  Warning: Production config template not found\n";
+}
+
+// Copy .env file if it exists
+$envSrc = GITHUB_FOLDER . '/config/.env';
+$envDest = $destApp . '/config/.env';
+if (file_exists($envSrc)) {
+    copy($envSrc, $envDest);
+    echo "✅ Environment file copied\n";
+} else {
+    echo "⚠️  Warning: .env file not found in repository\n";
+    echo "   You will need to create config/.env manually\n";
+}
 echo "📍 Application URL: https://" . $_SERVER['HTTP_HOST'] . "\n";
 echo "⚙️  Remember to configure your database settings in: config/config.php\n";
 echo "\nNext steps:\n";

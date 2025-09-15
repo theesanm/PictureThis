@@ -6,24 +6,35 @@
 // ENVIRONMENT DETECTION
 // ==========================================
 
-// First, try to get APP_ENV from environment (set by .htaccess or server)
-$appEnv = getenv('APP_ENV') ?: 'development';
-
 // Load .env file if it exists (for local development overrides)
-if (file_exists(__DIR__ . '/../.env')) {
-    $envLines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    $envLines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($envLines as $line) {
-        if (strpos($line, '#') === 0) continue; // Skip comments
+        if (strpos($line, '#') === 0 || empty(trim($line))) continue; // Skip comments and empty lines
+        if (strpos($line, '=') === false) continue; // Skip lines without =
+
         list($key, $value) = explode('=', $line, 2);
         $key = trim($key);
         $value = trim($value);
+
+        // Remove quotes if present
+        if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+            (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+            $value = substr($value, 1, -1);
+        }
+
         putenv("$key=$value");
         $_ENV[$key] = $value;
+
         // Override APP_ENV if set in .env
         if ($key === 'APP_ENV') {
             $appEnv = $value;
         }
     }
+} else {
+    // If no .env file, try to get from server environment or .htaccess
+    $appEnv = getenv('APP_ENV') ?: 'development';
 }
 
 // ==========================================
