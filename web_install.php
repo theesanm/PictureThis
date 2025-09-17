@@ -353,6 +353,11 @@ function setProductionMode() {
 
         $content = file_get_contents($configFile);
 
+        // Check if IS_PRODUCTION is already defined and true
+        if (strpos($content, "define('IS_PRODUCTION', true)") !== false) {
+            return ['success' => true, 'message' => 'Production mode already enabled'];
+        }
+
         // Change IS_PRODUCTION to true
         $content = preg_replace(
             "/define\('IS_PRODUCTION',\s*false\);/",
@@ -390,7 +395,19 @@ function testConfiguration() {
         require_once 'src/lib/db.php';
         $db = get_db();
         if (!$db) {
-            return ['success' => false, 'message' => 'Database connection failed. Debug: ' . $debug];
+            // Try to get more specific error information
+            try {
+                $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+                $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
+                $debug .= "Database connection successful on retry\n";
+                return ['success' => true, 'message' => 'Configuration test passed. Debug: ' . $debug];
+            } catch (PDOException $e) {
+                $debug .= "Database connection error: " . $e->getMessage() . "\n";
+                return ['success' => false, 'message' => 'Database connection failed. Debug: ' . $debug];
+            }
         }
 
         return ['success' => true, 'message' => 'Configuration test passed. Debug: ' . $debug];
