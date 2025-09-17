@@ -8,9 +8,38 @@ class PromptAgentController {
     public function __construct() {
         $this->openRouterUrl = defined('OPENROUTER_API_URL') ? OPENROUTER_API_URL : 'https://openrouter.ai/api/v1/chat/completions';
         $this->debugLogFile = __DIR__ . '/../../debug.log';
+        
+        // Ensure debug.log exists and is writable
+        $this->ensureDebugLogExists();
+        
         $this->debugLog('IS_PRODUCTION defined: ' . (defined('IS_PRODUCTION') ? 'YES' : 'NO'));
         if (defined('IS_PRODUCTION')) {
             $this->debugLog('IS_PRODUCTION value: ' . (IS_PRODUCTION ? 'TRUE' : 'FALSE'));
+        }
+    }
+
+    private function ensureDebugLogExists() {
+        $logDir = dirname($this->debugLogFile);
+        
+        // Ensure the directory exists and is writable
+        if (!is_dir($logDir)) {
+            if (!mkdir($logDir, 0755, true)) {
+                error_log('AGENT DEBUG: Cannot create log directory: ' . $logDir);
+                return;
+            }
+        }
+        
+        // Ensure the log file exists
+        if (!file_exists($this->debugLogFile)) {
+            if (file_put_contents($this->debugLogFile, '') === false) {
+                error_log('AGENT DEBUG: Cannot create log file: ' . $this->debugLogFile);
+                return;
+            }
+        }
+        
+        // Ensure the log file is writable
+        if (!is_writable($this->debugLogFile)) {
+            error_log('AGENT DEBUG: Log file is not writable: ' . $this->debugLogFile);
         }
     }
 
@@ -18,15 +47,16 @@ class PromptAgentController {
         $logMessage = '[' . date('Y-m-d H:i:s') . '] [AGENT] ' . $message . PHP_EOL;
         $logFile = $this->debugLogFile;
         
-        // Ensure the log file is writable
-        if (!is_writable($logFile)) {
-            error_log('AGENT DEBUG: Cannot write to log file: ' . $logFile);
-            return;
-        }
-        
-        $result = file_put_contents($logFile, $logMessage, FILE_APPEND);
+        // Try to write to the log file
+        $result = @file_put_contents($logFile, $logMessage, FILE_APPEND);
         if ($result === false) {
-            error_log('AGENT DEBUG: Failed to write to log file: ' . $logFile);
+            // If file writing fails, only log to PHP error log (avoid spam)
+            static $loggedOnce = false;
+            if (!$loggedOnce) {
+                error_log('AGENT DEBUG: Cannot write to log file: ' . $logFile . ' - logging disabled');
+                $loggedOnce = true;
+            }
+            return;
         }
         
         if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {

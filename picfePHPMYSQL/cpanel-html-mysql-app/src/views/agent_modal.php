@@ -6,7 +6,7 @@
             <h2 class="text-lg md:text-xl font-bold text-white">PictureThis Agent</h2>
             <div class="flex items-center gap-2 md:gap-4">
                 <div class="text-xs md:text-sm text-gray-400">
-                    <span id="agent-session-timer">30:00</span> remaining
+                    <span id="agent-session-timer">5:00</span> remaining
                 </div>
                 <button id="close-agent-modal" class="text-gray-400 hover:text-white text-xl">&times;</button>
             </div>

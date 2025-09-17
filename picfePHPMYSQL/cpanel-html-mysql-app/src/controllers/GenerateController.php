@@ -10,15 +10,56 @@ class GenerateController {
         $this->openRouterUrl = defined('OPENROUTER_API_URL') ? OPENROUTER_API_URL : 'https://openrouter.ai/api/v1/chat/completions';
         $this->uploadsDir = __DIR__ . '/../../uploads/';
         $this->debugLogFile = __DIR__ . '/../../debug.log';
+        
         // Ensure uploads directory exists
         if (!is_dir($this->uploadsDir)) {
             mkdir($this->uploadsDir, 0755, true);
+        }
+        
+        // Ensure debug.log exists and is writable
+        $this->ensureDebugLogExists();
+    }
+
+    private function ensureDebugLogExists() {
+        $logDir = dirname($this->debugLogFile);
+        
+        // Ensure the directory exists and is writable
+        if (!is_dir($logDir)) {
+            if (!mkdir($logDir, 0755, true)) {
+                error_log('DEBUG: Cannot create log directory: ' . $logDir);
+                return;
+            }
+        }
+        
+        // Ensure the log file exists
+        if (!file_exists($this->debugLogFile)) {
+            if (file_put_contents($this->debugLogFile, '') === false) {
+                error_log('DEBUG: Cannot create log file: ' . $this->debugLogFile);
+                return;
+            }
+        }
+        
+        // Ensure the log file is writable
+        if (!is_writable($this->debugLogFile)) {
+            error_log('DEBUG: Log file is not writable: ' . $this->debugLogFile);
         }
     }
 
     private function debugLog($message) {
         $logMessage = '[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL;
-        file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
+        
+        // Try to write to the log file
+        $result = @file_put_contents($this->debugLogFile, $logMessage, FILE_APPEND);
+        if ($result === false) {
+            // If file writing fails, only log to PHP error log (avoid spam)
+            static $loggedOnce = false;
+            if (!$loggedOnce) {
+                error_log('DEBUG: Cannot write to log file: ' . $this->debugLogFile . ' - logging disabled');
+                $loggedOnce = true;
+            }
+            return;
+        }
+        
         // Only log to PHP error_log in development
         if (!defined('IS_PRODUCTION') || !IS_PRODUCTION) {
             error_log('DEBUG: ' . $message);

@@ -324,6 +324,9 @@ function setupConfiguration() {
             mkdir('tests', 0755, true);
         }
 
+        // Setup debug logging
+        setupDebugLogging();
+
         // Set proper permissions
         if (is_dir('uploads')) {
             chmod('uploads', 0755);
@@ -339,7 +342,7 @@ function setupConfiguration() {
             }
         }
 
-        return ['success' => true, 'message' => 'Configuration setup completed - all diagnostic tools available in tests/ folder'];
+        return ['success' => true, 'message' => 'Configuration setup completed - debug logging configured and all diagnostic tools available in tests/ folder'];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Configuration setup failed: ' . $e->getMessage()];
     }
@@ -415,6 +418,41 @@ function testConfiguration() {
         return ['success' => true, 'message' => 'Configuration test passed. Debug: ' . $debug];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Configuration test failed: ' . $e->getMessage()];
+    }
+}
+
+function setupDebugLogging() {
+    $debugLogPath = 'debug.log';
+    $logDir = dirname($debugLogPath);
+    
+    // Ensure the directory exists and is writable
+    if (!is_dir($logDir)) {
+        if (!mkdir($logDir, 0755, true)) {
+            throw new Exception('Cannot create log directory: ' . $logDir);
+        }
+    }
+    
+    // Ensure the debug.log file exists
+    if (!file_exists($debugLogPath)) {
+        if (file_put_contents($debugLogPath, "Debug log initialized on " . date('Y-m-d H:i:s') . "\n") === false) {
+            throw new Exception('Cannot create debug.log file: ' . $debugLogPath);
+        }
+    }
+    
+    // Set proper permissions
+    if (!chmod($debugLogPath, 0666)) {
+        throw new Exception('Cannot set permissions on debug.log');
+    }
+    
+    // Test if the file is writable
+    if (!is_writable($debugLogPath)) {
+        throw new Exception('Debug.log is not writable after setup');
+    }
+    
+    // Add initialization entry
+    $initMessage = "[" . date('Y-m-d H:i:s') . "] [SETUP] Debug logging initialized by web installer\n";
+    if (file_put_contents($debugLogPath, $initMessage, FILE_APPEND) === false) {
+        throw new Exception('Cannot write initialization entry to debug.log');
     }
 }
 ?>
