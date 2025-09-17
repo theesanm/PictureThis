@@ -136,7 +136,7 @@ if (defined('IS_PRODUCTION')) {
 echo "<div class='summary'>";
 echo "<div class='metric'><h3 style='color: #28a745'>$passed</h3><p>Tests Passed</p></div>";
 echo "<div class='metric'><h3 style='color: #dc3545'>$failed</h3><p>Tests Failed</p></div>";
-echo "<div class='metric'><h3>" . ($passed + $failed) . "</h3><p>Total Tests</p></div>";
+echo "<div class='metric'><h3>" . count($results) . "</h3><p>Total Tests</p></div>";
 echo "</div>";
 
 echo "<h3>Test Results:</h3>";
