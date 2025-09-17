@@ -10,9 +10,9 @@ return [
     ],
     'database' => [
         'host' => '127.0.0.1',
-        'user' => 'cfoxcozj_picThisdb',
-        'pass' => 'LfUYHI%]{sjb5A*u',
-        'name' => 'cfoxcozj_PictureThis',
+        'user' => 'your_db_user',
+        'pass' => 'your_db_password',
+        'name' => 'your_db_name',
     ],
     'payfast' => [
         'merchant_id' => '10041798',
