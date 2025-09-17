@@ -54,7 +54,7 @@ if (version_compare($phpVersion, $minVersion, '>=')) {
 }
 
 // Test 2: Config File (simplified - just check if file exists)
-$configPath = dirname(__DIR__) . '/config/config.php';
+$configPath = __DIR__ . '/config/config.php';
 if (file_exists($configPath)) {
     addResult('Config File', 'PASS', 'config.php exists at: ' . $configPath);
 } else {
@@ -83,7 +83,7 @@ try {
 // Test 4: Database Connection (only if config loaded successfully)
 if ($configLoaded && !empty($configError)) {
     try {
-        $dbPath = dirname(__DIR__) . '/src/lib/db.php';
+        $dbPath = __DIR__ . '/src/lib/db.php';
         if (file_exists($dbPath)) {
             require_once $dbPath;
             if (function_exists('get_db')) {
@@ -110,9 +110,9 @@ if ($configLoaded && !empty($configError)) {
 
 // Test 5: Required Files
 $requiredFiles = [
-    dirname(__DIR__) . '/index.php' => 'Main application file',
-    dirname(__DIR__) . '/src/lib/db.php' => 'Database library',
-    dirname(__DIR__) . '/config/production.php' => 'Production config'
+    __DIR__ . '/index.php' => 'Main application file',
+    __DIR__ . '/src/lib/db.php' => 'Database library',
+    __DIR__ . '/config/production.php' => 'Production config'
 ];
 
 foreach ($requiredFiles as $file => $description) {
