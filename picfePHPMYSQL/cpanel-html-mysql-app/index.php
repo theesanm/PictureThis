@@ -140,6 +140,13 @@ try {
         exit;
     }
 
+    if ($path === '/logout') {
+        require_once __DIR__ . '/src/controllers/LoginController.php';
+        $ctrl = new LoginController();
+        $ctrl->logout();
+        exit;
+    }
+
     if ($path === '/dashboard') {
         require_once __DIR__ . '/src/controllers/DashboardController.php';
         $ctrl = new DashboardController();
