@@ -10,7 +10,40 @@ $user = isset($user) ? $user : (isset($_SESSION['user']) ? $_SESSION['user'] : n
 $settings = isset($settings) && is_array($settings) ? $settings : [];
 $recentImages = isset($recentImages) ? $recentImages : [];
 
-$displayCredits = $user['credits'] ?? ($_SESSION['user']['credits'] ?? 0);
+// Get fresh credit data from database (like header.php does)
+$displayCredits = 0;
+if (!empty($_SESSION['user']) || !empty($user)) {
+    $userId = $_SESSION['user']['id'] ?? ($user['id'] ?? null);
+    if ($userId) {
+        try {
+            require_once __DIR__ . '/../lib/db.php';
+            $pdo = get_db();
+            if ($pdo) {
+                $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ? LIMIT 1');
+                $stmt->execute([$userId]);
+                $fresh = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($fresh) {
+                    $displayCredits = $fresh['credits'] !== null ? $fresh['credits'] : 0;
+                    // Update session with fresh data
+                    if (!empty($_SESSION['user'])) {
+                        $_SESSION['user']['credits'] = $displayCredits;
+                    }
+                } else {
+                    $displayCredits = $user['credits'] ?? ($_SESSION['user']['credits'] ?? 0);
+                }
+            } else {
+                $displayCredits = $user['credits'] ?? ($_SESSION['user']['credits'] ?? 0);
+            }
+        } catch (Exception $e) {
+            $displayCredits = $user['credits'] ?? ($_SESSION['user']['credits'] ?? 0);
+        }
+    } else {
+        $displayCredits = $user['credits'] ?? ($_SESSION['user']['credits'] ?? 0);
+    }
+} else {
+    $displayCredits = 0;
+}
+
 $creditCost = isset($settings['credit_cost_per_image']) ? (int)$settings['credit_cost_per_image'] : 10;
 $enhanceCost = isset($settings['enhance_prompt_cost']) ? (int)$settings['enhance_prompt_cost'] : 1;
 $enableEnhance = isset($settings['enable_enhance']) ? (bool)$settings['enable_enhance'] : true;
@@ -1053,23 +1086,80 @@ function closeAgentSessionOnImageGeneration(sessionId) {
 }
 
 function updateCreditDisplays(newCredits) {
-  // Update credit display in generate page header
-  var generateCreditElements = document.querySelectorAll('.font-bold');
-  generateCreditElements.forEach(function(element) {
-    if (element.textContent.match(/^\d+$/) && element.nextElementSibling && element.nextElementSibling.textContent === 'credits') {
-      element.textContent = newCredits;
-    }
+  console.log('=== CREDIT UPDATE START ===');
+  console.log('Target credits value:', newCredits, 'Type:', typeof newCredits);
+
+  // Clear any existing credit display elements to prevent duplicates
+  var processedElements = new Set();
+
+  // Update credit displays with precise selectors - process in specific order
+  var creditSelectors = [
+    { selector: '.font-bold', type: 'generate-page' },
+    { selector: '.text-yellow-300.font-semibold', type: 'header' },
+    { selector: '.text-2xl.font-bold.text-yellow-300', type: 'profile' }
+  ];
+
+  creditSelectors.forEach(function(item) {
+    var elements = document.querySelectorAll(item.selector);
+    console.log('=== ANALYZING', item.type.toUpperCase(), 'ELEMENTS ===');
+    console.log('Found', elements.length, 'elements with selector:', item.selector);
+
+    elements.forEach(function(element, index) {
+      console.log(item.type, 'element', index, ':', {
+        content: element.textContent,
+        tagName: element.tagName,
+        className: element.className,
+        hasCreditsSibling: element.nextElementSibling && element.nextElementSibling.textContent.trim() === 'credits',
+        nextSibling: element.nextElementSibling ? element.nextElementSibling.textContent.trim() : 'none'
+      });
+    });
+
+    elements.forEach(function(element, index) {
+      // Skip if we've already processed this element
+      if (processedElements.has(element)) {
+        console.log('Skipping already processed element', index);
+        return;
+      }
+
+      console.log('Processing', item.type, 'element', index, 'content:', element.textContent);
+
+      var shouldUpdate = false;
+
+      // For generate page: check for sibling with 'credits' text
+      if (item.type === 'generate-page') {
+        if (element.textContent.match(/^\d+$/) && element.nextElementSibling &&
+            element.nextElementSibling.textContent.trim() === 'credits') {
+          shouldUpdate = true;
+          console.log('✓ Element', index, 'QUALIFIES for generate page update');
+        } else {
+          console.log('✗ Element', index, 'does NOT qualify for generate page update');
+        }
+      }
+      // For header and profile: check if element contains only digits
+      else if (element.textContent.match(/^\d+$/)) {
+        shouldUpdate = true;
+        console.log('✓ Element', index, 'QUALIFIES for', item.type, 'update');
+      } else {
+        console.log('✗ Element', index, 'does NOT qualify for', item.type, 'update');
+      }
+
+      if (shouldUpdate) {
+        console.log('UPDATING', item.type, 'element', index, 'from', element.textContent, 'to', newCredits);
+        console.log('Element details:', element.tagName, element.className, 'HTML:', element.outerHTML);
+
+        // Ensure we're setting a string value
+        element.textContent = String(newCredits);
+
+        console.log('AFTER UPDATE - element', index, 'content:', element.textContent);
+        processedElements.add(element);
+      } else {
+        console.log('NOT updating', item.type, 'element', index, '(does not match criteria)');
+      }
+    });
   });
 
-  // Update credit display in main header (if visible)
-  var headerCreditElements = document.querySelectorAll('.text-yellow-300.font-semibold');
-  headerCreditElements.forEach(function(element) {
-    if (element.textContent.match(/^\d+$/)) {
-      element.textContent = newCredits;
-    }
-  });
-
-  console.log('Credits updated to:', newCredits);
+  console.log('=== CREDIT UPDATE COMPLETE ===');
+  console.log('Processed', processedElements.size, 'unique elements');
 }
 
 // Agent Modal JavaScript
@@ -1191,7 +1281,59 @@ document.addEventListener('DOMContentLoaded', function() {
         var agentMessages = document.getElementById('agent-messages');
         if (agentMessages) {
           agentMessages.innerHTML = '';
-          addMessage('agent', result.data.welcomeMessage);
+          // Add the first agent message
+          addMessage('agent', result.data.message);
+          // Set the refined prompt in the input field
+          var promptInput = document.getElementById('prompt');
+          if (promptInput && result.data.refinedPrompt) {
+            promptInput.value = result.data.refinedPrompt;
+            // Also show the refined prompt in the modal
+            showRefinedPrompt(result.data.refinedPrompt);
+          }
+          scrollToLatestContent();
+        }
+
+        // Update credit display if updated credits were provided
+        if (result.data.updatedCredits !== null && result.data.updatedCredits !== undefined) {
+          console.log('=== BACKEND RESPONSE RECEIVED ===');
+          console.log('Raw result.data.updatedCredits:', result.data.updatedCredits);
+          console.log('Type of updatedCredits:', typeof result.data.updatedCredits);
+
+          // Ensure it's a number
+          var numericCredits = parseInt(result.data.updatedCredits, 10);
+          console.log('Parsed numeric credits:', numericCredits);
+
+          console.log('Current credit displays BEFORE update:');
+          // Log current credit displays
+          document.querySelectorAll('.font-bold').forEach(function(el, idx) {
+            if (el.textContent.match(/^\d+$/) && el.nextElementSibling && el.nextElementSibling.textContent.trim() === 'credits') {
+              console.log('Generate page credits (element', idx, '):', el.textContent);
+            }
+          });
+          document.querySelectorAll('.text-yellow-300.font-semibold').forEach(function(el, idx) {
+            if (el.textContent.match(/^\d+$/)) {
+              console.log('Header credits (element', idx, '):', el.textContent);
+            }
+          });
+
+          console.log('Calling updateCreditDisplays with:', numericCredits);
+          updateCreditDisplays(numericCredits);
+
+          console.log('Credit displays AFTER update:');
+          // Log credit displays after update
+          document.querySelectorAll('.font-bold').forEach(function(el, idx) {
+            if (el.textContent.match(/^\d+$/) && el.nextElementSibling && el.nextElementSibling.textContent.trim() === 'credits') {
+              console.log('Generate page credits (element', idx, '):', el.textContent);
+            }
+          });
+          document.querySelectorAll('.text-yellow-300.font-semibold').forEach(function(el, idx) {
+            if (el.textContent.match(/^\d+$/)) {
+              console.log('Header credits (element', idx, '):', el.textContent);
+            }
+          });
+          console.log('=== BACKEND RESPONSE PROCESSING COMPLETE ===');
+        } else {
+          console.warn('No updatedCredits received from backend');
         }
 
         if (sessionEndTime && sessionEndTime > new Date().getTime()) {
@@ -1199,6 +1341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
           console.error('Invalid session end time:', sessionEndTime);
           addMessage('system', '⚠️ Session configuration error. Please try again.');
+          scrollToLatestContent();
           setTimeout(function() { closeAgentModal(); }, 3000);
         }
 
@@ -1270,6 +1413,9 @@ document.addEventListener('DOMContentLoaded', function() {
           showRefinedPrompt(result.data.refinedPrompt);
         }
 
+        // Auto-scroll to show the latest content
+        scrollToLatestContent();
+
         if (result.data.creditsUsed) {
           updateCreditDisplays(-result.data.creditsUsed);
         }
@@ -1280,7 +1426,8 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(function(error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message: ' + error.message);
+      addMessage('system', '❌ Error: ' + error.message);
+      scrollToLatestContent();
     })
     .finally(function() {
       agentInput.disabled = false;
@@ -1297,23 +1444,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     refinedPromptText.textContent = prompt;
     agentRefinedPrompt.classList.remove('hidden');
+    
+    // Scroll to show the refined prompt
+    requestAnimationFrame(function() {
+      scrollToLatestContent();
+    });
   }
 
   function useRefinedPrompt() {
-    console.log('useRefinedPrompt called');
-    var refinedPromptText = document.getElementById('refined-prompt-text');
-    var promptInput = document.getElementById('prompt');
-
-    console.log('Prompt text:', refinedPromptText ? refinedPromptText.textContent : 'null');
-    console.log('Prompt input found:', !!promptInput);
-
-    if (promptInput && refinedPromptText) {
-      promptInput.value = refinedPromptText.textContent;
-      console.log('Setting prompt input value');
-      closeAgentModal();
-    } else {
-      console.log('Missing elements or prompt text');
-    }
+    console.log('useRefinedPrompt called - closing modal (prompt already updated)');
+    closeAgentModal();
   }
 
   function startSessionTimer() {
@@ -1336,17 +1476,25 @@ document.addEventListener('DOMContentLoaded', function() {
         clearInterval(sessionTimer);
         sessionTimer = null;
         addMessage('system', '⏰ Session expired. Please start a new session.');
+        scrollToLatestContent();
         setTimeout(function() { closeAgentModal(); }, 3000);
       }
     }, 1000);
   }
 
-  function updateCreditDisplays(creditChange) {
-    var creditElements = document.querySelectorAll('.font-bold');
-    creditElements.forEach(function(element) {
-      if (element.textContent.match(/^\d+$/)) {
-        var currentCredits = parseInt(element.textContent);
-        element.textContent = Math.max(0, currentCredits + creditChange);
+  function updateCreditDisplays(creditValue) {
+    // Update all credit displays that contain only numbers
+    var allElements = document.querySelectorAll('*');
+    allElements.forEach(function(element) {
+      // Check if element contains only digits and has text-yellow-300 class
+      if (element.textContent.match(/^\d+$/) && element.classList.contains('text-yellow-300')) {
+        // Always treat creditValue as the new absolute credits value
+        element.textContent = Math.max(0, creditValue);
+      }
+      // Also check font-bold elements (generate page)
+      else if (element.textContent.match(/^\d+$/) && element.classList.contains('font-bold')) {
+        // Always treat creditValue as the new absolute credits value
+        element.textContent = Math.max(0, creditValue);
       }
     });
   }
@@ -1383,10 +1531,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!messagesContainer) return;
 
     var messageDiv = document.createElement('div');
-    messageDiv.className = 'flex ' + (type === 'user' ? 'justify-end' : 'justify-start') + ' mb-4';
+    messageDiv.className = (type === 'user' ? 'text-right' : 'text-left') + ' mb-4';
 
     var messageContent = document.createElement('div');
-    messageContent.className = 'max-w-xs lg:max-w-md px-4 py-2 rounded-lg ' + 
+    messageContent.className = 'inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ' + 
       (type === 'user' ? 'bg-purple-600 text-white' : 
        type === 'agent' ? 'bg-gray-700 text-gray-300' : 
        'bg-red-600 text-white');
@@ -1395,14 +1543,27 @@ document.addEventListener('DOMContentLoaded', function() {
     messageDiv.appendChild(messageContent);
     messagesContainer.appendChild(messageDiv);
 
-    // Auto-scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // Auto-scroll to bottom using requestAnimationFrame
+    requestAnimationFrame(function() {
+      var scrollHeight = messagesContainer.scrollHeight;
+      var currentScroll = messagesContainer.scrollTop;
+      console.log('Auto-scrolling after adding message. Type:', type, 'Scroll height:', scrollHeight, 'Current scroll:', currentScroll);
+      // Try scrolling to a large number to ensure it goes to bottom
+      messagesContainer.scrollTop = 999999;
+    });
   }
 
   function scrollToLatestContent() {
     var messagesContainer = document.getElementById('agent-messages');
     if (messagesContainer) {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(function() {
+        var scrollHeight = messagesContainer.scrollHeight;
+        var currentScroll = messagesContainer.scrollTop;
+        console.log('Scrolling to latest content. Scroll height:', scrollHeight, 'Current scroll:', currentScroll);
+        // Try scrolling to a large number to ensure it goes to bottom
+        messagesContainer.scrollTop = 999999;
+      });
     }
   }
 
@@ -1463,6 +1624,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Log initial credit values on page load
+console.log('=== PAGE LOAD CREDIT CHECK ===');
+document.querySelectorAll('.font-bold').forEach(function(el, index) {
+  if (el.textContent.match(/^\d+$/) && el.nextElementSibling && el.nextElementSibling.textContent.trim() === 'credits') {
+    console.log('Initial generate page credits (element', index, '):', el.textContent);
+  }
+});
+document.querySelectorAll('.text-yellow-300.font-semibold').forEach(function(el, index) {
+  if (el.textContent.match(/^\d+$/)) {
+    console.log('Initial header credits (element', index, '):', el.textContent);
+  }
+});
+document.querySelectorAll('.text-2xl.font-bold.text-yellow-300').forEach(function(el, index) {
+  if (el.textContent.match(/^\d+$/)) {
+    console.log('Initial profile credits (element', index, '):', el.textContent);
+  }
+});
+console.log('=== PAGE LOAD CREDIT CHECK COMPLETE ===');
+
 </script>
 
 <?php include __DIR__ . '/agent_modal.php'; ?>

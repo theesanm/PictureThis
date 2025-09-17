@@ -106,67 +106,92 @@ class PromptAgentController {
             $pdo->prepare('UPDATE prompt_agent_sessions SET session_status = ? WHERE user_id = ? AND session_status = ?')
                 ->execute(['completed', $userId, 'active']);
 
-            // Create new session and charge credits
+            // Create new session WITHOUT charging credits yet
             $stmt = $pdo->prepare('
                 INSERT INTO prompt_agent_sessions
                 (id, user_id, original_prompt, expires_at, total_credits_used)
                 VALUES (?, ?, ?, ?, ?)
             ');
-            $stmt->execute([$sessionId, $userId, $originalPrompt, $expiresAt, $enhanceCost]);
+            $stmt->execute([$sessionId, $userId, $originalPrompt, $expiresAt, 0]); // Start with 0 credits used
 
-            $this->debugLog("Agent session created: $sessionId, about to deduct $enhanceCost credits from user $userId");
+            $this->debugLog("Agent session created: $sessionId, now making first LLM call");
 
-            // Deduct credits from user
-            $pdo->prepare('UPDATE users SET credits = credits - ? WHERE id = ?')
-                ->execute([$enhanceCost, $userId]);
-
-            $this->debugLog("Credits deducted successfully for agent session: $sessionId");
-
-            // Record transaction
-            $this->debugLog("About to record credit transaction for session: $sessionId");
+            // Make the first LLM call
             try {
-                $stmt = $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, description) VALUES (?, ?, ?, ?)');
-                $result = $stmt->execute([$userId, -$enhanceCost, 'usage', 'AI Prompt Enhancement Agent Session']);
-                $this->debugLog("Credit transaction execute result: " . ($result ? 'true' : 'false'));
-                $this->debugLog("Credit transaction recorded for agent session: $sessionId, cost: $enhanceCost credits");
+                // Generate agent response for the original prompt
+                $agentResponse = $this->generateAgentResponse($originalPrompt, [], $originalPrompt);
+
+                $this->debugLog("First LLM call successful for session: $sessionId");
+
+                // Now deduct credits since LLM call was successful
+                $pdo->prepare('UPDATE users SET credits = credits - ? WHERE id = ?')
+                    ->execute([$enhanceCost, $userId]);
+
+                $this->debugLog("Credits deducted successfully for agent session: $sessionId");
+
+                // Record transaction
+                $this->debugLog("About to record credit transaction for session: $sessionId");
+                try {
+                    $stmt = $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, description) VALUES (?, ?, ?, ?)');
+                    $result = $stmt->execute([$userId, -$enhanceCost, 'usage', 'AI Prompt Enhancement Agent Session']);
+                    $this->debugLog("Credit transaction execute result: " . ($result ? 'true' : 'false'));
+                    $this->debugLog("Credit transaction recorded for agent session: $sessionId, cost: $enhanceCost credits");
+                } catch (Exception $e) {
+                    $this->debugLog("ERROR: Failed to record credit transaction for agent session: " . $e->getMessage());
+                    $this->debugLog("ERROR details: " . $e->getTraceAsString());
+                    // Continue execution even if transaction recording fails
+                }
+
+                // Update session with credits used
+                $pdo->prepare('UPDATE prompt_agent_sessions SET total_credits_used = ? WHERE id = ?')
+                    ->execute([$enhanceCost, $sessionId]);
+
+                // Update session with new credit balance
+                $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
+                $stmt->execute([$userId]);
+                $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($updatedUser) {
+                    $_SESSION['user']['credits'] = $updatedUser['credits'];
+                    $this->debugLog('Session credits updated to ' . $updatedUser['credits'] . ' after agent session start');
+                }
+
+                // Store the first agent response
+                $pdo->prepare('
+                    INSERT INTO prompt_agent_messages
+                    (session_id, message_type, content, suggested_prompts)
+                    VALUES (?, ?, ?, ?)
+                ')->execute([$sessionId, 'agent', $agentResponse['message'], $agentResponse['refined_prompt']]);
+
+                // Update session stats
+                $pdo->prepare('
+                    UPDATE prompt_agent_sessions
+                    SET total_llm_calls = total_llm_calls + 1,
+                        updated_at = NOW()
+                    WHERE id = ?
+                ')->execute([$sessionId]);
+
+                $this->debugLog("Created new agent session with first response: $sessionId for user: $userId");
+
+                $this->sendJsonResponse([
+                    'success' => true,
+                    'data' => [
+                        'sessionId' => $sessionId,
+                        'expiresAt' => strtotime($expiresAt), // Convert to Unix timestamp
+                        'message' => $agentResponse['message'],
+                        'refinedPrompt' => $this->stripPromptTags($agentResponse['refined_prompt']),
+                        'updatedCredits' => $updatedUser['credits'] ?? null
+                    ]
+                ]);
+
             } catch (Exception $e) {
-                $this->debugLog("ERROR: Failed to record credit transaction for agent session: " . $e->getMessage());
-                $this->debugLog("ERROR details: " . $e->getTraceAsString());
-                // Continue execution even if transaction recording fails
+                $this->debugLog("First LLM call failed for session: $sessionId, error: " . $e->getMessage());
+                
+                // Delete the session since LLM call failed
+                $pdo->prepare('DELETE FROM prompt_agent_sessions WHERE id = ?')
+                    ->execute([$sessionId]);
+                
+                $this->sendJsonResponse(['success' => false, 'message' => 'Failed to generate AI response. Please try again.'], 500);
             }
-
-            // Update session with new credit balance
-            $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
-            $stmt->execute([$userId]);
-            $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($updatedUser) {
-                $_SESSION['user']['credits'] = $updatedUser['credits'];
-                $this->debugLog('Session credits updated to ' . $updatedUser['credits'] . ' after agent session start');
-            }
-
-            // Add welcome message
-            $welcomeMessage = "Hi! I'm your AI prompt enhancement assistant. I can help you create the perfect prompt for your image through conversation.
-
-Your original prompt: \"$originalPrompt\"
-
-Let's work together to refine this! Tell me more about your vision - what style are you going for? Any specific mood, colors, or technical details you'd like to include? I'll create a single, optimized prompt that you can refine until it's perfect.";
-
-            $pdo->prepare('
-                INSERT INTO prompt_agent_messages
-                (session_id, message_type, content)
-                VALUES (?, ?, ?)
-            ')->execute([$sessionId, 'agent', $welcomeMessage]);
-
-            $this->debugLog("Created new agent session: $sessionId for user: $userId");
-
-            $this->sendJsonResponse([
-                'success' => true,
-                'data' => [
-                    'sessionId' => $sessionId,
-                    'expiresAt' => strtotime($expiresAt), // Convert to Unix timestamp
-                    'welcomeMessage' => $welcomeMessage
-                ]
-            ]);
 
         } catch (Exception $e) {
             $this->debugLog('Failed to start agent session: ' . $e->getMessage());
@@ -271,7 +296,7 @@ Let's work together to refine this! Tell me more about your vision - what style 
                 'success' => true,
                 'data' => [
                     'message' => $agentResponse['message'],
-                    'refinedPrompt' => $agentResponse['refined_prompt'],
+                    'refinedPrompt' => $this->stripPromptTags($agentResponse['refined_prompt']),
                     'creditsUsed' => 0 // No credits charged per message
                 ]
             ]);
@@ -580,7 +605,6 @@ Guidelines for your refined_prompt:
 - Keep it under 200 words but make every word count
 - Focus on creating ONE excellent prompt, not multiple options
 - Use professional photography/art terminology when appropriate
-- Always wrap the prompt in <PROMPT> tags exactly as shown
 
 Your conversational style:
 - Be friendly and encouraging
@@ -665,12 +689,21 @@ Remember: Return ONLY the JSON format above. No additional text or explanations 
             // Fallback response if JSON parsing fails
             return [
                 'message' => 'I understand you want to improve your prompt. Let me help you refine it. What specific aspects would you like to focus on?',
-                'refined_prompt' => '<PROMPT>' . $originalPrompt . ', highly detailed, professional quality, sharp focus, optimal composition</PROMPT>'
+                'refined_prompt' => $originalPrompt . ', highly detailed, professional quality, sharp focus, optimal composition'
             ];
         }
 
         $this->debugLog('Successfully parsed LLM response with message: ' . substr($result['message'], 0, 100) . '...');
         return $result;
+    }
+
+    /**
+     * Strip <PROMPT> tags from refined prompt
+     */
+    private function stripPromptTags($prompt) {
+        // Remove <PROMPT> and </PROMPT> tags
+        $prompt = preg_replace('/<\/?PROMPT>/i', '', $prompt);
+        return trim($prompt);
     }
 
     /**

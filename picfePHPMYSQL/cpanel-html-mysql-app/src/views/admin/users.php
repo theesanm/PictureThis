@@ -6,7 +6,7 @@
   </div>
 
   <?php if (!empty($_SESSION['admin_flash'])): ?>
-    <div class="mb-4 p-3 rounded bg-gray-700 text-white text-sm"><?php echo htmlspecialchars($_SESSION['admin_flash']); ?></div>
+    <div class="mb-4 p-3 rounded bg-gray-700 text-white text-sm"><?php echo htmlspecialchars($_SESSION['admin_flash'] ?? ''); ?></div>
     <?php unset($_SESSION['admin_flash']); ?>
   <?php endif; ?>
 
@@ -25,13 +25,13 @@
       <?php foreach ($users as $u): ?>
       <tr class="border-t border-gray-700">
         <td class="py-3">
-          <div class="text-sm font-semibold"><?php echo htmlspecialchars($u['full_name']); ?></div>
-          <div class="text-xs text-gray-400"><?php echo htmlspecialchars($u['email']); ?></div>
+          <div class="text-sm font-semibold"><?php echo htmlspecialchars($u['full_name'] ?? ''); ?></div>
+          <div class="text-xs text-gray-400"><?php echo htmlspecialchars($u['email'] ?? ''); ?></div>
         </td>
         <td><?php echo $u['is_admin'] ? '<span class="px-2 py-1 rounded bg-purple-600 text-white text-xs">Admin</span>' : '<span class="px-2 py-1 rounded bg-gray-700 text-gray-200 text-xs">User</span>'; ?></td>
-        <td><?php echo htmlspecialchars($u['credits']); ?></td>
+        <td><?php echo htmlspecialchars((string)($u['credits'] ?? 0)); ?></td>
         <td><span class="text-yellow-300">Active</span></td>
-        <td><?php echo htmlspecialchars(date('n/j/Y', strtotime($u['created_at']))); ?></td>
+        <td><?php echo htmlspecialchars(date('n/j/Y', strtotime($u['created_at'] ?? 'now'))); ?></td>
         <td class="text-sm">
           <!-- view -->
           <a href="/admin/users?id=<?php echo $u['id']; ?>" class="mr-2">🔍</a>
@@ -70,13 +70,13 @@
       <input type="hidden" name="action" value="update" />
       <input type="hidden" name="user_id" value="<?php echo $edit_user['id']; ?>" />
       <label class="block mb-2">Full name
-        <input name="full_name" value="<?php echo htmlspecialchars($edit_user['full_name']); ?>" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
+        <input name="full_name" value="<?php echo htmlspecialchars($edit_user['full_name'] ?? ''); ?>" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
       </label>
       <label class="block mb-2">Email
-        <input name="email" value="<?php echo htmlspecialchars($edit_user['email']); ?>" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
+        <input name="email" value="<?php echo htmlspecialchars($edit_user['email'] ?? ''); ?>" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
       </label>
       <label class="block mb-4">Credits
-        <input name="credits" type="number" value="<?php echo htmlspecialchars($edit_user['credits']); ?>" class="w-32 bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
+        <input name="credits" type="number" value="<?php echo htmlspecialchars((string)($edit_user['credits'] ?? 0)); ?>" class="w-32 bg-gray-900 border border-gray-700 rounded p-2 text-sm" />
       </label>
       <div>
         <button class="px-4 py-2 bg-blue-600 rounded text-white">Save</button>

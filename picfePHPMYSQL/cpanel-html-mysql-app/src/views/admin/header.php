@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
       <a href="/dashboard" class="text-sm text-gray-400 hover:text-gray-200">&larr; Return to Dashboard</a>
       <div class="text-white font-semibold">Admin Portal</div>
     </div>
-    <div class="text-sm text-gray-400">Logged in as Admin: <?php echo htmlspecialchars($_SESSION['user']['email']); ?></div>
+    <div class="text-sm text-gray-400">Logged in as Admin: <?php echo htmlspecialchars($_SESSION['user']['email'] ?? 'Unknown'); ?></div>
   </div>
 </header>
 

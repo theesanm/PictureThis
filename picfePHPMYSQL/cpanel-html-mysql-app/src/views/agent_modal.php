@@ -13,7 +13,7 @@
         </div>
 
         <!-- Chat Messages Area -->
-        <div id="agent-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+        <div id="agent-messages" class="flex-1 overflow-y-auto p-6 flex flex-col">
             <!-- Messages will be dynamically added here -->
             <div class="text-center text-gray-400 py-8">
                 <div class="animate-pulse">Initializing agent...</div>
