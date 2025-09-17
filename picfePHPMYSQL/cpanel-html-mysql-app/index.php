@@ -1,139 +1,208 @@
 <?php
-/**
- * Test Suite Index
- * Provides access to all test tools and utilities
- */
+// Simple front controller for PictureThis application
 
-// Set headers
-header('Content-Type: text/html; charset=utf-8');
-header('Cache-Control: no-cache, no-store, must-revalidate');
+// Load app config (defines APP_NAME, DB_* and other settings)
+if (file_exists(__DIR__ . '/config/config.php')) {
+    require_once __DIR__ . '/config/config.php';
+} else {
+    // Fallback if config not found
+    if (!defined('APP_NAME')) {
+        define('APP_NAME', 'PictureThis');
+    }
+    if (!defined('SERVER_TIMEZONE')) {
+        define('SERVER_TIMEZONE', 'UTC');
+    }
+}
 
+// Set timezone
+date_default_timezone_set('Africa/Johannesburg');
+
+// Session configuration
+ini_set('session.cookie_domain', '');
+ini_set('session.cookie_secure', 0);
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+
+// Start session
+if (!headers_sent()) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+// Debug flag
+if (isset($_GET['__debug']) && $_GET['__debug']) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+    header('X-PictureThis-Debug: enabled');
+}
+
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Allow direct access to /tests/ directory (for diagnostics and debugging)
+if (strpos($path, '/tests/') === 0) {
+    $requestedFile = __DIR__ . $path;
+    if (file_exists($requestedFile) && !is_dir($requestedFile)) {
+        $extension = strtolower(pathinfo($requestedFile, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'html' => 'text/html',
+            'php' => 'text/html',
+            'txt' => 'text/plain',
+            'json' => 'application/json',
+            'css' => 'text/css',
+            'js' => 'application/javascript'
+        ];
+
+        if (isset($contentTypes[$extension])) {
+            header('Content-Type: ' . $contentTypes[$extension]);
+        }
+
+        if ($extension === 'php') {
+            include $requestedFile;
+        } else {
+            readfile($requestedFile);
+        }
+        exit;
+    }
+}
+
+// Allow direct access to root test files
+$testFiles = ['diagnostics.php', 'minimal_test.php', 'routing_test.php', 'server_test.php', 'phpinfo.php', 'html_test.html'];
+if (in_array(basename($path), $testFiles)) {
+    $requestedFile = __DIR__ . '/' . basename($path);
+    if (file_exists($requestedFile)) {
+        $extension = strtolower(pathinfo($requestedFile, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'html' => 'text/html',
+            'php' => 'text/html',
+            'txt' => 'text/plain',
+            'json' => 'application/json'
+        ];
+
+        if (isset($contentTypes[$extension])) {
+            header('Content-Type: ' . $contentTypes[$extension]);
+        }
+
+        if ($extension === 'php') {
+            include $requestedFile;
+        } else {
+            readfile($requestedFile);
+        }
+        exit;
+    }
+}
+
+// Route to appropriate controllers
+try {
+    // Home page
+    if ($path === '/' || $path === '') {
+        require_once __DIR__ . '/src/controllers/HomeController.php';
+        $ctrl = new HomeController();
+        $ctrl->index();
+        exit;
+    }
+
+    // Other pages
+    if ($path === '/about') {
+        require_once __DIR__ . '/src/controllers/HomeController.php';
+        $ctrl = new HomeController();
+        $ctrl->about();
+        exit;
+    }
+
+    if ($path === '/privacy') {
+        require_once __DIR__ . '/src/controllers/HomeController.php';
+        $ctrl = new HomeController();
+        $ctrl->privacy();
+        exit;
+    }
+
+    if ($path === '/terms') {
+        require_once __DIR__ . '/src/controllers/HomeController.php';
+        $ctrl = new HomeController();
+        $ctrl->terms();
+        exit;
+    }
+
+    // Authentication pages
+    if ($path === '/login') {
+        require_once __DIR__ . '/src/controllers/LoginController.php';
+        $ctrl = new LoginController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/register') {
+        require_once __DIR__ . '/src/controllers/RegisterController.php';
+        $ctrl = new RegisterController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/dashboard') {
+        require_once __DIR__ . '/src/controllers/DashboardController.php';
+        $ctrl = new DashboardController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/generate') {
+        require_once __DIR__ . '/src/controllers/GenerateController.php';
+        $ctrl = new GenerateController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/gallery') {
+        require_once __DIR__ . '/src/controllers/GalleryController.php';
+        $ctrl = new GalleryController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/profile') {
+        require_once __DIR__ . '/src/controllers/ProfileController.php';
+        $ctrl = new ProfileController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/admin') {
+        require_once __DIR__ . '/src/controllers/AdminController.php';
+        $ctrl = new AdminController();
+        $ctrl->index();
+        exit;
+    }
+
+    // API routes
+    if (strpos($path, '/api/') === 0) {
+        require_once __DIR__ . '/api.php';
+        exit;
+    }
+
+    // 404 for unknown routes
+    http_response_code(404);
+    echo "<!DOCTYPE html>
+    <html>
+    <head><title>404 Not Found</title></head>
+    <body>
+        <h1>404 Not Found</h1>
+        <p>The page you're looking for doesn't exist.</p>
+        <a href='/'>Go Home</a>
+    </body>
+    </html>";
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo "<!DOCTYPE html>
+    <html>
+    <head><title>Server Error</title></head>
+    <body>
+        <h1>Server Error</h1>
+        <p>Something went wrong. Please try again later.</p>
+        <a href='/'>Go Home</a>
+    </body>
+    </html>";
+}
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Suite - Interactive Prompt Enhancement Agent</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-            color: #333;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2em;
-            font-weight: 300;
-        }
-        .content {
-            padding: 30px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            margin: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-        }
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-        .btn-info:hover {
-            background: #138496;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-        .description {
-            color: #6c757d;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🧪 Test Suite</h1>
-            <p>Interactive Prompt Enhancement Agent</p>
-        </div>
-        <div class="content">
-            <p class="description">
-                Welcome to the comprehensive test suite for PictureThis.
-                Choose an option below to get started.
-            </p>
-
-            <div style="text-align: left; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
-                <h3 style="margin-top: 0; color: #007cba;">🚀 Quick Deployment Checklist</h3>
-                <ol style="margin-bottom: 0;">
-                    <li>Run <a href="../web_install.php?install=confirm" style="color: #007cba;">Web Installer</a> to set up the application</li>
-                    <li>Run <a href="diagnostics.php" style="color: #007cba;">Full Diagnostics</a> to verify everything works</li>
-                    <li>Access your <a href="../" style="color: #007cba;">live application</a></li>
-                </ol>
-            </div>
-
-            <h3 style="text-align: left; color: #333;">🔧 Diagnostic Tools</h3>
-            <a href="diagnostics.php" class="btn btn-primary" style="width: 200px;">Full System Diagnostics</a>
-            <a href="database.php" class="btn btn-info" style="width: 200px;">Database Tests</a>
-            <a href="email.php" class="btn btn-success" style="width: 200px;">Email Tests</a>
-            <a href="api.php" class="btn btn-secondary" style="width: 200px;">API Tests</a>
-
-            <h3 style="text-align: left; color: #333; margin-top: 30px;">⚙️ Legacy Tools</h3>
-            <a href="web_runner.php" class="btn btn-primary">Run All Tests</a>
-            <a href="status.php" class="btn btn-info">Environment Status</a>
-            <a href="update_schema.php" class="btn btn-success">Update Schema</a>
-
-            <div style="margin-top: 30px;">
-                <a href="../" class="btn btn-secondary">Back to App</a>
-                <a href="README.md" class="btn btn-secondary" style="margin-left: 10px;">Documentation</a>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
