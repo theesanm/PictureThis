@@ -1,13 +1,9 @@
 <?php
-// Test the actual agent API endpoint
-// This simulates the exact request that the frontend makes
+// Test the actual agent API endpoint via HTTP
+// This generates a curl command to test the real endpoint
 
-// Start session FIRST before any output
+// Start session FIRST
 session_start();
-
-// Set up test environment
-$_SERVER['REQUEST_METHOD'] = 'POST';
-$_SERVER['CONTENT_TYPE'] = 'application/json';
 
 // Simulate logged in user
 $_SESSION['user'] = [
@@ -26,57 +22,24 @@ $testPayload = [
     'csrf_token' => $csrfToken
 ];
 
-// Set up the request BEFORE any output
-$_POST['csrf_token'] = $csrfToken;
+// Get the base URL (adjust if needed)
+$baseUrl = 'https://demo.cfox.co.za'; // Change this to your actual domain
+$endpoint = '/api/prompt-agent/start';
 
-// Create a simple test that bypasses the input reading
+// Create the curl command
 $jsonPayload = json_encode($testPayload);
+$curlCommand = "curl -X POST '{$baseUrl}{$endpoint}' -H 'Content-Type: application/json' -d '{$jsonPayload}'";
 
-// Now we can output
-echo "=== Testing Agent API Endpoint ===\n\n";
-echo "Test payload: " . $jsonPayload . "\n\n";
+echo "=== Testing Agent API Endpoint via HTTP ===\n\n";
+echo "Generated curl command:\n";
+echo $curlCommand . "\n\n";
+echo "Run this command to test the actual endpoint:\n";
+echo "(This will properly populate php://input with the JSON payload)\n\n";
 
-// Test what the controller actually does
-echo "Testing controller input reading...\n";
-$rawInput = file_get_contents('php://input');
-echo "Raw php://input: '" . $rawInput . "'\n";
+// Also show what we're sending
+echo "Payload being sent:\n";
+echo $jsonPayload . "\n\n";
 
-if (empty($rawInput)) {
-    echo "❌ php://input is empty - this is why the controller fails!\n";
-    echo "The controller expects JSON input but gets nothing.\n\n";
-
-    // Let's try to provide the input directly
-    echo "Providing test input directly...\n";
-    // We'll need to test this differently
-} else {
-    $input = json_decode($rawInput, true);
-    $originalPrompt = trim($input['prompt'] ?? '');
-    echo "Controller would find prompt: '" . $originalPrompt . "'\n";
-    if (empty($originalPrompt)) {
-        echo "❌ Controller would reject: Original prompt is required\n";
-    } else {
-        echo "✅ Controller would accept the prompt\n";
-    }
-}
-echo "\n";
-
-try {
-    require_once 'src/controllers/PromptAgentController.php';
-
-    // Create controller instance
-    $controller = new PromptAgentController();
-
-    // Call the startSession method directly
-    echo "Calling startSession method...\n";
-    $result = $controller->startSession();
-
-    echo "Result: " . json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-} catch (Exception $e) {
-    echo "ERROR: " . $e->getMessage() . "\n";
-    echo "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n";
-    echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
-}
-
-echo "\n=== Test Complete ===\n";
+echo "Expected result: The endpoint should process the prompt and return a success response.\n";
+echo "If it fails with 'Original prompt is required', then the issue is in the web server configuration.\n";
 ?>
