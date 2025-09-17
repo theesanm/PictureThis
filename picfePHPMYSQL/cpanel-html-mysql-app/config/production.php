@@ -11,9 +11,9 @@ return [
     ],
     'database' => [
         'host' => getEnvVar('DB_HOST', '127.0.0.1:3306'), // Your production database host
-        'user' => getEnvVar('DB_USER', 'pt_user'), // Your production database user
-        'pass' => getEnvVar('DB_PASS', 'pt_pass'), // Your production database password
-        'name' => getEnvVar('DB_NAME', 'picturethis_dev'), // Your production database name
+        'user' => getEnvVar('DB_USER', 'cfoxcozj_picThisdb'), // Your production database user
+        'pass' => getEnvVar('DB_PASS', 'LfUYHI%]{sjb5A*u'), // Your production database password
+        'name' => getEnvVar('DB_NAME', 'cfoxcozj_PictureThis'), // Your production database name
     ],
     'payfast' => [
         'merchant_id' => getEnvVar('PAYFAST_MERCHANT_ID', 'YOUR_ACTUAL_PAYFAST_MERCHANT_ID'), // Set in cPanel env vars
