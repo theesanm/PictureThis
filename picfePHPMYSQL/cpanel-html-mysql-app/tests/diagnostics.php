@@ -4,7 +4,26 @@
  * Comprehensive testing tool for the application
  */
 
-require_once '../config/config.php';
+// Load config - try multiple paths for flexibility
+$configPaths = [
+    '../config/config.php',           // When running from tests/ directory
+    __DIR__ . '/../config/config.php', // Absolute path from tests/ directory
+    'config/config.php',              // When running from root directory
+    __DIR__ . '/../../config/config.php' // When in subdirectory
+];
+
+$configLoaded = false;
+foreach ($configPaths as $path) {
+    if (file_exists($path)) {
+        require_once $path;
+        $configLoaded = true;
+        break;
+    }
+}
+
+if (!$configLoaded) {
+    die("Error: Could not find config file. Tried paths: " . implode(', ', $configPaths) . "\n");
+}
 
 class Diagnostics {
     private $results = [];
@@ -68,24 +87,44 @@ class Diagnostics {
 
     private function testConfiguration() {
         // Check if config files exist
+        $baseDir = dirname(__DIR__); // Get parent directory of tests/
         $configFiles = [
-            '../config/config.php',
-            '../config/development.php',
-            '../config/production.php'
+            $baseDir . '/config/config.php',
+            $baseDir . '/config/development.php',
+            $baseDir . '/config/production.php'
         ];
 
         foreach ($configFiles as $file) {
             if (file_exists($file)) {
                 $this->addResult("Config File: " . basename($file), 'PASS', 'File exists');
             } else {
-                $this->addResult("Config File: " . basename($file), 'FAIL', 'File missing');
+                $this->addResult("Config File: " . basename($file), 'FAIL', 'File missing: ' . $file);
             }
         }
 
         // Test config loading
         try {
-            require_once '../config/config.php';
-            $this->addResult('Config Loading', 'PASS', 'Configuration loaded successfully');
+            $configLoaded = false;
+            $configPaths = [
+                '../config/config.php',
+                __DIR__ . '/../config/config.php',
+                'config/config.php',
+                __DIR__ . '/../../config/config.php'
+            ];
+
+            foreach ($configPaths as $path) {
+                if (file_exists($path)) {
+                    require_once $path;
+                    $configLoaded = true;
+                    break;
+                }
+            }
+
+            if ($configLoaded) {
+                $this->addResult('Config Loading', 'PASS', 'Configuration loaded successfully');
+            } else {
+                $this->addResult('Config Loading', 'FAIL', 'Could not find config file');
+            }
         } catch (Exception $e) {
             $this->addResult('Config Loading', 'FAIL', 'Failed to load configuration: ' . $e->getMessage());
         }
@@ -101,7 +140,27 @@ class Diagnostics {
 
     private function testDatabase() {
         try {
-            require_once '../src/lib/db.php';
+            $dbPaths = [
+                '../src/lib/db.php',
+                __DIR__ . '/../src/lib/db.php',
+                'src/lib/db.php',
+                __DIR__ . '/../../src/lib/db.php'
+            ];
+
+            $dbLoaded = false;
+            foreach ($dbPaths as $path) {
+                if (file_exists($path)) {
+                    require_once $path;
+                    $dbLoaded = true;
+                    break;
+                }
+            }
+
+            if (!$dbLoaded) {
+                $this->addResult('Database Test', 'FAIL', 'Could not find db.php file');
+                return;
+            }
+
             $db = get_db();
 
             if ($db) {
@@ -137,12 +196,14 @@ class Diagnostics {
     }
 
     private function testFileSystem() {
+        $baseDir = dirname(__DIR__); // Get parent directory of tests/
+
         // Check required directories
         $requiredDirs = [
-            '../uploads',
-            '../src',
-            '../config',
-            '../tests'
+            $baseDir . '/uploads',
+            $baseDir . '/src',
+            $baseDir . '/config',
+            $baseDir . '/tests'
         ];
 
         foreach ($requiredDirs as $dir) {
@@ -156,36 +217,38 @@ class Diagnostics {
                     $this->addResult("Write Permission: " . basename($dir), 'FAIL', 'Directory not writable');
                 }
             } else {
-                $this->addResult("Directory: " . basename($dir), 'FAIL', 'Directory missing');
+                $this->addResult("Directory: " . basename($dir), 'FAIL', 'Directory missing: ' . $dir);
             }
         }
 
         // Check key files
         $keyFiles = [
-            '../index.php',
-            '../config/config.php',
-            '../src/lib/db.php'
+            $baseDir . '/index.php',
+            $baseDir . '/config/config.php',
+            $baseDir . '/src/lib/db.php'
         ];
 
         foreach ($keyFiles as $file) {
             if (file_exists($file)) {
                 $this->addResult("File: " . basename($file), 'PASS', 'File exists');
             } else {
-                $this->addResult("File: " . basename($file), 'FAIL', 'File missing');
+                $this->addResult("File: " . basename($file), 'FAIL', 'File missing: ' . $file);
             }
         }
     }
 
     private function testSecurity() {
+        $baseDir = dirname(__DIR__); // Get parent directory of tests/
+
         // Check for .env file
-        if (file_exists('../.env')) {
+        if (file_exists($baseDir . '/.env')) {
             $this->addResult('.env File', 'PASS', 'Environment file exists');
         } else {
             $this->addResult('.env File', 'INFO', 'Environment file not found (using defaults)');
         }
 
         // Check for debug.log
-        if (file_exists('../debug.log')) {
+        if (file_exists($baseDir . '/debug.log')) {
             $this->addResult('Debug Log', 'INFO', 'Debug log exists');
         } else {
             $this->addResult('Debug Log', 'PASS', 'Debug log not found');
@@ -209,8 +272,10 @@ class Diagnostics {
     }
 
     private function testEmail() {
+        global $config;
+
         // Check SMTP configuration
-        $smtpConfig = getConfigValue('email', 'smtp_host');
+        $smtpConfig = $config['email']['smtp_host'] ?? null;
         if ($smtpConfig) {
             $this->addResult('SMTP Configuration', 'PASS', 'SMTP settings configured');
         } else {
@@ -249,10 +314,12 @@ class Diagnostics {
     }
 
     private function testAgent() {
+        $baseDir = dirname(__DIR__); // Get parent directory of tests/
+
         // Check agent-related files
         $agentFiles = [
-            '../src/controllers/PromptAgentController.php',
-            '../src/views/agent_modal.php'
+            $baseDir . '/src/controllers/PromptAgentController.php',
+            $baseDir . '/src/views/agent_modal.php'
         ];
 
         foreach ($agentFiles as $file) {
@@ -264,7 +331,7 @@ class Diagnostics {
         }
 
         // Check OpenRouter API key
-        $apiKey = getConfigValue('openrouter', 'api_key');
+        $apiKey = $config['openrouter']['api_key'] ?? null;
         if ($apiKey) {
             $this->addResult('OpenRouter API Key', 'PASS', 'API key configured');
         } else {
