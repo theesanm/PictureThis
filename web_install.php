@@ -183,14 +183,7 @@ function checkEnvironment() {
     $debug .= "Tests in root exist: " . ($hasTests ? 'YES' : 'NO') . "\n";
     $debug .= "Src in root exists: " . ($hasSrc ? 'YES' : 'NO') . "\n";
 
-    // First priority: Check if PHP app is already deployed in root
-    if ($hasConfig && $hasTests && $hasSrc) {
-        $debug .= "PHP app already deployed in root directory\n";
-        $message = 'Environment check passed - PHP app already deployed in root';
-        return ['success' => true, 'message' => $debug . $message];
-    }
-
-    // Second priority: Check if GitHub folder has the PHP app (this is the normal case)
+    // First priority: Check if GitHub folder exists - if it does, we should copy from it
     if ($hasGithub) {
         $debug .= "Checking GitHub folder structure:\n";
 
@@ -198,20 +191,27 @@ function checkEnvironment() {
         $githubConfig = @is_dir('github/picfePHPMYSQL/cpanel-html-mysql-app/config') && @file_exists('github/picfePHPMYSQL/cpanel-html-mysql-app/config/config.php');
         $githubTests = @file_exists('github/picfePHPMYSQL/cpanel-html-mysql-app/tests/diagnostics.php');
         $githubSrc = @is_dir('github/picfePHPMYSQL/cpanel-html-mysql-app/src');
+        $githubIndex = @file_exists('github/picfePHPMYSQL/cpanel-html-mysql-app/index.php');
 
         $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/config/config.php: " . ($githubConfig ? 'FOUND' : 'MISSING') . "\n";
         $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/tests/diagnostics.php: " . ($githubTests ? 'FOUND' : 'MISSING') . "\n";
         $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/src/: " . ($githubSrc ? 'FOUND' : 'MISSING') . "\n";
+        $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/index.php: " . ($githubIndex ? 'FOUND' : 'MISSING') . "\n";
 
-        if ($githubConfig && $githubTests && $githubSrc) {
-            $debug .= "Complete PHP app found in github/ folder - ready to deploy\n";
+        if ($githubConfig && $githubTests && $githubSrc && $githubIndex) {
+            $debug .= "Complete PHP app found in github/ folder - will copy to root\n";
             $message = 'Environment check passed - PHP app found in github/ folder, ready to copy to root';
             return ['success' => true, 'message' => $debug . $message];
         } else {
             $issues[] = 'GitHub folder exists but missing required PHP app files';
         }
-    } else {
-        $issues[] = 'No github/ folder found with PHP app';
+    }
+
+    // Second priority: Check if PHP app is already properly deployed in root
+    if ($hasConfig && $hasTests && $hasSrc && file_exists('index.php')) {
+        $debug .= "PHP app already deployed in root directory\n";
+        $message = 'Environment check passed - PHP app already deployed in root';
+        return ['success' => true, 'message' => $debug . $message];
     }
 
     // Check PHP version
@@ -242,24 +242,15 @@ function copyFiles() {
         $currentDir = __DIR__;
         $message = "Working directory: $currentDir\n";
 
-        // Check if this is already a properly deployed PHP app in root
-        if (is_dir('config') && file_exists('config/config.php') &&
-            is_dir('src') && is_dir('tests') && file_exists('tests/diagnostics.php')) {
-
-            $message .= "PHP application files found in current directory\n";
-            $message .= "No file copying needed - app is already deployed\n";
-
-            return ['success' => true, 'message' => $message . 'PHP app deployment verified - ready to configure'];
-        }
-
-        // Check if github folder exists with the complete PHP app
+        // Always try to copy from GitHub if it exists - this ensures we have the latest version
         $source = 'github/picfePHPMYSQL/cpanel-html-mysql-app/';
         if (is_dir($source)) {
             $message .= "GitHub folder found - checking for PHP app structure\n";
 
         // Check for complete PHP app structure in github
             if (is_dir($source . 'config') && file_exists($source . 'config/config.php') &&
-                is_dir($source . 'src') && file_exists($source . 'tests/diagnostics.php')) {
+                is_dir($source . 'src') && file_exists($source . 'tests/diagnostics.php') &&
+                file_exists($source . 'index.php')) {
 
                 $message .= "Complete PHP app found in github/picfePHPMYSQL/cpanel-html-mysql-app/ folder\n";
                 $message .= "Copying PHP app from github/picfePHPMYSQL/cpanel-html-mysql-app/ to root directory...\n";
@@ -276,6 +267,17 @@ function copyFiles() {
             } else {
                 return ['success' => false, 'message' => $message . 'GitHub folder exists but does not contain complete PHP app structure'];
             }
+        }
+
+        // If no GitHub folder, check if PHP app is already properly deployed
+        if (is_dir('config') && file_exists('config/config.php') &&
+            is_dir('src') && is_dir('tests') && file_exists('tests/diagnostics.php') &&
+            file_exists('index.php')) {
+
+            $message .= "PHP application files found in current directory\n";
+            $message .= "No file copying needed - app is already deployed\n";
+
+            return ['success' => true, 'message' => $message . 'PHP app deployment verified - ready to configure'];
         }
 
         // If neither condition is met
