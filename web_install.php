@@ -382,8 +382,10 @@ function testConfiguration() {
 
         require_once 'config/config.php';
 
-        // Debug: output the database constants
-        $debug = "DB_HOST: " . (defined('DB_HOST') ? DB_HOST : 'NOT_DEFINED') . "\n";
+        // Debug: output the database constants and env vars
+        global $envVars;
+        $debug = "Env vars loaded: " . (isset($envVars) ? json_encode($envVars) : 'NONE') . "\n";
+        $debug .= "DB_HOST: " . (defined('DB_HOST') ? DB_HOST : 'NOT_DEFINED') . "\n";
         $debug .= "DB_USER: " . (defined('DB_USER') ? DB_USER : 'NOT_DEFINED') . "\n";
         $debug .= "DB_PASS: " . (defined('DB_PASS') ? '***' : 'NOT_DEFINED') . "\n";
         $debug .= "DB_NAME: " . (defined('DB_NAME') ? DB_NAME : 'NOT_DEFINED') . "\n";
