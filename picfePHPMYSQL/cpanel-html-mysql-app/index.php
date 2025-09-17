@@ -175,6 +175,118 @@ try {
         exit;
     }
 
+    if ($path === '/check-email') {
+        require_once __DIR__ . '/src/controllers/CheckEmailController.php';
+        $ctrl = new CheckEmailController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/verify-email') {
+        require_once __DIR__ . '/src/controllers/EmailVerificationController.php';
+        $ctrl = new EmailVerificationController();
+        $ctrl->verify();
+        exit;
+    }
+
+    if ($path === '/forgot-password') {
+        require_once __DIR__ . '/src/controllers/PasswordResetController.php';
+        $ctrl = new PasswordResetController();
+        $ctrl->forgot();
+        exit;
+    }
+
+    if ($path === '/reset-password') {
+        require_once __DIR__ . '/src/controllers/PasswordResetController.php';
+        $ctrl = new PasswordResetController();
+        $ctrl->reset();
+        exit;
+    }
+
+    if ($path === '/pricing') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->index();
+        exit;
+    }
+
+    if ($path === '/pricing/packages') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->packages();
+        exit;
+    }
+
+    if ($path === '/pricing/initiate') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->initiate();
+        exit;
+    }
+
+    if ($path === '/pricing/notify') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->notify();
+        exit;
+    }
+
+    if ($path === '/pricing/test-itn') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->testItn();
+        exit;
+    }
+
+    if ($path === '/pricing/success') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->success();
+        exit;
+    }
+
+    if ($path === '/pricing/cancelled') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->cancelled();
+        exit;
+    }
+
+    if ($path === '/pricing/iframe-success') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->iframeSuccess();
+        exit;
+    }
+
+    if ($path === '/pricing/iframe-cancel') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->iframeCancel();
+        exit;
+    }
+
+    if ($path === '/pricing/popup-success') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->popupSuccess();
+        exit;
+    }
+
+    if ($path === '/pricing/popup-cancel') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->popupCancel();
+        exit;
+    }
+
+    if ($path === '/pricing/status') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->paymentStatus();
+        exit;
+    }
+
     if ($path === '/admin') {
         require_once __DIR__ . '/src/controllers/AdminController.php';
         $ctrl = new AdminController();
