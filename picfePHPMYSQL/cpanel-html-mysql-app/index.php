@@ -177,7 +177,7 @@ try {
 
     // API routes
     if (strpos($path, '/api/') === 0) {
-        require_once __DIR__ . '/api.php';
+        require_once __DIR__ . '/api/index.php';
         exit;
     }
 
