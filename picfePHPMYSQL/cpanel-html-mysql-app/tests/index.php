@@ -105,14 +105,34 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
         </div>
         <div class="content">
             <p class="description">
-                Welcome to the comprehensive test suite for the Interactive Prompt Enhancement Agent.
+                Welcome to the comprehensive test suite for PictureThis.
                 Choose an option below to get started.
             </p>
 
+            <div style="text-align: left; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                <h3 style="margin-top: 0; color: #007cba;">🚀 Quick Deployment Checklist</h3>
+                <ol style="margin-bottom: 0;">
+                    <li>Run <a href="../web_install.php?install=confirm" style="color: #007cba;">Web Installer</a> to set up the application</li>
+                    <li>Run <a href="diagnostics.php" style="color: #007cba;">Full Diagnostics</a> to verify everything works</li>
+                    <li>Access your <a href="../" style="color: #007cba;">live application</a></li>
+                </ol>
+            </div>
+
+            <h3 style="text-align: left; color: #333;">🔧 Diagnostic Tools</h3>
+            <a href="diagnostics.php" class="btn btn-primary" style="width: 200px;">Full System Diagnostics</a>
+            <a href="database.php" class="btn btn-info" style="width: 200px;">Database Tests</a>
+            <a href="email.php" class="btn btn-success" style="width: 200px;">Email Tests</a>
+            <a href="api.php" class="btn btn-secondary" style="width: 200px;">API Tests</a>
+
+            <h3 style="text-align: left; color: #333; margin-top: 30px;">⚙️ Legacy Tools</h3>
             <a href="web_runner.php" class="btn btn-primary">Run All Tests</a>
             <a href="status.php" class="btn btn-info">Environment Status</a>
             <a href="update_schema.php" class="btn btn-success">Update Schema</a>
-            <a href="../" class="btn btn-secondary">Back to App</a>
+
+            <div style="margin-top: 30px;">
+                <a href="../" class="btn btn-secondary">Back to App</a>
+                <a href="README.md" class="btn btn-secondary" style="margin-left: 10px;">Documentation</a>
+            </div>
         </div>
     </div>
 </body>

@@ -51,6 +51,122 @@ tests/
 - Error reporting with stack traces and debugging info
 - Mobile-responsive interface for all devices
 
+### 🔧 New Diagnostic Tools
+
+#### Full System Diagnostics (`diagnostics.php`)
+**Purpose**: Complete system health check for production deployment
+**Tests**:
+- Environment (PHP version, extensions, memory)
+- Configuration loading and validation
+- Database connectivity and table structure
+- File system permissions and security
+- Security settings and CSRF protection
+- Email/SMTP configuration and connectivity
+- API endpoints accessibility
+- Agent functionality and OpenRouter integration
+
+**Usage**: Open in browser and click "Run Full Diagnostics"
+
+#### Database Diagnostics (`database.php`)
+**Purpose**: Detailed database connectivity and structure testing
+**Tests**:
+- Connection establishment and authentication
+- Basic query execution and performance
+- Required table existence verification
+- Table structure and column validation
+- Query performance benchmarking
+
+**Usage**: Open in browser and click "Run Database Tests"
+
+#### Email Diagnostics (`email.php`)
+**Purpose**: SMTP configuration and email functionality testing
+**Tests**:
+- SMTP settings validation
+- Server connectivity testing
+- PHP mail() function availability
+- Manual email sending capability
+
+**Usage**:
+1. Open in browser and click "Run Email Tests"
+2. Use manual email test to send actual test emails
+
+#### API Diagnostics (`api.php`)
+**Purpose**: API endpoints and static file accessibility testing
+**Tests**:
+- Endpoint HTTP response validation
+- Static file serving verification
+- Content type checking
+- CORS and security headers
+
+**Usage**: Open in browser and click "Run API Tests"
+
+## 🚀 Deployment Process
+
+### Step 1: Code Check-in
+```bash
+# In your local development environment
+git add .
+git commit -m "Deployment: [description]"
+git push origin main
+```
+
+### Step 2: Server Update
+```bash
+# On your server via SSH or cPanel File Manager
+cd /path/to/github/folder
+git pull origin main
+```
+
+### Step 3: Web Installation
+1. Copy `web_install.php` from GitHub folder to root directory
+2. Open `http://yourdomain.com/web_install.php?install=confirm` in browser
+3. Follow the installation wizard:
+   - ✅ Environment check
+   - ✅ File copying from GitHub folder
+   - ✅ Configuration setup
+   - ✅ Production mode activation
+   - ✅ Basic configuration test
+4. Delete `web_install.php` after successful installation
+
+### Step 4: Run Comprehensive Diagnostics
+1. Open `http://yourdomain.com/tests/diagnostics.php` in browser
+2. Click "Run Full Diagnostics"
+3. Verify all tests pass (target: 90%+ success rate)
+4. Review any warnings or failures
+
+### Step 5: Run Specialized Tests (if needed)
+If full diagnostics show issues, run specific tests:
+- **Database issues**: `tests/database.php`
+- **Email problems**: `tests/email.php`
+- **API problems**: `tests/api.php`
+
+### Step 6: Launch Application
+- If all diagnostics pass, the application is ready for production
+- Access your main application at the root URL
+- Monitor server logs for any runtime issues
+
+## 📊 Test Results Guide
+
+### ✅ PASS (Green)
+- Test completed successfully
+- No action required
+- System component working correctly
+
+### ❌ FAIL (Red)
+- Test failed - requires immediate attention
+- Check details for specific error messages
+- Fix configuration or code issues before launch
+
+### ⚠️ WARNING (Yellow)
+- Test passed but with performance concerns
+- May indicate optimization opportunities
+- Review and address if affecting user experience
+
+### ℹ️ INFO (Blue)
+- Informational results
+- No action required
+- Useful for debugging and monitoring
+
 ## Prerequisites
 
 1. **Database Setup**: Ensure your test database is properly configured

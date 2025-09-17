@@ -25,6 +25,40 @@ if (!file_exists($configFile)) {
 $config = require $configFile;
 
 // ==========================================
+// LOAD ENVIRONMENT VARIABLES FROM .env FILE
+// ==========================================
+// Load .env file from parent directory (outside web root for security)
+$envFile = __DIR__ . '/../.env';
+$envVars = [];
+
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        list($key, $value) = explode('=', $line, 2);
+        $envVars[trim($key)] = trim($value);
+    }
+}
+
+// Function to get environment variable (from .env file or server env)
+function getEnvVar($key, $default = null) {
+    global $envVars;
+
+    // First check .env file
+    if (isset($envVars[$key])) {
+        return $envVars[$key];
+    }
+
+    // Then check server environment variables
+    $serverKey = 'PICTURETHIS_' . strtoupper($key);
+    if (getenv($serverKey) !== false) {
+        return getenv($serverKey);
+    }
+
+    return $default;
+}
+
+// ==========================================
 // ENVIRONMENT VARIABLE OVERRIDES (Production Only)
 // ==========================================
 // Allow environment variables to override config values (useful for production)

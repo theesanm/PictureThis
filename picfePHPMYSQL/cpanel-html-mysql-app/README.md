@@ -31,17 +31,80 @@ cpanel-html-mysql-app
 └── README.md                    # Project documentation
 ```
 
-## Setup Instructions
+## Environment Configuration
 
-1. **Clone the Repository**: Download or clone the repository to your local machine or server.
+This application uses environment variables to securely store sensitive configuration data. The configuration is split between development and production environments.
 
-2. **Database Configuration**: Update the `config/config.php` file with your MySQL database connection details.
+### Local Development Setup
 
-3. **Database Setup**: Execute the SQL commands in `sql/schema.sql` to create the necessary database tables.
+1. **Copy the environment file**:
+   ```bash
+   cp .env.example .env
+   ```
 
-4. **File Permissions**: Ensure that the necessary files and directories have the correct permissions for the web server to access them.
+2. **Edit `.env` file** with your local credentials:
+   ```bash
+   # Database
+   DB_HOST=127.0.0.1:3306
+   DB_USER=your_db_user
+   DB_PASS=your_db_password
+   DB_NAME=your_db_name
 
-5. **Access the Application**: Navigate to the `public/index.php` file in your web browser to access the application.
+   # PayFast
+   PAYFAST_MERCHANT_ID=your_merchant_id
+   PAYFAST_MERCHANT_KEY=your_merchant_key
+   PAYFAST_PASSPHRASE=your_passphrase
+
+   # OpenRouter API
+   OPENROUTER_API_KEY=your_api_key
+
+   # Email/SMTP
+   SMTP_HOST=your_smtp_host
+   SMTP_USERNAME=your_smtp_username
+   SMTP_PASSWORD=your_smtp_password
+   SMTP_PORT=587
+   SMTP_FROM_EMAIL=your_email@domain.com
+   ```
+
+3. **Run the setup script**:
+   ```bash
+   php setup_env.php
+   ```
+
+### cPanel Production Setup
+
+#### Option 1: Using .env file (Recommended)
+1. **Upload your project** to cPanel's `public_html` directory
+2. **Create `.env` file** in your home directory (`/home/username/.env`):
+   ```bash
+   # Via cPanel File Manager or SSH
+   nano /home/username/.env
+   ```
+3. **Add your production credentials** to the `.env` file
+
+#### Option 2: Using cPanel Environment Variables
+1. **Go to cPanel** → **Software** → **MultiPHP INI Editor**
+2. **Add environment variables** with `PICTURETHIS_` prefix:
+   ```
+   PICTURETHIS_DB_PASS=your_production_db_password
+   PICTURETHIS_PAYFAST_MERCHANT_ID=your_merchant_id
+   PICTURETHIS_OPENROUTER_API_KEY=your_api_key
+   ```
+
+### Security Notes
+
+- ✅ **Never commit** `.env` files to version control
+- ✅ **Store `.env` outside** your web root directory
+- ✅ **Use strong passwords** for all services
+- ✅ **Regularly rotate** API keys and credentials
+- ✅ **Test configuration** after deployment
+
+### Configuration Files
+
+- `config/config.php` - Main configuration loader
+- `config/development.php` - Development environment settings
+- `config/production.php` - Production environment settings
+- `.env.example` - Example environment file template
 
 ## Usage Guidelines
 
