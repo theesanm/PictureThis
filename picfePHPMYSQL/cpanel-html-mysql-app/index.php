@@ -182,6 +182,34 @@ try {
         exit;
     }
 
+    if ($path === '/admin/users') {
+        require_once __DIR__ . '/src/controllers/AdminController.php';
+        $ctrl = new AdminController();
+        $ctrl->users();
+        exit;
+    }
+
+    if ($path === '/admin/credits') {
+        require_once __DIR__ . '/src/controllers/AdminController.php';
+        $ctrl = new AdminController();
+        $ctrl->credits();
+        exit;
+    }
+
+    if ($path === '/admin/settings') {
+        require_once __DIR__ . '/src/controllers/AdminController.php';
+        $ctrl = new AdminController();
+        $ctrl->settings();
+        exit;
+    }
+
+    if ($path === '/admin/analytics') {
+        require_once __DIR__ . '/src/controllers/AdminController.php';
+        $ctrl = new AdminController();
+        $ctrl->analytics();
+        exit;
+    }
+
     // API routes
     if (strpos($path, '/api/') === 0) {
         require_once __DIR__ . '/api/index.php';
