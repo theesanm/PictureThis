@@ -14,6 +14,19 @@ $csrfToken = $csrf->generateToken();
 
 echo "=== Testing Agent API with Authentication ===\n\n";
 
+// Check if cookies file is writable
+$cookiesFile = 'cookies.txt';
+if (file_exists($cookiesFile)) {
+    unlink($cookiesFile);
+}
+
+if (!is_writable(dirname($cookiesFile) ?: '.')) {
+    echo "❌ Directory is not writable for cookies file\n";
+    exit(1);
+}
+
+echo "Directory is writable for cookies\n\n";
+
 // Step 1: Login to get session
 echo "Step 1: Logging in...\n";
 $loginData = [
@@ -30,13 +43,19 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $loginPostData);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_COOKIEJAR, 'cookies.txt');
+curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/x-www-form-urlencoded'
 ]);
+curl_setopt($ch, CURLOPT_HEADER, true); // Include headers in response
 
 $loginResponse = curl_exec($ch);
 $loginHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+// Separate headers from body for login
+$loginHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$loginHeaders = substr($loginResponse, 0, $loginHeaderSize);
+$loginBody = substr($loginResponse, $loginHeaderSize);
 
 if (curl_errno($ch)) {
     echo "❌ Login failed: " . curl_error($ch) . "\n";
@@ -47,14 +66,23 @@ if (curl_errno($ch)) {
 curl_close($ch);
 
 echo "✅ Login completed (HTTP $loginHttpCode)\n";
+echo "Login Response Headers:\n" . $loginHeaders . "\n";
+echo "Login Response Body:\n" . $loginBody . "\n\n";
 
 // Debug: Check if cookies were saved
-if (file_exists('cookies.txt')) {
+if (file_exists($cookiesFile)) {
     echo "Cookies file created\n";
-    $cookies = file_get_contents('cookies.txt');
+    $cookies = file_get_contents($cookiesFile);
     echo "Cookies content: " . $cookies . "\n";
 } else {
     echo "❌ Cookies file not created\n";
+    // Try to manually extract session cookie from headers
+    if (preg_match('/Set-Cookie: ([^;]+)/', $loginHeaders, $matches)) {
+        $sessionCookie = $matches[1];
+        echo "Found session cookie in headers: $sessionCookie\n";
+        file_put_contents($cookiesFile, "# Netscape HTTP Cookie File\n$baseUrl\tFALSE\t/\tFALSE\t0\t" . str_replace('=', "\t", $sessionCookie) . "\n");
+        echo "Manually saved session cookie to file\n";
+    }
 }
 
 echo "\n";
@@ -88,7 +116,7 @@ curl_setopt($ch2, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
 curl_setopt($ch2, CURLOPT_POST, true);
 curl_setopt($ch2, CURLOPT_POSTFIELDS, $jsonPayload);
 curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch2, CURLOPT_COOKIEFILE, 'cookies.txt');
+curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
 curl_setopt($ch2, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json'
 ]);
@@ -113,7 +141,7 @@ curl_close($ch2);
 
 echo "API Request Headers:\n";
 echo "Content-Type: application/json\n";
-echo "Cookies from file: " . (file_exists('cookies.txt') ? file_get_contents('cookies.txt') : 'NO COOKIES FILE') . "\n\n";
+echo "Cookies from file: " . (file_exists($cookiesFile) ? file_get_contents($cookiesFile) : 'NO COOKIES FILE') . "\n\n";
 
 echo "API Response Headers (HTTP $apiHttpCode):\n";
 echo $headers . "\n";
@@ -136,8 +164,8 @@ if ($apiHttpCode === 200) {
 }
 
 // Clean up
-if (file_exists('cookies.txt')) {
-    unlink('cookies.txt');
+if (file_exists($cookiesFile)) {
+    unlink($cookiesFile);
 }
 
 echo "\n=== Test Complete ===\n";
