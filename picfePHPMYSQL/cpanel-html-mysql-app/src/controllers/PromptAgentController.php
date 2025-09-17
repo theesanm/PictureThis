@@ -230,7 +230,13 @@ class PromptAgentController {
                 $pdo->prepare('DELETE FROM prompt_agent_sessions WHERE id = ?')
                     ->execute([$sessionId]);
                 
-                $this->sendJsonResponse(['success' => false, 'message' => 'Failed to generate AI response. Please try again.'], 500);
+                // Provide specific error message for API key issues
+                $errorMessage = 'Failed to generate AI response. Please try again.';
+                if (strpos($e->getMessage(), 'API key not configured') !== false) {
+                    $errorMessage = 'AI service is temporarily unavailable. Please contact support.';
+                }
+                
+                $this->sendJsonResponse(['success' => false, 'message' => $errorMessage], 500);
             }
 
         } catch (Exception $e) {
@@ -644,8 +650,10 @@ class PromptAgentController {
                        (defined('OPENROUTER_API_KEY_RUNTIME') ? 'OPENROUTER_API_KEY_RUNTIME' :
                        (defined('OPENROUTER_API_KEY') ? 'OPENROUTER_API_KEY' : 'getenv')));
         $this->debugLog('API Key length: ' . strlen($apiKey ?? ''));
-        if (!$apiKey) {
-            throw new Exception('OpenRouter API key not configured');
+        
+        if (!$apiKey || trim($apiKey) === '') {
+            $this->debugLog('ERROR: OpenRouter API key is empty or not configured');
+            throw new Exception('OpenRouter API key not configured. Please contact administrator.');
         }
 
         // Build conversation context
