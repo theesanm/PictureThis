@@ -1,45 +1,86 @@
 <?php
-// Test the actual agent API endpoint via HTTP
-// This generates a curl command to test the real endpoint
+// Test the agent API with proper authentication
+// This script logs in first, then tests the agent endpoint
 
-// Start session FIRST
-session_start();
+// Test user credentials (from setup_database.php)
+$testEmail = 'admin@picturethis.com';
+$testPassword = 'admin123';
+$baseUrl = 'https://demo.cfox.co.za';
 
-// Simulate logged in user
-$_SESSION['user'] = [
-    'id' => 1,
-    'email' => 'test@example.com'
-];
-
-// Generate CSRF token
+// Generate CSRF token for login
 require_once 'src/utils/CSRF.php';
 $csrf = new CSRF();
 $csrfToken = $csrf->generateToken();
 
-// Simulate the JSON payload from the frontend
-$testPayload = [
-    'prompt' => 'A beautiful sunset over mountains',
+echo "=== Testing Agent API with Authentication ===\n\n";
+
+// Step 1: Login to get session
+echo "Step 1: Logging in...\n";
+$loginData = [
+    'email' => $testEmail,
+    'password' => $testPassword,
     'csrf_token' => $csrfToken
 ];
 
-// Get the base URL (adjust if needed)
-$baseUrl = 'https://demo.cfox.co.za'; // Change this to your actual domain
-$endpoint = '/api/prompt-agent/start';
+$loginCommand = "curl -X POST '{$baseUrl}/login' " .
+    "-H 'Content-Type: application/x-www-form-urlencoded' " .
+    "-d 'email={$testEmail}&password={$testPassword}&csrf_token={$csrfToken}' " .
+    "-c cookies.txt -L -s";
 
-// Create the curl command
-$jsonPayload = json_encode($testPayload);
-$curlCommand = "curl -X POST '{$baseUrl}{$endpoint}' -H 'Content-Type: application/json' -d '{$jsonPayload}'";
+echo "Login command: $loginCommand\n";
+exec($loginCommand, $loginOutput, $loginReturnCode);
 
-echo "=== Testing Agent API Endpoint via HTTP ===\n\n";
-echo "Generated curl command:\n";
-echo $curlCommand . "\n\n";
-echo "Run this command to test the actual endpoint:\n";
-echo "(This will properly populate php://input with the JSON payload)\n\n";
+if ($loginReturnCode !== 0) {
+    echo "❌ Login failed with return code: $loginReturnCode\n";
+    echo "Output: " . implode("\n", $loginOutput) . "\n";
+    exit(1);
+}
 
-// Also show what we're sending
-echo "Payload being sent:\n";
-echo $jsonPayload . "\n\n";
+echo "✅ Login completed\n\n";
 
-echo "Expected result: The endpoint should process the prompt and return a success response.\n";
-echo "If it fails with 'Original prompt is required', then the issue is in the web server configuration.\n";
+// Step 2: Test the agent API with the session cookie
+echo "Step 2: Testing agent API...\n";
+
+// Generate new CSRF token for the API call
+$csrfToken2 = $csrf->generateToken();
+
+$apiData = [
+    'prompt' => 'A beautiful sunset over mountains',
+    'csrf_token' => $csrfToken2
+];
+
+$jsonPayload = json_encode($apiData);
+$apiCommand = "curl -X POST '{$baseUrl}/api/prompt-agent/start' " .
+    "-H 'Content-Type: application/json' " .
+    "-d '{$jsonPayload}' " .
+    "-b cookies.txt -s";
+
+echo "API command: $apiCommand\n";
+echo "Payload: $jsonPayload\n\n";
+
+exec($apiCommand, $apiOutput, $apiReturnCode);
+
+echo "API Response:\n";
+echo implode("\n", $apiOutput) . "\n\n";
+
+if ($apiReturnCode === 0) {
+    $response = json_decode(implode("\n", $apiOutput), true);
+    if ($response && isset($response['success']) && $response['success']) {
+        echo "✅ Agent API test PASSED!\n";
+    } else {
+        echo "❌ Agent API test FAILED!\n";
+        if ($response && isset($response['message'])) {
+            echo "Error: " . $response['message'] . "\n";
+        }
+    }
+} else {
+    echo "❌ API call failed with return code: $apiReturnCode\n";
+}
+
+// Clean up
+if (file_exists('cookies.txt')) {
+    unlink('cookies.txt');
+}
+
+echo "\n=== Test Complete ===\n";
 ?>
