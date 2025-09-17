@@ -8,7 +8,18 @@
 // For local development: set to false
 // For production server: set to true
 if (!defined('IS_PRODUCTION')) {
-    define('IS_PRODUCTION', false); // true = production, false = development
+    // Auto-detect production environment based on server name or URL
+    $isProductionServer = (
+        isset($_SERVER['HTTP_HOST']) &&
+        (strpos($_SERVER['HTTP_HOST'], 'demo.cfox.co.za') !== false ||
+         strpos($_SERVER['HTTP_HOST'], 'cfox.co.za') !== false)
+    ) ||
+    (isset($_SERVER['SERVER_NAME']) &&
+        (strpos($_SERVER['SERVER_NAME'], 'demo.cfox.co.za') !== false ||
+         strpos($_SERVER['SERVER_NAME'], 'cfox.co.za') !== false)
+    );
+
+    define('IS_PRODUCTION', $isProductionServer);
 }
 
 // ==========================================
@@ -65,7 +76,9 @@ define('IMAGE_RETENTION_DAYS', $config['images']['retention_days'] ?? 7);
 define('MIN_IMAGES_PER_USER', $config['images']['min_images_per_user'] ?? 3);
 
 // Agent configuration
-define('AGENT_SESSION_TIMEOUT_MINUTES', $config['agent']['session_timeout_minutes'] ?? 30);
+if (!defined('AGENT_SESSION_TIMEOUT_MINUTES')) {
+    define('AGENT_SESSION_TIMEOUT_MINUTES', $config['agent']['session_timeout_minutes'] ?? 30);
+}
 
 // OpenRouter App Title
 define('OPENROUTER_APP_TITLE', 'PictureThis AI');

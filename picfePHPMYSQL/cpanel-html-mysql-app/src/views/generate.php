@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var sessionExpiryTime = null;
   
   // Agent session timeout configuration (in minutes)
-  const AGENT_SESSION_TIMEOUT_MINUTES = <?php echo AGENT_SESSION_TIMEOUT_MINUTES; ?>;
+  const AGENT_SESSION_TIMEOUT_MINUTES = <?php echo defined('AGENT_SESSION_TIMEOUT_MINUTES') ? AGENT_SESSION_TIMEOUT_MINUTES : 30; ?>;
 
   // Toggle guidance function
   window.toggleGuidance = function() {
