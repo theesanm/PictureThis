@@ -8,16 +8,45 @@
 // For local development: set to false
 // For production server: set to true
 if (!defined('IS_PRODUCTION')) {
-    // Auto-detect production environment based on server name or URL
-    $isProductionServer = (
-        isset($_SERVER['HTTP_HOST']) &&
+    // Auto-detect production environment based on multiple indicators
+    $isProductionServer = false;
+
+    // Check server hostname/domain
+    if (isset($_SERVER['HTTP_HOST']) &&
         (strpos($_SERVER['HTTP_HOST'], 'demo.cfox.co.za') !== false ||
-         strpos($_SERVER['HTTP_HOST'], 'cfox.co.za') !== false)
-    ) ||
-    (isset($_SERVER['SERVER_NAME']) &&
+         strpos($_SERVER['HTTP_HOST'], 'cfox.co.za') !== false)) {
+        $isProductionServer = true;
+    }
+
+    if (isset($_SERVER['SERVER_NAME']) &&
         (strpos($_SERVER['SERVER_NAME'], 'demo.cfox.co.za') !== false ||
-         strpos($_SERVER['SERVER_NAME'], 'cfox.co.za') !== false)
-    );
+         strpos($_SERVER['SERVER_NAME'], 'cfox.co.za') !== false)) {
+        $isProductionServer = true;
+    }
+
+    // Check document root for production indicators
+    if (isset($_SERVER['DOCUMENT_ROOT']) &&
+        (strpos($_SERVER['DOCUMENT_ROOT'], 'cfoxcozj') !== false ||
+         strpos($_SERVER['DOCUMENT_ROOT'], 'demo.cfox.co.za') !== false)) {
+        $isProductionServer = true;
+    }
+
+    // Check if we're in a cPanel environment (common for production)
+    if (isset($_SERVER['SCRIPT_NAME']) &&
+        (strpos($_SERVER['SCRIPT_NAME'], '/home/cfoxcozj/') !== false ||
+         getenv('HOME') && strpos(getenv('HOME'), 'cfoxcozj') !== false)) {
+        $isProductionServer = true;
+    }
+
+    // Check for force production file
+    if (file_exists(__DIR__ . '/../.force_production')) {
+        $isProductionServer = true;
+    }
+
+    // Manual override via environment variable
+    if (getenv('FORCE_PRODUCTION') === 'true') {
+        $isProductionServer = true;
+    }
 
     define('IS_PRODUCTION', $isProductionServer);
 }
