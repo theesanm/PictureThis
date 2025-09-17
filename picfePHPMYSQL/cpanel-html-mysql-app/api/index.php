@@ -1,25 +1,7 @@
 <?php
 /**
- * AP    elseif ($apiPath === 'prompt-agent/start') {
-        require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
-        $controller = new PromptAgentController();
-        $controller->startSession();
-    }
-    elseif ($apiPath === 'prompt-agent/message') {
-        require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
-        $controller = new PromptAgentController();
-        $controller->sendMessage();
-    }
-    elseif ($apiPath === 'prompt-agent/continue') {
-        require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
-        $controller = new PromptAgentController();
-        $controller->continueSession();
-    }
-    elseif ($apiPath === 'prompt-agent/end') {
-        require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
-        $controller = new PromptAgentController();
-        $controller->endSession();
-    }tes API requests to appropriate controllers
+ * API Router
+ * Routes API requests to appropriate controllers
  */
 
 // Load configuration first
@@ -35,6 +17,11 @@ try {
         require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
         $controller = new PromptAgentController();
         $controller->startSession();
+    }
+    elseif ($apiPath === 'prompt-agent/message') {
+        require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
+        $controller = new PromptAgentController();
+        $controller->sendMessage();
     }
     elseif ($apiPath === 'prompt-agent/continue') {
         require_once __DIR__ . '/../src/controllers/PromptAgentController.php';
