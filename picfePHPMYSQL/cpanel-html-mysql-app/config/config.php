@@ -25,99 +25,44 @@ if (!file_exists($configFile)) {
 $config = require $configFile;
 
 // ==========================================
-// LOAD ENVIRONMENT VARIABLES FROM .env FILE
-// ==========================================
-// Load .env file from parent directory (outside web root for security)
-$envFile = __DIR__ . '/../.env';
-$envVars = [];
-
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue; // Skip comments
-        list($key, $value) = explode('=', $line, 2);
-        $envVars[trim($key)] = trim($value);
-    }
-}
-
-// Function to get environment variable (from .env file or server env)
-function getEnvVar($key, $default = null) {
-    global $envVars;
-
-    // First check .env file
-    if (isset($envVars[$key])) {
-        return $envVars[$key];
-    }
-
-    // Then check server environment variables
-    $serverKey = 'PICTURETHIS_' . strtoupper($key);
-    if (getenv($serverKey) !== false) {
-        return getenv($serverKey);
-    }
-
-    return $default;
-}
-
-// ==========================================
-// ENVIRONMENT VARIABLE OVERRIDES (Production Only)
-// ==========================================
-// Allow environment variables to override config values (useful for production)
-
-function getConfigValue($section, $key, $default = null) {
-    global $config;
-
-    // First check environment variables (only in production)
-    if (IS_PRODUCTION) {
-        $envKey = strtoupper($section . '_' . $key);
-        $envValue = getenv($envKey);
-        if ($envValue !== false) {
-            return $envValue;
-        }
-    }
-
-    // Then check config array
-    return $config[$section][$key] ?? $default;
-}
-
-// ==========================================
-// DEFINE CONSTANTS
+// DEFINE CONSTANTS - Load directly from config
 // ==========================================
 
 // Application settings
 if (!defined('APP_ENV')) define('APP_ENV', $appEnv);
-if (!defined('APP_NAME')) define('APP_NAME', getConfigValue('app', 'name', 'PictureThis'));
-if (!defined('APP_URL')) define('APP_URL', getConfigValue('app', 'url', 'http://localhost:8000'));
-if (!defined('APP_DEBUG')) define('APP_DEBUG', getConfigValue('app', 'debug', !IS_PRODUCTION));
+if (!defined('APP_NAME')) define('APP_NAME', $config['app']['name'] ?? 'PictureThis');
+if (!defined('APP_URL')) define('APP_URL', $config['app']['url'] ?? 'http://localhost:8000');
+if (!defined('APP_DEBUG')) define('APP_DEBUG', $config['app']['debug'] ?? !IS_PRODUCTION);
 
-// Database configuration
-if (!defined('DB_HOST')) define('DB_HOST', getConfigValue('database', 'host', '127.0.0.1'));
-if (!defined('DB_USER')) define('DB_USER', getConfigValue('database', 'user', 'root'));
-if (!defined('DB_PASS')) define('DB_PASS', getConfigValue('database', 'pass', ''));
-if (!defined('DB_NAME')) define('DB_NAME', getConfigValue('database', 'name', 'picturethis'));
+// Database configuration - Load directly from config
+if (!defined('DB_HOST')) define('DB_HOST', $config['database']['host'] ?? '127.0.0.1');
+if (!defined('DB_USER')) define('DB_USER', $config['database']['user'] ?? 'root');
+if (!defined('DB_PASS')) define('DB_PASS', $config['database']['pass'] ?? '');
+if (!defined('DB_NAME')) define('DB_NAME', $config['database']['name'] ?? 'picturethis');
 
 // PayFast configuration
-define('PAYFAST_MERCHANT_ID', getConfigValue('payfast', 'merchant_id', ''));
-define('PAYFAST_MERCHANT_KEY', getConfigValue('payfast', 'merchant_key', ''));
-define('PAYFAST_PASSPHRASE', getConfigValue('payfast', 'passphrase', ''));
-define('PAYFAST_ENV', getConfigValue('payfast', 'env', 'development'));
+define('PAYFAST_MERCHANT_ID', $config['payfast']['merchant_id'] ?? '');
+define('PAYFAST_MERCHANT_KEY', $config['payfast']['merchant_key'] ?? '');
+define('PAYFAST_PASSPHRASE', $config['payfast']['passphrase'] ?? '');
+define('PAYFAST_ENV', $config['payfast']['env'] ?? 'development');
 
 // OpenRouter configuration
-define('OPENROUTER_API_KEY', getConfigValue('openrouter', 'api_key', ''));
-define('OPENROUTER_APP_URL', getConfigValue('openrouter', 'app_url', ''));
-define('OPENROUTER_GEMINI_MODEL', getConfigValue('openrouter', 'gemini_model', 'google/gemini-2.5-flash-image-preview'));
-define('OPENROUTER_MODEL', getConfigValue('openrouter', 'model', 'openai/gpt-oss-20b:free'));
+define('OPENROUTER_API_KEY', $config['openrouter']['api_key'] ?? '');
+define('OPENROUTER_APP_URL', $config['openrouter']['app_url'] ?? '');
+define('OPENROUTER_GEMINI_MODEL', $config['openrouter']['gemini_model'] ?? 'google/gemini-2.5-flash-image-preview');
+define('OPENROUTER_MODEL', $config['openrouter']['model'] ?? 'openai/gpt-oss-20b:free');
 define('OPENROUTER_API_URL', 'https://openrouter.ai/api/v1/chat/completions');
 
 // Email configuration
-define('SMTP_HOST', getConfigValue('email', 'smtp_host', 'localhost'));
-define('SMTP_USERNAME', getConfigValue('email', 'smtp_username', ''));
-define('SMTP_PASSWORD', getConfigValue('email', 'smtp_password', ''));
-define('SMTP_PORT', getConfigValue('email', 'smtp_port', '587'));
-define('FROM_EMAIL', getConfigValue('email', 'from_email', 'noreply@localhost'));
+define('SMTP_HOST', $config['email']['smtp_host'] ?? 'localhost');
+define('SMTP_USERNAME', $config['email']['smtp_username'] ?? '');
+define('SMTP_PASSWORD', $config['email']['smtp_password'] ?? '');
+define('SMTP_PORT', $config['email']['smtp_port'] ?? '587');
+define('FROM_EMAIL', $config['email']['from_email'] ?? 'noreply@localhost');
 
 // Image configuration
-define('IMAGE_RETENTION_DAYS', getConfigValue('images', 'retention_days', 7));
-define('MIN_IMAGES_PER_USER', getConfigValue('images', 'min_images_per_user', 3));
+define('IMAGE_RETENTION_DAYS', $config['images']['retention_days'] ?? 7);
+define('MIN_IMAGES_PER_USER', $config['images']['min_images_per_user'] ?? 3);
 
 // OpenRouter App Title
 define('OPENROUTER_APP_TITLE', 'PictureThis AI');
