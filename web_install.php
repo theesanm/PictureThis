@@ -382,14 +382,21 @@ function testConfiguration() {
 
         require_once 'config/config.php';
 
+        // Debug: output the database constants
+        $debug = "DB_HOST: " . (defined('DB_HOST') ? DB_HOST : 'NOT_DEFINED') . "\n";
+        $debug .= "DB_USER: " . (defined('DB_USER') ? DB_USER : 'NOT_DEFINED') . "\n";
+        $debug .= "DB_PASS: " . (defined('DB_PASS') ? '***' : 'NOT_DEFINED') . "\n";
+        $debug .= "DB_NAME: " . (defined('DB_NAME') ? DB_NAME : 'NOT_DEFINED') . "\n";
+        $debug .= "IS_PRODUCTION: " . (defined('IS_PRODUCTION') ? (IS_PRODUCTION ? 'true' : 'false') : 'NOT_DEFINED') . "\n";
+
         // Test database connection
         require_once 'src/lib/db.php';
         $db = get_db();
         if (!$db) {
-            return ['success' => false, 'message' => 'Database connection failed'];
+            return ['success' => false, 'message' => 'Database connection failed. Debug: ' . $debug];
         }
 
-        return ['success' => true, 'message' => 'Configuration test passed'];
+        return ['success' => true, 'message' => 'Configuration test passed. Debug: ' . $debug];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Configuration test failed: ' . $e->getMessage()];
     }
