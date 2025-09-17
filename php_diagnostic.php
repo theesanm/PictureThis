@@ -1,8 +1,4 @@
 <?php
-/**
- * Simple PHP Diagnostic for cPanel
- */
-
 echo "<!DOCTYPE html>
 <html>
 <head>
@@ -22,18 +18,26 @@ echo "<!DOCTYPE html>
         <p>PHP Version: " . PHP_VERSION . "</p>
         <p>Current Directory: " . __DIR__ . "</p>
         <p>Working Directory: " . getcwd() . "</p>
-    </div>
+    </div>";
 
-    <div class='section " . (version_compare(PHP_VERSION, '8.0.0', '>=') ? 'success' : 'error') . "'>
+$php_class = version_compare(PHP_VERSION, '8.0.0', '>=') ? 'success' : 'error';
+$php_status = version_compare(PHP_VERSION, '8.0.0', '>=') ? '✅ PASS' : '❌ FAIL';
+
+echo "
+    <div class='section $php_class'>
         <h3>PHP Version Check</h3>
         <p>Current PHP Version: " . PHP_VERSION . "</p>
         <p>Required: PHP 8.0+</p>
-        <p>Status: " . (version_compare(PHP_VERSION, '8.0.0', '>=') ? '✅ PASS' : '❌ FAIL') . "</p>
-    </div>
+        <p>Status: $php_status</p>
+    </div>";
 
-    <div class='section " . (is_writable('.') ? 'success' : 'error') . "'>
+$write_class = is_writable('.') ? 'success' : 'error';
+$write_status = is_writable('.') ? '✅ YES' : '❌ NO';
+
+echo "
+    <div class='section $write_class'>
         <h3>Directory Permissions</h3>
-        <p>Current Directory Writable: " . (is_writable('.') ? '✅ YES' : '❌ NO') . "</p>
+        <p>Current Directory Writable: $write_status</p>
     </div>
 
     <div class='section'>
