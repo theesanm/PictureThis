@@ -47,8 +47,8 @@ try {
     echo "✅ Application files copied\n";
 
     // Copy diagnostic script from repository root
-    $diagnosticSrc = GITHUB_FOLDER . '/diagnostic.php';
-    $diagnosticDest = $destApp . '/diagnostic.php';
+    $diagnosticSrc = GITHUB_FOLDER . '/tests/diagnostic.php';
+    $diagnosticDest = $destApp . '/tests/diagnostic.php';
     if (file_exists($diagnosticSrc)) {
         copy($diagnosticSrc, $diagnosticDest);
         echo "✅ Diagnostic script copied\n";
@@ -67,8 +67,8 @@ try {
     }
 
     // Copy simple diagnostic script from repository root
-    $simpleDiagSrc = GITHUB_FOLDER . '/simple-diagnostic.php';
-    $simpleDiagDest = $destApp . '/simple-diagnostic.php';
+    $simpleDiagSrc = GITHUB_FOLDER . '/tests/simple-diagnostic.php';
+    $simpleDiagDest = $destApp . '/tests/simple-diagnostic.php';
     if (file_exists($simpleDiagSrc)) {
         copy($simpleDiagSrc, $simpleDiagDest);
         echo "✅ Simple diagnostic script copied\n";
@@ -191,5 +191,5 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 }
 
 echo "</pre>";
-echo "<p><a href='simple-diagnostic.php'>🔍 Run Simple Diagnostic</a> | <a href='diagnostic.php'>🔧 Run Full Diagnostic</a></p>";
+echo "<p><a href='tests/simple-diagnostic.php'>🔍 Run Simple Diagnostic</a> | <a href='tests/diagnostic.php'>🔧 Run Full Diagnostic</a></p>";
 ?>

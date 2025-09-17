@@ -190,7 +190,7 @@ if (empty($issues)) {
     echo "🎉 Your app should be working at: " . APP_URL . "\n";
     echo "\n📝 Next steps:\n";
     echo "   1. Test the homepage: " . APP_URL . "\n";
-    echo "   2. Run diagnostics: " . APP_URL . "/diagnostic.php\n";
+    echo "   2. Run diagnostics: " . APP_URL . "/tests/diagnostic.php\n";
     echo "   3. Check database: " . APP_URL . "/test_database.php\n";
     echo "   4. Remove this deploy.php file for security\n";
 } else {

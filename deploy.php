@@ -42,8 +42,8 @@ copyDirectory($sourceApp, $destApp, ['.git', '.gitignore', 'README.md', 'debug.l
 echo "✅ Application files copied\n";
 
 // Copy diagnostic script from repository root
-$diagnosticSrc = GITHUB_FOLDER . '/diagnostic.php';
-$diagnosticDest = $destApp . '/diagnostic.php';
+$diagnosticSrc = GITHUB_FOLDER . '/tests/diagnostic.php';
+$diagnosticDest = $destApp . '/tests/diagnostic.php';
 if (file_exists($diagnosticSrc)) {
     copy($diagnosticSrc, $diagnosticDest);
     echo "✅ Diagnostic script copied\n";

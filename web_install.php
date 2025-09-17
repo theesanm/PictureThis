@@ -196,11 +196,11 @@ function checkEnvironment() {
 
         // Check for the complete PHP app structure in github
         $githubConfig = @is_dir('github/config') && @file_exists('github/config/config.php');
-        $githubTests = @file_exists('github/diagnostic.php');
+        $githubTests = @file_exists('github/tests/diagnostics.php');
         $githubSrc = @is_dir('github/src');
 
         $debug .= "- github/config/config.php: " . ($githubConfig ? 'FOUND' : 'MISSING') . "\n";
-        $debug .= "- github/diagnostic.php: " . ($githubTests ? 'FOUND' : 'MISSING') . "\n";
+        $debug .= "- github/tests/diagnostics.php: " . ($githubTests ? 'FOUND' : 'MISSING') . "\n";
         $debug .= "- github/src/: " . ($githubSrc ? 'FOUND' : 'MISSING') . "\n";
 
         if ($githubConfig && $githubTests && $githubSrc) {
@@ -257,9 +257,9 @@ function copyFiles() {
         if (is_dir($source)) {
             $message .= "GitHub folder found - checking for PHP app structure\n";
 
-            // Check for complete PHP app structure in github
+        // Check for complete PHP app structure in github
             if (is_dir($source . 'config') && file_exists($source . 'config/config.php') &&
-                is_dir($source . 'src') && file_exists($source . 'diagnostic.php')) {
+                is_dir($source . 'src') && file_exists($source . 'tests/diagnostics.php')) {
 
                 $message .= "Complete PHP app found in github/ folder\n";
                 $message .= "Copying PHP app from github/ to root directory...\n";
@@ -317,14 +317,9 @@ function setupConfiguration() {
             mkdir('uploads', 0755, true);
         }
 
-        // Create tests directory only if it doesn't exist
+        // Ensure tests directory exists and has proper permissions
         if (!is_dir('tests')) {
             mkdir('tests', 0755, true);
-        }
-
-        // Copy diagnostic.php to tests/diagnostics.php if needed
-        if (file_exists('diagnostic.php') && !file_exists('tests/diagnostics.php')) {
-            copy('diagnostic.php', 'tests/diagnostics.php');
         }
 
         // Set proper permissions
@@ -342,7 +337,7 @@ function setupConfiguration() {
             }
         }
 
-        return ['success' => true, 'message' => 'Configuration setup completed'];
+        return ['success' => true, 'message' => 'Configuration setup completed - all diagnostic tools available in tests/ folder'];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Configuration setup failed: ' . $e->getMessage()];
     }
