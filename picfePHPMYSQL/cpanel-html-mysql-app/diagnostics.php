@@ -41,7 +41,8 @@ function addResult($test, $status, $message, $details = '') {
     global $results, $passed, $failed;
     $results[] = ['test' => $test, 'status' => $status, 'message' => $message, 'details' => $details];
     if ($status === 'PASS') $passed++;
-    else $failed++;
+    elseif ($status === 'FAIL') $failed++;
+    // INFO status doesn't count as failed
 }
 
 // Test 1: PHP Version
