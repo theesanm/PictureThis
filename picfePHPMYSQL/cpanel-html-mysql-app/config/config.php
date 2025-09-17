@@ -2,16 +2,27 @@
 // Simple Environment Configuration System
 // Change IS_PRODUCTION to switch between development and production
 
-// ==========================================
-// ENVIRONMENT SETTING - CHANGE THIS ONLY
-// ==========================================
-// For local development: set to false
-// For production server: set to true
-if (!defined('IS_PRODUCTION')) {
-    // Auto-detect production environment based on multiple indicators
-    $isProductionServer = false;
+// SIMPLE PRODUCTION DETECTION
+$isProductionServer = false;
 
-    // Check server hostname/domain
+// Check if we're on the production domain
+if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'demo.cfox.co.za') !== false) {
+    $isProductionServer = true;
+}
+
+// Check if we're on cPanel (production server)
+if (isset($_SERVER['DOCUMENT_ROOT']) && strpos($_SERVER['DOCUMENT_ROOT'], 'cfoxcozj') !== false) {
+    $isProductionServer = true;
+}
+
+// Check current directory for production indicators
+if (strpos(__DIR__, 'cfoxcozj') !== false) {
+    $isProductionServer = true;
+}
+
+// Enhanced production detection for cPanel environments
+if (!$isProductionServer) {
+    // Check server hostname/domain with multiple patterns
     if (isset($_SERVER['HTTP_HOST']) &&
         (strpos($_SERVER['HTTP_HOST'], 'demo.cfox.co.za') !== false ||
          strpos($_SERVER['HTTP_HOST'], 'cfox.co.za') !== false)) {
@@ -24,10 +35,9 @@ if (!defined('IS_PRODUCTION')) {
         $isProductionServer = true;
     }
 
-    // Check document root for production indicators
+    // Check document root for additional production indicators
     if (isset($_SERVER['DOCUMENT_ROOT']) &&
-        (strpos($_SERVER['DOCUMENT_ROOT'], 'cfoxcozj') !== false ||
-         strpos($_SERVER['DOCUMENT_ROOT'], 'demo.cfox.co.za') !== false)) {
+        strpos($_SERVER['DOCUMENT_ROOT'], 'demo.cfox.co.za') !== false) {
         $isProductionServer = true;
     }
 
@@ -73,17 +83,19 @@ if (!defined('IS_PRODUCTION')) {
             // Can't connect to production DB, stay with current detection
         }
     }
+}
 
-    // Check for force production file
-    if (file_exists(__DIR__ . '/../.force_production')) {
-        $isProductionServer = true;
-    }
+// MANUAL OVERRIDE: If you want to force production mode, create this file
+if (file_exists(__DIR__ . '/../.force_production')) {
+    $isProductionServer = true;
+}
 
-    // Manual override via environment variable
-    if (getenv('FORCE_PRODUCTION') === 'true') {
-        $isProductionServer = true;
-    }
+// Manual override via environment variable
+if (getenv('FORCE_PRODUCTION') === 'true') {
+    $isProductionServer = true;
+}
 
+if (!defined('IS_PRODUCTION')) {
     define('IS_PRODUCTION', $isProductionServer);
 }
 
