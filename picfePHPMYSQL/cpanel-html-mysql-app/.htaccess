@@ -1,3 +1,20 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Prevent access to sensitive files
+RewriteRule ^\.env$ - [F,L]
+RewriteRule ^config/.*\.php$ - [F,L]
+RewriteRule ^src/.*\.php$ - [F,L]
+
+# Allow direct access to certain directories and files
+RewriteRule ^(public|uploads|tests)/ - [L]
+RewriteRule ^(diagnostics\.php|minimal_test\.php|routing_test\.php|server_test\.php|phpinfo\.php|html_test\.html)$ - [L]
+
+# Rewrite all other requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . index.php [L]
+
 # Aggressive cache control to prevent JavaScript caching
 <IfModule mod_headers.c>
     Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
