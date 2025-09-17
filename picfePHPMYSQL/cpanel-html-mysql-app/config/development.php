@@ -21,7 +21,7 @@ return [
         'env' => 'development',
     ],
     'openrouter' => [
-        'api_key' => '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',
+        'api_key' => ' ',
         'app_url' => 'https://demo.cfox.co.za',
         'gemini_model' => 'google/gemini-2.5-flash-image-preview',
         'model' => '@preset/picture-this-agent',
