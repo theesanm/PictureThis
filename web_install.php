@@ -1,7 +1,7 @@
 <?php
 /**
- * PictureThis Web Installer
- * Run this script from your browser to install the application
+ * PictureThis PHP App Web Installer
+ * Deploys and configures the PHP application for production
  */
 
 // Handle AJAX requests first, before any HTML output
@@ -56,7 +56,7 @@ if (!isset($_GET['install']) || $_GET['install'] !== 'confirm') {
 echo "<!DOCTYPE html>
 <html>
 <head>
-    <title>PictureThis - Web Installer</title>
+    <title>PictureThis - PHP App Deployment</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -74,7 +74,7 @@ echo "<!DOCTYPE html>
 </head>
 <body>
     <div class='container'>
-        <h1>🔧 PictureThis Web Installer</h1>
+        <h1>🔧 PictureThis PHP App Deployment</h1>
         <div id='progress-container'>
             <div class='progress'>
                 <div class='progress-bar' id='progress-bar' style='width: 0%'></div>
@@ -87,7 +87,7 @@ echo "<!DOCTYPE html>
         let currentStep = 0;
         const steps = [
             'Checking environment...',
-            'Copying files from GitHub folder...',
+            'Verifying PHP app deployment...',
             'Setting up configuration...',
             'Setting production mode...',
             'Testing configuration...',
@@ -225,55 +225,62 @@ function checkEnvironment() {
     if (empty($issues)) {
         $message = 'Environment check passed';
         if ($hasGithub) {
-            $message .= ' - GitHub folder found with proper structure';
+            $message .= ' - GitHub folder found with PHP app structure';
         } elseif ($hasConfig && $hasTests) {
-            $message .= ' - Application already deployed';
+            $message .= ' - PHP app already deployed in root';
         }
         return ['success' => true, 'message' => $debug . $message];
     } else {
-        return ['success' => false, 'message' => $debug . 'Environment issues: ' . implode(', ', $issues)];
+        return ['success' => false, 'message' => $debug . 'PHP app deployment issues: ' . implode(', ', $issues)];
     }
 }
 
 function copyFiles() {
     try {
-        // Debug: Show current working directory
+        // For PHP app deployment, we don't need to copy files
+        // The app files should already be in the correct location
+        // This step just verifies the app structure exists
+
         $currentDir = __DIR__;
         $message = "Working directory: $currentDir\n";
 
-        // Check if test files already exist (likely already deployed)
-        if (is_dir('tests') && file_exists('tests/diagnostics.php')) {
-            return ['success' => true, 'message' => 'Files already exist in current directory - skipping copy'];
+        // Check if this is already a properly deployed PHP app
+        if (is_dir('config') && file_exists('config/config.php') &&
+            is_dir('src') && is_dir('tests') && file_exists('tests/diagnostics.php')) {
+
+            $message .= "PHP application files found in current directory\n";
+            $message .= "No file copying needed - app is already deployed\n";
+
+            return ['success' => true, 'message' => $message . 'PHP app deployment verified - ready to configure'];
         }
 
-        // Try to copy from github folder if it exists
+        // If github folder exists, check if it contains the PHP app
         $source = 'github/';
         if (is_dir($source)) {
-            $message .= "GitHub folder found at: $currentDir/github/\n";
+            $message .= "GitHub folder found - checking for PHP app structure\n";
 
-            // Check if github has the expected structure
-            if (!is_dir($source . 'tests') || !file_exists($source . 'tests/diagnostics.php')) {
-                return ['success' => false, 'message' => $message . 'GitHub folder exists but tests/diagnostics.php not found in github/tests/'];
-            }
+            // Check for PHP app structure in github
+            if (is_dir($source . 'config') && file_exists($source . 'config/config.php') &&
+                is_dir($source . 'src') && is_dir($source . 'tests') && file_exists($source . 'tests/diagnostics.php')) {
 
-            if (!is_dir($source . 'config') || !file_exists($source . 'config/config.php')) {
-                return ['success' => false, 'message' => $message . 'GitHub folder exists but config/config.php not found in github/config/'];
-            }
+                $message .= "PHP app found in github folder - copying to root\n";
+                $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php'];
 
-            $message .= "GitHub structure verified - ready to copy\n";
-            $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php'];
-
-            if (copyDirectory($source, './', $exclude)) {
-                return ['success' => true, 'message' => $message . 'Files copied successfully from github/ to current directory'];
+                if (copyDirectory($source, './', $exclude)) {
+                    return ['success' => true, 'message' => $message . 'PHP app copied successfully from github/ to root directory'];
+                } else {
+                    return ['success' => false, 'message' => $message . 'Failed to copy PHP app from github/'];
+                }
             } else {
-                return ['success' => false, 'message' => $message . 'Failed to copy files from github/'];
+                return ['success' => false, 'message' => $message . 'GitHub folder exists but does not contain a complete PHP app structure'];
             }
-        } else {
-            return ['success' => false, 'message' => "GitHub folder not found. Expected at: $currentDir/github/"];
         }
 
+        // If neither condition is met
+        return ['success' => false, 'message' => $message . 'PHP app not found. Expected either: 1) App files in current directory, or 2) Complete app in github/ folder'];
+
     } catch (Exception $e) {
-        return ['success' => false, 'message' => 'Copy error: ' . $e->getMessage()];
+        return ['success' => false, 'message' => 'PHP app deployment error: ' . $e->getMessage()];
     }
 }
 
