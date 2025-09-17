@@ -53,54 +53,73 @@ if (version_compare($phpVersion, $minVersion, '>=')) {
     addResult('PHP Version', 'FAIL', "PHP $phpVersion (requires $minVersion+)");
 }
 
-// Test 2: Config File
-if (file_exists('../config/config.php')) {
-    addResult('Config File', 'PASS', 'config.php exists');
+// Test 2: Config File (simplified - just check if file exists)
+$configPath = dirname(__DIR__) . '/config/config.php';
+if (file_exists($configPath)) {
+    addResult('Config File', 'PASS', 'config.php exists at: ' . $configPath);
 } else {
-    addResult('Config File', 'FAIL', 'config.php not found');
+    addResult('Config File', 'FAIL', 'config.php not found at: ' . $configPath);
 }
 
-// Test 3: Config Loading
+// Test 3: Config Loading (simplified - try to include without complex logic)
+$configLoaded = false;
+$configError = '';
 try {
-    if (file_exists('../config/config.php')) {
-        require_once '../config/config.php';
+    if (file_exists($configPath)) {
+        require_once $configPath;
+        $configLoaded = true;
         addResult('Config Loading', 'PASS', 'Configuration loaded successfully');
     } else {
         addResult('Config Loading', 'FAIL', 'Config file not found');
     }
 } catch (Exception $e) {
-    addResult('Config Loading', 'FAIL', 'Failed to load configuration: ' . $e->getMessage());
+    $configError = $e->getMessage();
+    addResult('Config Loading', 'FAIL', 'Failed to load configuration: ' . $configError);
+} catch (Error $e) {
+    $configError = $e->getMessage();
+    addResult('Config Loading', 'FAIL', 'Fatal error loading configuration: ' . $configError);
 }
 
-// Test 4: Database Connection (if config loaded)
-if (isset($db) || function_exists('get_db')) {
+// Test 4: Database Connection (only if config loaded successfully)
+if ($configLoaded && !empty($configError)) {
     try {
-        require_once '../src/lib/db.php';
-        $db_connection = get_db();
-        if ($db_connection) {
-            addResult('Database Connection', 'PASS', 'Connected to database successfully');
+        $dbPath = dirname(__DIR__) . '/src/lib/db.php';
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
+            if (function_exists('get_db')) {
+                $db_connection = get_db();
+                if ($db_connection) {
+                    addResult('Database Connection', 'PASS', 'Connected to database successfully');
+                } else {
+                    addResult('Database Connection', 'FAIL', 'Failed to connect to database');
+                }
+            } else {
+                addResult('Database Connection', 'FAIL', 'get_db function not found');
+            }
         } else {
-            addResult('Database Connection', 'FAIL', 'Failed to connect to database');
+            addResult('Database Connection', 'FAIL', 'Database library not found at: ' . $dbPath);
         }
     } catch (Exception $e) {
         addResult('Database Connection', 'FAIL', 'Database error: ' . $e->getMessage());
+    } catch (Error $e) {
+        addResult('Database Connection', 'FAIL', 'Database fatal error: ' . $e->getMessage());
     }
 } else {
-    addResult('Database Connection', 'INFO', 'Database test skipped - config not loaded');
+    addResult('Database Connection', 'INFO', 'Database test skipped - config not loaded properly');
 }
 
 // Test 5: Required Files
 $requiredFiles = [
-    '../index.php' => 'Main application file',
-    '../src/lib/db.php' => 'Database library',
-    '../config/production.php' => 'Production config'
+    dirname(__DIR__) . '/index.php' => 'Main application file',
+    dirname(__DIR__) . '/src/lib/db.php' => 'Database library',
+    dirname(__DIR__) . '/config/production.php' => 'Production config'
 ];
 
 foreach ($requiredFiles as $file => $description) {
     if (file_exists($file)) {
         addResult("File: $description", 'PASS', basename($file) . ' exists');
     } else {
-        addResult("File: $description", 'FAIL', basename($file) . ' missing');
+        addResult("File: $description", 'FAIL', basename($file) . ' missing at: ' . $file);
     }
 }
 
@@ -137,6 +156,7 @@ echo "<ul>";
 echo "<li><strong>Server:</strong> " . ($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown') . "</li>";
 echo "<li><strong>PHP Version:</strong> " . PHP_VERSION . "</li>";
 echo "<li><strong>Current Directory:</strong> " . __DIR__ . "</li>";
+echo "<li><strong>Parent Directory:</strong> " . dirname(__DIR__) . "</li>";
 echo "<li><strong>Document Root:</strong> " . ($_SERVER['DOCUMENT_ROOT'] ?? 'Unknown') . "</li>";
 echo "<li><strong>Memory Limit:</strong> " . ini_get('memory_limit') . "</li>";
 echo "<li><strong>Max Execution Time:</strong> " . ini_get('max_execution_time') . " seconds</li>";
