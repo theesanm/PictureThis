@@ -81,7 +81,7 @@ try {
 }
 
 // Test 4: Database Connection (only if config loaded successfully)
-if ($configLoaded && !empty($configError)) {
+if ($configLoaded && empty($configError)) {
     try {
         $dbPath = __DIR__ . '/src/lib/db.php';
         if (file_exists($dbPath)) {
