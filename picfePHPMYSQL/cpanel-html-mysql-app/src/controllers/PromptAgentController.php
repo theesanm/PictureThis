@@ -98,7 +98,13 @@ class PromptAgentController {
             // Check if user has enough credits
             $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = ?');
             $stmt->execute([$userId]);
-            $userCredits = $stmt->fetch(PDO::FETCH_ASSOC)['credits'];
+            $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$userData) {
+                $this->sendJsonResponse(['success' => false, 'message' => 'User not found'], 404);
+            }
+            
+            $userCredits = $userData['credits'] ?? 0;
 
             if ($userCredits < $enhanceCost) {
                 $this->sendJsonResponse(['success' => false, 'message' => 'Insufficient credits. Agent session costs ' . $enhanceCost . ' credits.'], 400);
