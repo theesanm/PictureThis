@@ -7,11 +7,6 @@ $testEmail = 'admin@picturethis.com';
 $testPassword = 'admin123';
 $baseUrl = 'https://demo.cfox.co.za';
 
-// Generate CSRF token for login
-require_once 'src/utils/CSRF.php';
-$csrf = new CSRF();
-$csrfToken = $csrf->generateToken();
-
 echo "=== Testing Agent API with Authentication ===\n\n";
 
 // Check if cookies file is writable
@@ -27,8 +22,42 @@ if (!is_writable(dirname($cookiesFile) ?: '.')) {
 
 echo "Directory is writable for cookies\n\n";
 
-// Step 1: Login to get session
-echo "Step 1: Logging in...\n";
+// Step 1: Visit login page first to get CSRF token
+echo "Step 1: Visiting login page to get CSRF token...\n";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $baseUrl . '/login');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
+curl_setopt($ch, CURLOPT_HEADER, true);
+
+$loginPageResponse = curl_exec($ch);
+$loginPageHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+// Separate headers from body
+$loginPageHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$loginPageHeaders = substr($loginPageResponse, 0, $loginPageHeaderSize);
+$loginPageBody = substr($loginPageResponse, $loginPageHeaderSize);
+
+curl_close($ch);
+
+echo "✅ Login page loaded (HTTP $loginPageHttpCode)\n";
+
+// Extract CSRF token from the login page HTML
+if (preg_match('/name="csrf_token" value="([^"]+)"/', $loginPageBody, $matches)) {
+    $csrfToken = $matches[1];
+    echo "✅ Extracted CSRF token: " . substr($csrfToken, 0, 10) . "...\n";
+} else {
+    echo "❌ Could not extract CSRF token from login page\n";
+    echo "Login page content:\n" . substr($loginPageBody, 0, 500) . "\n";
+    exit(1);
+}
+
+echo "\n";
+
+// Step 2: Login with the extracted CSRF token
+echo "Step 2: Logging in with valid CSRF token...\n";
 $loginData = [
     'email' => $testEmail,
     'password' => $testPassword,
@@ -37,37 +66,38 @@ $loginData = [
 
 $loginPostData = http_build_query($loginData);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $baseUrl . '/login');
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $loginPostData);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, $baseUrl . '/login');
+curl_setopt($ch2, CURLOPT_POST, true);
+curl_setopt($ch2, CURLOPT_POSTFIELDS, $loginPostData);
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
+curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);
+curl_setopt($ch2, CURLOPT_HTTPHEADER, [
     'Content-Type: application/x-www-form-urlencoded'
 ]);
-curl_setopt($ch, CURLOPT_HEADER, true); // Include headers in response
+curl_setopt($ch2, CURLOPT_HEADER, true);
 
-$loginResponse = curl_exec($ch);
-$loginHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$loginResponse = curl_exec($ch2);
+$loginHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
 
 // Separate headers from body for login
-$loginHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$loginHeaderSize = curl_getinfo($ch2, CURLINFO_HEADER_SIZE);
 $loginHeaders = substr($loginResponse, 0, $loginHeaderSize);
 $loginBody = substr($loginResponse, $loginHeaderSize);
 
-if (curl_errno($ch)) {
-    echo "❌ Login failed: " . curl_error($ch) . "\n";
-    curl_close($ch);
+if (curl_errno($ch2)) {
+    echo "❌ Login failed: " . curl_error($ch2) . "\n";
+    curl_close($ch2);
     exit(1);
 }
 
-curl_close($ch);
+curl_close($ch2);
 
 echo "✅ Login completed (HTTP $loginHttpCode)\n";
 echo "Login Response Headers:\n" . $loginHeaders . "\n";
-echo "Login Response Body:\n" . $loginBody . "\n\n";
+echo "Login Response Body:\n" . substr($loginBody, 0, 200) . "\n\n";
 
 // Debug: Check if cookies were saved
 if (file_exists($cookiesFile)) {
@@ -87,13 +117,13 @@ if (file_exists($cookiesFile)) {
 
 echo "\n";
 
-// Step 2: Test the agent API with the session cookie
-echo "Step 2: Testing agent API...\n";
+// Step 3: Test the agent API with the session cookie
+echo "Step 3: Testing agent API...\n";
 
 // Debug: Check cookies before API call
-if (file_exists('cookies.txt')) {
+if (file_exists($cookiesFile)) {
     echo "Cookies file exists before API call\n";
-    $cookies = file_get_contents('cookies.txt');
+    $cookies = file_get_contents($cookiesFile);
     echo "Cookies content: " . $cookies . "\n";
 } else {
     echo "❌ Cookies file missing before API call\n";
@@ -101,8 +131,10 @@ if (file_exists('cookies.txt')) {
 
 echo "\n";
 
-// Generate new CSRF token for the API call
-$csrfToken2 = $csrf->generateToken();
+// Generate new CSRF token for the API call (using the session from login)
+require_once 'src/utils/CSRF.php';
+$csrf2 = new CSRF();
+$csrfToken2 = $csrf2->generateToken();
 
 $apiData = [
     'prompt' => 'A beautiful sunset over mountains',
