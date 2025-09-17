@@ -175,19 +175,23 @@ function checkEnvironment() {
     $hasConfig = @is_dir('config') && @file_exists('config/config.php');
     $hasTests = @is_dir('tests') && @file_exists('tests/diagnostics.php');
 
-    if (!$hasGithub && !$hasConfig) {
+    if ($hasGithub) {
+        // Check github folder contents
+        if (!@is_dir('github/config') || !@file_exists('github/config/config.php')) {
+            $issues[] = 'GitHub folder exists but github/config/config.php not found';
+        }
+        if (!@is_dir('github/tests') || !@file_exists('github/tests/diagnostics.php')) {
+            $issues[] = 'GitHub folder exists but github/tests/diagnostics.php not found';
+        }
+        if (!@is_dir('github/src')) {
+            $issues[] = 'GitHub folder exists but github/src/ not found';
+        }
+    } elseif (!$hasConfig) {
         $issues[] = 'Neither github/ folder nor deployed config found';
     }
 
     if (!$hasGithub && !$hasTests) {
         $issues[] = 'Neither github/ folder nor deployed tests found';
-    }
-
-    // If github folder exists, check its contents
-    if ($hasGithub) {
-        if (!@is_dir('github/config') || !@is_dir('github/src')) {
-            $issues[] = 'GitHub folder does not contain the application';
-        }
     }
 
     // Check PHP version
@@ -201,7 +205,13 @@ function checkEnvironment() {
     }
 
     if (empty($issues)) {
-        return ['success' => true, 'message' => 'Environment check passed'];
+        $message = 'Environment check passed';
+        if ($hasGithub) {
+            $message .= ' - GitHub folder found with proper structure';
+        } elseif ($hasConfig && $hasTests) {
+            $message .= ' - Application already deployed';
+        }
+        return ['success' => true, 'message' => $message];
     } else {
         return ['success' => false, 'message' => 'Environment issues: ' . implode(', ', $issues)];
     }
@@ -211,26 +221,31 @@ function copyFiles() {
     try {
         // Check if test files already exist (likely already deployed)
         if (is_dir('tests') && file_exists('tests/diagnostics.php')) {
-            return ['success' => true, 'message' => 'Files already exist - skipping copy'];
+            return ['success' => true, 'message' => 'Files already exist in current directory - skipping copy'];
         }
 
         // Try to copy from github folder if it exists
         $source = 'github/';
         if (is_dir($source)) {
+            // Check if github has the expected structure
+            if (!is_dir($source . 'tests') || !file_exists($source . 'tests/diagnostics.php')) {
+                return ['success' => false, 'message' => 'GitHub folder exists but tests/diagnostics.php not found in github/tests/'];
+            }
+
+            if (!is_dir($source . 'config') || !file_exists($source . 'config/config.php')) {
+                return ['success' => false, 'message' => 'GitHub folder exists but config/config.php not found in github/config/'];
+            }
+
             $exclude = ['.git', 'node_modules', '.env', 'debug.log'];
 
             if (copyDirectory($source, './', $exclude)) {
-                return ['success' => true, 'message' => 'Files copied from github folder'];
+                return ['success' => true, 'message' => 'Files copied successfully from github/ to current directory'];
+            } else {
+                return ['success' => false, 'message' => 'Failed to copy files from github/'];
             }
+        } else {
+            return ['success' => false, 'message' => 'GitHub folder not found at: ' . __DIR__ . '/github/'];
         }
-
-        // If github folder doesn't exist, check if we're already in the right place
-        if (is_dir('tests') || file_exists('config/config.php')) {
-            return ['success' => true, 'message' => 'Application files already in place'];
-        }
-
-        // If we get here, files are missing
-        return ['success' => false, 'message' => 'Application files not found. Please ensure github/ folder exists or files are already deployed.'];
 
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Copy error: ' . $e->getMessage()];
