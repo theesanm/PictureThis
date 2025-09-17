@@ -4,7 +4,51 @@
  * Run this script from your browser to install the application
  */
 
-// Prevent direct access without proper setup
+// Handle AJAX requests first, before any HTML output
+if (isset($_GET['step'])) {
+    // Prevent direct access without proper setup
+    if (!isset($_GET['install']) || $_GET['install'] !== 'confirm') {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Access denied']);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+    // Suppress PHP errors/warnings that might output HTML
+    error_reporting(0);
+    ini_set('display_errors', 0);
+
+    try {
+        switch ($_GET['step']) {
+            case 'check_env':
+                $result = checkEnvironment();
+                break;
+            case 'copy_files':
+                $result = copyFiles();
+                break;
+            case 'setup_config':
+                $result = setupConfiguration();
+                break;
+            case 'set_production':
+                $result = setProductionMode();
+                break;
+            case 'test_config':
+                $result = testConfiguration();
+                break;
+            default:
+                $result = ['success' => false, 'message' => 'Unknown step'];
+        }
+    } catch (Exception $e) {
+        $result = ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+    } catch (Error $e) {
+        $result = ['success' => false, 'message' => 'Fatal error: ' . $e->getMessage()];
+    }
+
+    echo json_encode($result);
+    exit;
+}
+
+// Prevent direct access without proper setup for HTML page
 if (!isset($_GET['install']) || $_GET['install'] !== 'confirm') {
     die("Access denied. Use: web_install.php?install=confirm");
 }
@@ -69,7 +113,7 @@ echo "<!DOCTYPE html>
             try {
                 // Step 1: Check environment
                 updateProgress(0, steps[0]);
-                const envCheck = await fetch('?step=check_env');
+                const envCheck = await fetch('?install=confirm&step=check_env');
                 const envResult = await envCheck.json();
                 updateProgress(0, envResult.message, envResult.success ? 'success' : 'error');
 
@@ -79,7 +123,7 @@ echo "<!DOCTYPE html>
 
                 // Step 2: Copy files
                 updateProgress(1, steps[1]);
-                const copyCheck = await fetch('?step=copy_files');
+                const copyCheck = await fetch('?install=confirm&step=copy_files');
                 const copyResult = await copyCheck.json();
                 updateProgress(1, copyResult.message, copyResult.success ? 'success' : 'error');
 
@@ -89,28 +133,28 @@ echo "<!DOCTYPE html>
 
                 // Step 3: Setup configuration
                 updateProgress(2, steps[2]);
-                const configCheck = await fetch('?step=setup_config');
+                const configCheck = await fetch('?install=confirm&step=setup_config');
                 const configResult = await configCheck.json();
                 updateProgress(2, configResult.message, configResult.success ? 'success' : 'error');
 
                 // Step 4: Set production mode
                 updateProgress(3, steps[3]);
-                const prodCheck = await fetch('?step=set_production');
+                const prodCheck = await fetch('?install=confirm&step=set_production');
                 const prodResult = await prodCheck.json();
                 updateProgress(3, prodResult.message, prodResult.success ? 'success' : 'error');
 
                 // Step 5: Test configuration
                 updateProgress(4, steps[4]);
-                const testCheck = await fetch('?step=test_config');
+                const testCheck = await fetch('?install=confirm&step=test_config');
                 const testResult = await testCheck.json();
                 updateProgress(4, testResult.message, testResult.success ? 'success' : 'error');
 
                 // Step 6: Complete
-                updateProgress(5, steps[5] + '<br><br>' +
-                    '<strong>Next Steps:</strong><br>' +
+                const nextSteps = '<br><br><strong>Next Steps:</strong><br>' +
                     '1. Run diagnostics: <a href=\"tests/diagnostics.php\" target=\"_blank\">tests/diagnostics.php</a><br>' +
                     '2. Access your application<br>' +
-                    '3. Delete this installer file for security', 'success');
+                    '3. Delete this installer file for security';
+                updateProgress(5, steps[5] + nextSteps, 'success');
 
             } catch (error) {
                 updateProgress(currentStep, 'Installation failed: ' + error.message, 'error');
@@ -123,45 +167,27 @@ echo "<!DOCTYPE html>
 </body>
 </html>";
 
-// Handle AJAX requests
-if (isset($_GET['step'])) {
-    header('Content-Type: application/json');
-
-    switch ($_GET['step']) {
-        case 'check_env':
-            $result = checkEnvironment();
-            break;
-        case 'copy_files':
-            $result = copyFiles();
-            break;
-        case 'setup_config':
-            $result = setupConfiguration();
-            break;
-        case 'set_production':
-            $result = setProductionMode();
-            break;
-        case 'test_config':
-            $result = testConfiguration();
-            break;
-        default:
-            $result = ['success' => false, 'message' => 'Unknown step'];
-    }
-
-    echo json_encode($result);
-    exit;
-}
-
 function checkEnvironment() {
     $issues = [];
 
-    // Check if GitHub folder exists
-    if (!is_dir('github')) {
-        $issues[] = 'GitHub folder not found';
+    // Check if GitHub folder exists OR if files are already deployed
+    $hasGithub = @is_dir('github');
+    $hasConfig = @is_dir('config') && @file_exists('config/config.php');
+    $hasTests = @is_dir('tests') && @file_exists('tests/diagnostics.php');
+
+    if (!$hasGithub && !$hasConfig) {
+        $issues[] = 'Neither github/ folder nor deployed config found';
     }
 
-    // Check if GitHub folder has the app
-    if (!is_dir('github/config') || !is_dir('github/src')) {
-        $issues[] = 'GitHub folder does not contain the application';
+    if (!$hasGithub && !$hasTests) {
+        $issues[] = 'Neither github/ folder nor deployed tests found';
+    }
+
+    // If github folder exists, check its contents
+    if ($hasGithub) {
+        if (!@is_dir('github/config') || !@is_dir('github/src')) {
+            $issues[] = 'GitHub folder does not contain the application';
+        }
     }
 
     // Check PHP version
@@ -170,7 +196,7 @@ function checkEnvironment() {
     }
 
     // Check write permissions
-    if (!is_writable('.')) {
+    if (!@is_writable('.')) {
         $issues[] = 'Current directory is not writable';
     }
 
@@ -182,18 +208,30 @@ function checkEnvironment() {
 }
 
 function copyFiles() {
-    $source = 'github/';
-    $destination = './';
-
     try {
-        // Copy all files except certain directories
-        $exclude = ['.git', 'node_modules', '.env', 'debug.log'];
-
-        if (copyDirectory($source, $destination, $exclude)) {
-            return ['success' => true, 'message' => 'Files copied successfully'];
-        } else {
-            return ['success' => false, 'message' => 'Failed to copy files'];
+        // Check if test files already exist (likely already deployed)
+        if (is_dir('tests') && file_exists('tests/diagnostics.php')) {
+            return ['success' => true, 'message' => 'Files already exist - skipping copy'];
         }
+
+        // Try to copy from github folder if it exists
+        $source = 'github/';
+        if (is_dir($source)) {
+            $exclude = ['.git', 'node_modules', '.env', 'debug.log'];
+
+            if (copyDirectory($source, './', $exclude)) {
+                return ['success' => true, 'message' => 'Files copied from github folder'];
+            }
+        }
+
+        // If github folder doesn't exist, check if we're already in the right place
+        if (is_dir('tests') || file_exists('config/config.php')) {
+            return ['success' => true, 'message' => 'Application files already in place'];
+        }
+
+        // If we get here, files are missing
+        return ['success' => false, 'message' => 'Application files not found. Please ensure github/ folder exists or files are already deployed.'];
+
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Copy error: ' . $e->getMessage()];
     }
@@ -230,14 +268,25 @@ function setupConfiguration() {
             mkdir('uploads', 0755, true);
         }
 
-        // Create tests directory
+        // Create tests directory only if it doesn't exist
         if (!is_dir('tests')) {
             mkdir('tests', 0755, true);
         }
 
         // Set proper permissions
-        chmod('uploads', 0755);
-        chmod('tests', 0755);
+        if (is_dir('uploads')) {
+            chmod('uploads', 0755);
+        }
+        if (is_dir('tests')) {
+            chmod('tests', 0755);
+            // Ensure test files are readable
+            if (file_exists('tests/diagnostics.php')) {
+                chmod('tests/diagnostics.php', 0644);
+            }
+            if (file_exists('tests/index.php')) {
+                chmod('tests/index.php', 0644);
+            }
+        }
 
         return ['success' => true, 'message' => 'Configuration setup completed'];
     } catch (Exception $e) {
