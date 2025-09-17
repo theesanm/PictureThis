@@ -1,392 +1,139 @@
 <?php
-// Simple front controller for dev server. Routes payfast return/cancel to views.
+/**
+ * Test Suite Index
+ * Provides access to all test tools and utilities
+ */
 
-// Load app config (defines APP_NAME, DB_* and other settings). Use a safe fallback if missing.
-if (file_exists(__DIR__ . '/config/config.php')) {
-    require_once __DIR__ . '/config/config.php';
-} else {
-    if (!defined('APP_NAME')) {
-        define('APP_NAME', 'PictureThis');
-    }
-    // Fallback timezone if config not loaded
-    if (!defined('SERVER_TIMEZONE')) {
-        define('SERVER_TIMEZONE', 'UTC');
-    }
-}
+// Set headers
+header('Content-Type: text/html; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 
-// Set timezone to match system timezone for session expiry calculations
-date_default_timezone_set('Africa/Johannesburg');
-
-// Session configuration for better compatibility
-ini_set('session.cookie_domain', ''); // Allow sessions to work across subdomains
-ini_set('session.cookie_secure', 0); // Allow HTTP for development
-ini_set('session.cookie_httponly', 1); // Prevent JavaScript access to session cookie
-ini_set('session.use_only_cookies', 1); // Use only cookies for sessions
-
-// Start session early (if possible) so views can rely on it. Guard with headers_sent().
-if (!headers_sent()) {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-}
-
-// Opt-in debug flag: visit any URL with ?__debug=1 to enable full error display temporarily.
-if (isset($_GET['__debug']) && $_GET['__debug']) {
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-    // Helpful header for debugging via browser
-    header('X-PictureThis-Debug: enabled');
-}
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-// Allow direct access to /tests/ directory (for diagnostics and debugging)
-if (strpos($path, '/tests/') === 0) {
-    // Let the web server serve files from /tests/ directory directly
-    $requestedFile = __DIR__ . $path;
-    if (file_exists($requestedFile) && !is_dir($requestedFile)) {
-        // Serve the file with appropriate content type
-        $extension = strtolower(pathinfo($requestedFile, PATHINFO_EXTENSION));
-        $contentTypes = [
-            'html' => 'text/html',
-            'php' => 'text/html', // PHP files will be executed by the web server
-            'txt' => 'text/plain',
-            'json' => 'application/json',
-            'css' => 'text/css',
-            'js' => 'application/javascript'
-        ];
-
-        if (isset($contentTypes[$extension])) {
-            header('Content-Type: ' . $contentTypes[$extension]);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Suite - Interactive Prompt Enhancement Agent</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+            text-align: center;
         }
-
-        // For PHP files, let the web server handle execution
-        if ($extension === 'php') {
-            include $requestedFile;
-        } else {
-            readfile($requestedFile);
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
-        exit;
-    }
-}
-
-// Handle home page
-if ($path === '/' || $path === '') {
-    require_once __DIR__ . '/src/controllers/HomeController.php';
-    $ctrl = new HomeController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/payment/success') {
-    include __DIR__ . '/src/views/payment_success.php';
-    exit;
-}
-if ($path === '/payment/cancelled') {
-    include __DIR__ . '/src/views/payment_cancelled.php';
-    exit;
-}
-if ($path === '/payment/success/iframe/success') {
-    include __DIR__ . '/src/views/payment_iframe_success.php';
-    exit;
-}
-if ($path === '/payment/cancelled/iframe/cancel') {
-    include __DIR__ . '/src/views/payment_iframe_cancel.php';
-    exit;
-}
-if ($path === '/payment/popup/success') {
-    require_once __DIR__ . '/src/controllers/PricingController.php';
-    $ctrl = new PricingController();
-    $ctrl->popupSuccess();
-    exit;
-}
-if ($path === '/payment/popup/cancel') {
-    require_once __DIR__ . '/src/controllers/PricingController.php';
-    $ctrl = new PricingController();
-    $ctrl->popupCancel();
-    exit;
-}
-if ($path === '/pricing') {
-    require_once __DIR__ . '/src/controllers/PricingController.php';
-    $ctrl = new PricingController();
-    $ctrl->index();
-    exit;
-}
-
-// Handle other pages
-if ($path === '/about') {
-    require_once __DIR__ . '/src/controllers/HomeController.php';
-    $ctrl = new HomeController();
-    $ctrl->about();
-    exit;
-}
-
-if ($path === '/privacy') {
-    require_once __DIR__ . '/src/controllers/HomeController.php';
-    $ctrl = new HomeController();
-    $ctrl->privacy();
-    exit;
-}
-
-if ($path === '/terms') {
-    require_once __DIR__ . '/src/controllers/HomeController.php';
-    $ctrl = new HomeController();
-    $ctrl->terms();
-    exit;
-}
-
-// Handle authentication pages
-if ($path === '/login') {
-    require_once __DIR__ . '/src/controllers/LoginController.php';
-    $ctrl = new LoginController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/register') {
-    require_once __DIR__ . '/src/controllers/RegisterController.php';
-    $ctrl = new RegisterController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/check-email') {
-    require_once __DIR__ . '/src/controllers/CheckEmailController.php';
-    $ctrl = new CheckEmailController();
-    $ctrl->index();
-    exit;
-}
-
-// Handle email verification and password reset
-if ($path === '/verify-email') {
-    require_once __DIR__ . '/src/controllers/EmailVerificationController.php';
-    $ctrl = new EmailVerificationController();
-    $ctrl->verify();
-    exit;
-}
-
-if ($path === '/resend-verification') {
-    require_once __DIR__ . '/src/controllers/EmailVerificationController.php';
-    $ctrl = new EmailVerificationController();
-    $ctrl->resend();
-    exit;
-}
-
-if ($path === '/forgot-password') {
-    require_once __DIR__ . '/src/controllers/PasswordResetController.php';
-    $ctrl = new PasswordResetController();
-    $ctrl->forgot();
-    exit;
-}
-
-if ($path === '/reset-password') {
-    require_once __DIR__ . '/src/controllers/PasswordResetController.php';
-    $ctrl = new PasswordResetController();
-    $ctrl->reset();
-    exit;
-}
-
-if ($path === '/logout') {
-    require_once __DIR__ . '/src/controllers/LoginController.php';
-    $ctrl = new LoginController();
-    $ctrl->logout();
-    exit;
-}
-
-// Handle main app pages (require authentication in controllers)
-if ($path === '/dashboard') {
-    require_once __DIR__ . '/src/controllers/DashboardController.php';
-    $ctrl = new DashboardController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/generate') {
-    require_once __DIR__ . '/src/controllers/GenerateController.php';
-    $ctrl = new GenerateController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/gallery') {
-    require_once __DIR__ . '/src/controllers/GalleryController.php';
-    $ctrl = new GalleryController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/profile') {
-    require_once __DIR__ . '/src/controllers/ProfileController.php';
-    $ctrl = new ProfileController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/admin') {
-    require_once __DIR__ . '/src/controllers/AdminController.php';
-    $ctrl = new AdminController();
-    $ctrl->index();
-    exit;
-}
-
-if ($path === '/admin/users') {
-    require_once __DIR__ . '/src/controllers/AdminController.php';
-    $ctrl = new AdminController();
-    $ctrl->users();
-    exit;
-}
-
-if ($path === '/admin/credits') {
-    require_once __DIR__ . '/src/controllers/AdminController.php';
-    $ctrl = new AdminController();
-    $ctrl->credits();
-    exit;
-}
-
-if ($path === '/admin/settings') {
-    require_once __DIR__ . '/src/controllers/AdminController.php';
-    $ctrl = new AdminController();
-    $ctrl->settings();
-    exit;
-}
-
-if ($path === '/admin/analytics') {
-    require_once __DIR__ . '/src/controllers/AdminController.php';
-    $ctrl = new AdminController();
-    $ctrl->analytics();
-    exit;
-}
-
-// Handle PayFast popup success (with query params for payment_id, user_id, package_id)
-if ($path === '/payment/popup/success') {
-    session_start(); // Ensure session for flash messages
-
-    $successMessage = 'Payment processed successfully!';
-    $errorMessage = null;
-
-    // NOTE: Credits are added by the ITN handler, not here
-    // This route is only for displaying the success page
-
-    // Try to include success view, fallback to simple HTML if it fails
-    if (file_exists(__DIR__ . '/src/views/payment_popup_success.php')) {
-        include __DIR__ . '/src/views/payment_popup_success.php';
-    } else {
-        // Fallback success page
-        echo '<!DOCTYPE html>
-        <html><head><title>Payment Success</title>
-        <link href="https://cdn.tailwindcss.com" rel="stylesheet"></head>
-        <body class="bg-gray-900 text-white p-8">
-            <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg">
-                <h1 class="text-2xl font-bold mb-4">Payment Successful!</h1>';
-        if ($errorMessage) {
-            echo '<p class="text-red-400 mb-4">' . htmlspecialchars($errorMessage) . '</p>';
-        } else {
-            echo '<p class="text-green-400 mb-4">Your payment has been processed successfully.</p>
-            <script>
-                // Send message to parent window
-                if (window.opener) {
-                    window.opener.postMessage({
-                        type: "payment_success",
-                        payment_id: "' . htmlspecialchars($_GET['payment_id'] ?? '') . '",
-                        user_id: "' . htmlspecialchars($_GET['user_id'] ?? '') . '",
-                        package_id: "' . htmlspecialchars($_GET['package_id'] ?? '') . '"
-                    }, "*");
-                }
-                // Auto-close after 2 seconds
-                setTimeout(() => { window.close(); }, 2000);
-            </script>';
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
         }
-        echo '</div></body></html>';
-    }
-    exit;
-}
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        .description {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Test Suite</h1>
+            <p>Interactive Prompt Enhancement Agent</p>
+        </div>
+        <div class="content">
+            <p class="description">
+                Welcome to the comprehensive test suite for PictureThis.
+                Choose an option below to get started.
+            </p>
 
-// Minimal API routes for PayFast integration and polling
-if (strpos($path, '/api/') === 0) {
-    // Debug logging
-    error_log('API Request: ' . $path . ' Method: ' . $_SERVER['REQUEST_METHOD']);
+            <div style="text-align: left; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                <h3 style="margin-top: 0; color: #007cba;">🚀 Quick Deployment Checklist</h3>
+                <ol style="margin-bottom: 0;">
+                    <li>Run <a href="../web_install.php?install=confirm" style="color: #007cba;">Web Installer</a> to set up the application</li>
+                    <li>Run <a href="diagnostics.php" style="color: #007cba;">Full Diagnostics</a> to verify everything works</li>
+                    <li>Access your <a href="../" style="color: #007cba;">live application</a></li>
+                </ol>
+            </div>
 
-    // Lazy-load controllers
-    require_once __DIR__ . '/src/controllers/PricingController.php';
-    require_once __DIR__ . '/src/controllers/GenerateController.php';
-    require_once __DIR__ . '/src/controllers/PromptAgentController.php';
-    $pricingCtrl = new PricingController();
-    $generateCtrl = new GenerateController();
-    $agentCtrl = new PromptAgentController();
+            <h3 style="text-align: left; color: #333;">🔧 Diagnostic Tools</h3>
+            <a href="diagnostics.php" class="btn btn-primary" style="width: 200px;">Full System Diagnostics</a>
+            <a href="database.php" class="btn btn-info" style="width: 200px;">Database Tests</a>
+            <a href="email.php" class="btn btn-success" style="width: 200px;">Email Tests</a>
+            <a href="api.php" class="btn btn-secondary" style="width: 200px;">API Tests</a>
 
-    if ($path === '/api/payments/status') {
-        $pricingCtrl->paymentStatus();
-        exit;
-    }
+            <h3 style="text-align: left; color: #333; margin-top: 30px;">⚙️ Legacy Tools</h3>
+            <a href="web_runner.php" class="btn btn-primary">Run All Tests</a>
+            <a href="status.php" class="btn btn-info">Environment Status</a>
+            <a href="update_schema.php" class="btn btn-success">Update Schema</a>
 
-    if ($path === '/api/credits/payfast/notify') {
-        $pricingCtrl->notify();
-        exit;
-    }
-
-    if ($path === '/api/credits/payfast/test') {
-        $pricingCtrl->testItn();
-        exit;
-    }
-
-    if ($path === '/api/credits/initiate') {
-        $pricingCtrl->initiate();
-        exit;
-    }
-
-    if ($path === '/api/enhance') {
-        $generateCtrl->enhance();
-        exit;
-    }
-
-    if ($path === '/api/generate') {
-        $generateCtrl->generate();
-        exit;
-    }
-
-    if ($path === '/api/user/credits') {
-        $generateCtrl->getUserCredits();
-        exit;
-    }
-
-    // Agent API routes
-    if ($path === '/api/prompt-agent/start') {
-        $agentCtrl->startSession();
-        exit;
-    }
-
-    if ($path === '/api/prompt-agent/message') {
-        $agentCtrl->sendMessage();
-        exit;
-    }
-
-    if ($path === '/api/prompt-agent/session') {
-        $agentCtrl->getSession();
-        exit;
-    }
-
-    if ($path === '/api/prompt-agent/end') {
-        $agentCtrl->endSession();
-        exit;
-    }
-
-    if ($path === '/api/prompt-agent/close-on-generation') {
-        $agentCtrl->closeSessionOnImageGeneration();
-        exit;
-    }
-}
-
-// Fall back to existing server files if present (index.php in src or public)
-if (file_exists(__DIR__ . '/src/server.php')) {
-    include __DIR__ . '/src/server.php';
-    exit;
-}
-
-// If nothing else, let PHP built-in server handle static files; otherwise show 404
-$requested = __DIR__ . preg_replace('#\?.*$#', '', $_SERVER['REQUEST_URI']);
-if (php_sapi_name() === 'cli-server' && file_exists($requested) && !is_dir($requested)) {
-    return false; // serve the requested resource as-is
-}
-
-http_response_code(404);
-echo "404 Not Found";
+            <div style="margin-top: 30px;">
+                <a href="../" class="btn btn-secondary">Back to App</a>
+                <a href="README.md" class="btn btn-secondary" style="margin-left: 10px;">Documentation</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
