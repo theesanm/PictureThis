@@ -964,7 +964,7 @@ function compressImage(file, index, input) {
             lastModified: Date.now()
           });
 
-          console.log('Image ' + index + ' compressed: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB → ' + (compressedFile.size / 1024 / 1024).toFixed(2) + 'MB');
+          console.log('Image ' + index + ' compressed: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB -> ' + (compressedFile.size / 1024 / 1024).toFixed(2) + 'MB');
 
           // Replace the original file with the compressed one
           var dataTransfer = new DataTransfer();

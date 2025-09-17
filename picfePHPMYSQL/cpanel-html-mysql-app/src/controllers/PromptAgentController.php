@@ -8,6 +8,10 @@ class PromptAgentController {
     public function __construct() {
         $this->openRouterUrl = defined('OPENROUTER_API_URL') ? OPENROUTER_API_URL : 'https://openrouter.ai/api/v1/chat/completions';
         $this->debugLogFile = __DIR__ . '/../../debug.log';
+        $this->debugLog('IS_PRODUCTION defined: ' . (defined('IS_PRODUCTION') ? 'YES' : 'NO'));
+        if (defined('IS_PRODUCTION')) {
+            $this->debugLog('IS_PRODUCTION value: ' . (IS_PRODUCTION ? 'TRUE' : 'FALSE'));
+        }
     }
 
     private function debugLog($message) {
@@ -259,7 +263,7 @@ class PromptAgentController {
                 $this->sendJsonResponse(['success' => false, 'message' => 'Session expired'], 400);
             }
 
-            // Check rate limits and daily limits
+            // Check rate limits (message frequency only)
             $this->checkRateLimits($pdo, $userId, $sessionId);
 
             // Store user message
@@ -523,7 +527,7 @@ class PromptAgentController {
     }
 
     /**
-     * Check rate limits and daily limits
+     * Check rate limits (message frequency only - daily limits removed)
      */
     private function checkRateLimits($pdo, $userId, $sessionId) {
         // Check message rate limit (10 seconds between messages)
@@ -542,18 +546,7 @@ class PromptAgentController {
             }
         }
 
-        // Check daily credit limit
-        $stmt = $pdo->prepare('
-            SELECT SUM(total_credits_used) as daily_credits
-            FROM prompt_agent_sessions
-            WHERE user_id = ? AND DATE(created_at) = CURDATE()
-        ');
-        $stmt->execute([$userId]);
-        $dailyUsage = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (($dailyUsage['daily_credits'] ?? 0) >= 50) {
-            throw new Exception('Daily credit limit reached for agent interactions');
-        }
+        // Daily credit limits removed - unlimited agent interactions allowed
     }
 
     /**
@@ -571,14 +564,50 @@ class PromptAgentController {
     }
 
     /**
-     * Generate agent response using LLM
+     * Generate agent response using OpenRouter API (same as image generation)
      */
     private function generateAgentResponse($userMessage, $history, $originalPrompt) {
         $this->debugLog('generateAgentResponse method called with userMessage: ' . substr($userMessage, 0, 100));
-        
-        $apiKey = defined('OPENROUTER_API_KEY_RUNTIME') ? OPENROUTER_API_KEY_RUNTIME : 
-                  (defined('OPENROUTER_API_KEY') ? OPENROUTER_API_KEY : 
+
+        // Use OpenRouter API like the image generation does
+        return $this->enhancePromptWithOpenRouter($userMessage, $history, $originalPrompt);
+    }
+
+    /**
+     * Strip <PROMPT> tags from refined prompt
+     */
+    private function stripPromptTags($prompt) {
+        // Remove <PROMPT> and </PROMPT> tags
+        $prompt = preg_replace('/<\/?PROMPT>/i', '', $prompt);
+        return trim($prompt);
+    }
+
+    /**
+     * Send JSON response
+     */
+    private function sendJsonResponse($data, $statusCode = 200) {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+        echo json_encode($data);
+        exit;
+    }
+
+    /**
+     * Enhance prompt using OpenRouter API (same approach as image generation)
+     */
+    private function enhancePromptWithOpenRouter($userMessage, $history, $originalPrompt) {
+        $this->debugLog('enhancePromptWithOpenRouter method called with prompt: ' . substr($originalPrompt, 0, 50));
+
+        $apiKey = defined('OPENROUTER_API_KEY_RUNTIME') ? OPENROUTER_API_KEY_RUNTIME :
+                  (defined('OPENROUTER_API_KEY') ? OPENROUTER_API_KEY :
                   getenv('OPENROUTER_API_KEY'));
+        $this->debugLog('API Key source: ' . 
+                       (defined('OPENROUTER_API_KEY_RUNTIME') ? 'OPENROUTER_API_KEY_RUNTIME' :
+                       (defined('OPENROUTER_API_KEY') ? 'OPENROUTER_API_KEY' : 'getenv')));
+        $this->debugLog('API Key length: ' . strlen($apiKey ?? ''));
         if (!$apiKey) {
             throw new Exception('OpenRouter API key not configured');
         }
@@ -615,8 +644,15 @@ Your conversational style:
 
 Remember: Return ONLY the JSON format above. No additional text or explanations outside the JSON structure.';
 
+        $this->debugLog('OPENROUTER_MODEL_RUNTIME defined: ' . (defined('OPENROUTER_MODEL_RUNTIME') ? 'YES' : 'NO'));
+        if (defined('OPENROUTER_MODEL_RUNTIME')) {
+            $this->debugLog('OPENROUTER_MODEL_RUNTIME value: ' . OPENROUTER_MODEL_RUNTIME);
+        }
+        $this->debugLog('getenv(OPENROUTER_MODEL): ' . (getenv('OPENROUTER_MODEL') ?: 'NOT_SET'));
+
         $requestBody = [
-            "model" => defined('OPENROUTER_MODEL_RUNTIME') ? OPENROUTER_MODEL_RUNTIME : (getenv('OPENROUTER_MODEL') ?: "openai/gpt-oss-20b:free"),
+            "model" => defined('OPENROUTER_MODEL_RUNTIME') ? OPENROUTER_MODEL_RUNTIME :
+                      (getenv('OPENROUTER_MODEL') ?: "openai/gpt-oss-20b:free"),
             "messages" => [
                 [
                     "role" => "system",
@@ -631,10 +667,9 @@ Remember: Return ONLY the JSON format above. No additional text or explanations 
             "temperature" => 0.7
         ];
 
-        // Make API request
-        $this->debugLog('Making LLM request to: ' . $this->openRouterUrl);
-        $this->debugLog('LLM Request Body: ' . json_encode($requestBody));
-        
+        $this->debugLog('OpenRouter Prompt Enhancement Request: ' . json_encode($requestBody));
+
+        // Make API request (same approach as image generation)
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->openRouterUrl);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -642,80 +677,82 @@ Remember: Return ONLY the JSON format above. No additional text or explanations 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Authorization: Bearer ' . $apiKey,
             'Content-Type: application/json',
-            'HTTP-Referer: ' . (defined('OPENROUTER_APP_URL_RUNTIME') ? OPENROUTER_APP_URL_RUNTIME : (getenv('OPENROUTER_APP_URL') ?: 'http://localhost:8000')),
+            'HTTP-Referer: ' . (defined('OPENROUTER_APP_URL_RUNTIME') ? OPENROUTER_APP_URL_RUNTIME :
+                               (getenv('OPENROUTER_APP_URL') ?: 'http://localhost:8000')),
             'X-Title: PictureThis Agent'
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         $error = curl_error($ch);
         curl_close($ch);
 
-        $this->debugLog('LLM Response Status: ' . $httpCode);
-        $this->debugLog('LLM Response Body: ' . $response);
+        $this->debugLog('OpenRouter Prompt Enhancement Response - HTTP Code: ' . $httpCode .
+                       ', Content-Type: ' . $contentType . ', Response Length: ' . strlen($response));
 
         if ($error) {
+            $this->debugLog('OpenRouter API Error: ' . $error);
             throw new Exception('API request failed: ' . $error);
         }
 
         if ($httpCode !== 200) {
+            $this->debugLog('OpenRouter API HTTP Error: ' . $httpCode . ' | Response: ' . substr($response, 0, 500));
             throw new Exception('API request failed with status: ' . $httpCode);
         }
 
         $data = json_decode($response, true);
         if (!$data || !isset($data['choices'][0]['message']['content'])) {
+            $this->debugLog('Invalid API response structure');
             throw new Exception('Invalid API response structure');
         }
 
         $content = $data['choices'][0]['message']['content'];
-        $this->debugLog('Raw LLM content (first 300 chars): ' . substr($content, 0, 300) . (strlen($content) > 300 ? '...' : ''));
-        
+        $this->debugLog('Raw LLM content: ' . substr($content, 0, 300));
+
         // Handle LLM responses wrapped in markdown code blocks
         if (preg_match('/^```json\s*\n(.*)\n```$/s', $content, $matches)) {
             $content = $matches[1];
             $this->debugLog('Extracted JSON from markdown code block');
-        } else {
-            $this->debugLog('No markdown code block detected, using content as-is');
         }
-
-        $this->debugLog('Content to parse (first 200 chars): ' . substr($content, 0, 200) . (strlen($content) > 200 ? '...' : ''));
 
         // Parse JSON response
         $result = json_decode($content, true);
         if (!$result || !isset($result['message']) || !isset($result['refined_prompt'])) {
-            $this->debugLog('JSON parsing failed. Raw content: ' . substr($content, 0, 200) . '...');
-            // Fallback response if JSON parsing fails
+            $this->debugLog('JSON parsing failed. Raw content length: ' . strlen($content));
+            $this->debugLog('JSON parsing failed. Raw content (first 500 chars): ' . substr($content, 0, 500));
+
+            // Try to extract partial JSON if response was truncated
+            if (preg_match('/"message"\s*:\s*"([^"]*(?:\\.[^"]*)*)/', $content, $msgMatch)) {
+                $message = $msgMatch[1];
+                // Try to extract refined_prompt as well
+                if (preg_match('/"refined_prompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)/', $content, $promptMatch)) {
+                    $refinedPrompt = $promptMatch[1];
+                    $this->debugLog('Extracted partial response - message and refined_prompt found');
+                    return [
+                        'message' => $message,
+                        'refined_prompt' => $refinedPrompt
+                    ];
+                } else {
+                    $this->debugLog('Extracted partial response - only message found, using fallback prompt');
+                    return [
+                        'message' => $message,
+                        'refined_prompt' => '<PROMPT>' . $originalPrompt . ' with enhanced details</PROMPT>'
+                    ];
+                }
+            }
+
+            // Fallback response if JSON parsing fails completely
+            $this->debugLog('Using complete fallback response');
             return [
                 'message' => 'I understand you want to improve your prompt. Let me help you refine it. What specific aspects would you like to focus on?',
-                'refined_prompt' => $originalPrompt . ', highly detailed, professional quality, sharp focus, optimal composition'
+                'refined_prompt' => '<PROMPT>' . $originalPrompt . ' with enhanced details and professional styling</PROMPT>'
             ];
         }
 
-        $this->debugLog('Successfully parsed LLM response with message: ' . substr($result['message'], 0, 100) . '...');
+        $this->debugLog('Successfully parsed OpenRouter response');
         return $result;
-    }
-
-    /**
-     * Strip <PROMPT> tags from refined prompt
-     */
-    private function stripPromptTags($prompt) {
-        // Remove <PROMPT> and </PROMPT> tags
-        $prompt = preg_replace('/<\/?PROMPT>/i', '', $prompt);
-        return trim($prompt);
-    }
-
-    /**
-     * Send JSON response
-     */
-    private function sendJsonResponse($data, $statusCode = 200) {
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization');
-        header('Content-Type: application/json');
-        http_response_code($statusCode);
-        echo json_encode($data);
-        exit;
     }
 }

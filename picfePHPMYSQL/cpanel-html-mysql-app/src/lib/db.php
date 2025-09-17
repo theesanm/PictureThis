@@ -1,6 +1,14 @@
 <?php
 // Minimal DB connection helper for the simple cPanel PHP app
-require_once __DIR__ . '/../../config/config.php';
+
+// Load config based on current directory context
+if (file_exists(__DIR__ . '/config/config.php')) {
+    // Running from cpanel directory - load cpanel config
+    require_once __DIR__ . '/config/config.php';
+} else {
+    // Fallback to main config
+    require_once __DIR__ . '/../../config/config.php';
+}
 
 $db = null; // Global connection variable, initialized on first use
 
