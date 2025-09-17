@@ -38,6 +38,42 @@ if (!defined('IS_PRODUCTION')) {
         $isProductionServer = true;
     }
 
+    // Check current working directory for cPanel username
+    if (strpos(getcwd(), 'cfoxcozj') !== false) {
+        $isProductionServer = true;
+    }
+
+    // Check if we're running in a web server context (not CLI)
+    if (PHP_SAPI !== 'cli') {
+        // Additional web server checks can go here
+        if (isset($_SERVER['REQUEST_URI']) || isset($_SERVER['QUERY_STRING'])) {
+            // We're definitely in a web context
+        }
+    }
+
+    // Database-based production detection as fallback
+    if (!$isProductionServer) {
+        try {
+            // Try to connect with production database credentials
+            $prodConfig = require __DIR__ . '/production.php';
+            $pdo = new PDO(
+                "mysql:host={$prodConfig['database']['host']};dbname={$prodConfig['database']['name']}",
+                $prodConfig['database']['user'],
+                $prodConfig['database']['pass']
+            );
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            // If we can connect to production DB, we're likely in production
+            $stmt = $pdo->query('SELECT COUNT(*) as count FROM users');
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result && $result['count'] > 0) {
+                $isProductionServer = true;
+            }
+            $pdo = null; // Close connection
+        } catch (Exception $e) {
+            // Can't connect to production DB, stay with current detection
+        }
+    }
+
     // Check for force production file
     if (file_exists(__DIR__ . '/../.force_production')) {
         $isProductionServer = true;
