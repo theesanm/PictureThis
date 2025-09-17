@@ -261,7 +261,7 @@ function copyFiles() {
             }
 
             $message .= "GitHub structure verified - ready to copy\n";
-            $exclude = ['.git', 'node_modules', '.env', 'debug.log'];
+            $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php'];
 
             if (copyDirectory($source, './', $exclude)) {
                 return ['success' => true, 'message' => $message . 'Files copied successfully from github/ to current directory'];
