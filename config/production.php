@@ -15,13 +15,13 @@ return [
         'name' => 'cfoxcozj_PictureThis', // Your production database name
     ],
     'payfast' => [
-        'merchant_id' => '10041798', // Set in cPanel env vars
-        'merchant_key' => 'vlnqle74tnkl7', // Set in cPanel env vars
-        'passphrase' => 'ThisIsATestFromPictureThis', // Set in cPanel env vars
+        'merchant_id' => '10041798',
+        'merchant_key' => 'vlnqle74tnkl7',
+        'passphrase' => 'ThisIsATestFromPictureThis',
         'env' => 'production',
     ],
     'openrouter' => [
-        'api_key' => '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', // Set in cPanel env vars
+        'api_key' => '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',
         'app_url' => 'https://demo.cfox.co.za',
         'gemini_model' => 'google/gemini-2.5-flash-image-preview',
         'model' => '@preset/picture-this-agent',
@@ -29,7 +29,7 @@ return [
     'email' => [
         'smtp_host' => 'metallurgix.aserv.co.za',
         'smtp_username' => 'cfoxcozj',
-        'smtp_password' => 'Runx141kw007@', // Set in cPanel env vars
+        'smtp_password' => 'Runx141kw007@',
         'smtp_port' => '587',
         'from_email' => 'picturethis@cfox.co.za',
     ],
