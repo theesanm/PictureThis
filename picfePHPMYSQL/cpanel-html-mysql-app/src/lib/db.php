@@ -29,16 +29,8 @@ function get_db() {
             $db = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
             error_log('[DB] PDO Exception: ' . $e->getMessage());
-            // Only set headers and output error if headers haven't been sent yet
-            if (!headers_sent()) {
-                http_response_code(500);
-                echo "Database connection failed: " . htmlspecialchars($e->getMessage());
-                exit;
-            } else {
-                // If headers already sent, just log the error and return null
-                error_log('[DB] Headers already sent, cannot output error message');
-                return null;
-            }
+            // Return null instead of outputting error and exiting
+            return null;
         }
     }
     return $db;
