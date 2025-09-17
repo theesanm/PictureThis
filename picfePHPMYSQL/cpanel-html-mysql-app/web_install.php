@@ -17,6 +17,7 @@ $canWriteConfig = is_writable(__DIR__ . '/config') || !file_exists(__DIR__ . '/c
 // Helper: recursively copy directory contents
 function copy_dir($src, $dst, &$copied = 0) {
     $exclude = ['.git', '.github', '.gitignore', '.gitmodules'];
+    $preserve = ['tests/diagnostics.php']; // Files to preserve if they exist
     $src = rtrim($src, "/");
     $dst = rtrim($dst, "/");
     if (!is_dir($src)) return false;
@@ -33,6 +34,20 @@ function copy_dir($src, $dst, &$copied = 0) {
         if ($item->isDir()) {
             if (!is_dir($target)) @mkdir($target, 0755, true);
         } else {
+            // Check if this file should be preserved
+            $shouldPreserve = false;
+            foreach ($preserve as $preserveFile) {
+                if ($subPath === $preserveFile && file_exists($target)) {
+                    $shouldPreserve = true;
+                    break;
+                }
+            }
+            
+            if ($shouldPreserve) {
+                // Skip copying this file, preserve the existing one
+                continue;
+            }
+            
             // ensure target dir exists
             $dir = dirname($target);
             if (!is_dir($dir)) @mkdir($dir, 0755, true);
@@ -100,6 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = copy_dir($srcReal, $dstReal, $copied);
             if ($ok) {
                 $messages[] = "Copied $copied files from github/$selected_source to site root.";
+                
+                // Check if diagnostics.php was preserved
+                if (file_exists(__DIR__ . '/tests/diagnostics.php')) {
+                    $messages[] = "✓ Preserved existing diagnostics.php file (not overwritten)";
+                }
+                
                 $didCopy = $copied;
             } else {
                 $errors[] = "Failed to copy files from github/$selected_source to site root. Check permissions.";
@@ -279,6 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <li>Remove <code>web_install.php</code> after use to avoid exposing your database setup UI publicly.</li>
 <li>If import fails due to large SQL file, import via phpMyAdmin in cPanel.</li>
 <li>After install, visit <code>/?__debug=1</code> to check for runtime errors and verify the app.</li>
+<li><strong>Direct Updates:</strong> The <code>tests/diagnostics.php</code> file is preserved during redeployment, allowing you to update it directly on the server without losing your changes.</li>
 </ul>
 </body>
 </html>
