@@ -380,8 +380,8 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
 document.addEventListener('DOMContentLoaded', function() {
   // Toggle guidance function
   window.toggleGuidance = function() {
-    const content = document.getElementById('guidance-content');
-    const chevron = document.getElementById('guidance-chevron');
+    var content = document.getElementById('guidance-content');
+    var chevron = document.getElementById('guidance-chevron');
     if (content.classList.contains('hidden')) {
       content.classList.remove('hidden');
       chevron.style.transform = 'rotate(0deg)';
@@ -392,8 +392,8 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // Image upload handling
-  const image1Input = document.getElementById('image1');
-  const image2Input = document.getElementById('image2');
+  var image1Input = document.getElementById('image1');
+  var image2Input = document.getElementById('image2');
   
   if (image1Input) {
     image1Input.addEventListener('change', function(e) {
@@ -408,8 +408,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Remove image handlers
-  const removeImage1Btn = document.getElementById('remove-image1');
-  const removeImage2Btn = document.getElementById('remove-image2');
+  var removeImage1Btn = document.getElementById('remove-image1');
+  var removeImage2Btn = document.getElementById('remove-image2');
   
   if (removeImage1Btn) {
     removeImage1Btn.addEventListener('click', function() {
@@ -424,77 +424,76 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Permission modal handling
-  const acceptPermissionBtn = document.getElementById('accept-permission');
-  const declinePermissionBtn = document.getElementById('decline-permission');
-  const closePermissionModalBtn = document.getElementById('close-permission-modal');
+  var acceptPermissionBtn = document.getElementById('accept-permission');
+  var declinePermissionBtn = document.getElementById('decline-permission');
+  var closePermissionModalBtn = document.getElementById('close-permission-modal');
   
   if (acceptPermissionBtn) {
     acceptPermissionBtn.addEventListener('click', function() {
-      const usagePermission = document.getElementById('usage-permission');
+      var usagePermission = document.getElementById('usage-permission');
       if (usagePermission) usagePermission.checked = true;
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
   
   if (declinePermissionBtn) {
     declinePermissionBtn.addEventListener('click', function() {
-      const usagePermission = document.getElementById('usage-permission');
+      var usagePermission = document.getElementById('usage-permission');
       if (usagePermission) usagePermission.checked = false;
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
   
   if (closePermissionModalBtn) {
     closePermissionModalBtn.addEventListener('click', function() {
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
 
   // Close enhanced prompts button
-  const closeEnhancedPromptsBtn = document.getElementById('close-enhanced-prompts');
+  var closeEnhancedPromptsBtn = document.getElementById('close-enhanced-prompts');
   if (closeEnhancedPromptsBtn) {
     closeEnhancedPromptsBtn.addEventListener('click', function() {
-      const enhancedPrompts = document.getElementById('enhanced-prompts');
+      var enhancedPrompts = document.getElementById('enhanced-prompts');
       if (enhancedPrompts) enhancedPrompts.classList.add('hidden');
     });
   }
 
   // Enhance prompt functionality
-  const enhanceBtn = document.getElementById('enhance-btn');
+  var enhanceBtn = document.getElementById('enhance-btn');
   if (enhanceBtn) {
-    enhanceBtn.addEventListener('click', async function() {
-      const prompt = document.getElementById('prompt');
+    enhanceBtn.addEventListener('click', function() {
+      var prompt = document.getElementById('prompt');
       if (!prompt || !prompt.value.trim()) {
         alert('Please enter a prompt first');
         return;
       }
 
-      const btn = this;
-      const text = document.getElementById('enhance-text');
-      const spinner = document.getElementById('enhance-spinner');
+      var btn = this;
+      var text = document.getElementById('enhance-text');
+      var spinner = document.getElementById('enhance-spinner');
 
       if (btn) btn.disabled = true;
       if (text) text.textContent = 'Enhancing...';
       if (spinner) spinner.classList.remove('hidden');
 
-      try {
         console.log('Sending enhance request for prompt:', prompt.value.trim());
         
         // Get fresh CSRF token from meta tag
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
         if (!csrfMeta) {
           throw new Error('CSRF token not found. Please refresh the page.');
         }
-        const csrfToken = csrfMeta.getAttribute('content');
+        var csrfToken = csrfMeta.getAttribute('content');
         if (!csrfToken) {
           throw new Error('Invalid CSRF token. Please refresh the page.');
         }
         console.log('Using CSRF token:', csrfToken.substring(0, 10) + '...');
         
-        const response = await fetch('/api/enhance', {
+        fetch('/api/enhance', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -502,100 +501,105 @@ document.addEventListener('DOMContentLoaded', function() {
           },
           credentials: 'same-origin',
           body: JSON.stringify({ prompt: prompt.value.trim() })
-        });
+        })
+        .then(function(response) {
+          console.log('Enhance response status:', response.status);
+          console.log('Enhance response headers:', Array.from(response.headers.entries()));
 
-        console.log('Enhance response status:', response.status);
-        console.log('Enhance response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Enhance API error response:', errorText);
-          console.error('CSRF token used:', csrfToken);
-          
-          // Check if it's a CSRF token error
-          if (errorText.includes('Invalid request')) {
-            console.log('CSRF token error detected, attempting to refresh page...');
-            alert('Session expired. Refreshing page to continue...');
-            window.location.reload();
-            return;
+          if (!response.ok) {
+            return response.text().then(function(errorText) {
+              console.error('Enhance API error response:', errorText);
+              console.error('CSRF token used:', csrfToken);
+              
+              // Check if it's a CSRF token error
+              if (errorText.includes('Invalid request')) {
+                console.log('CSRF token error detected, attempting to refresh page...');
+                alert('Session expired. Refreshing page to continue...');
+                window.location.reload();
+                return;
+              }
+              
+              throw new Error('HTTP ' + response.status + ': ' + errorText);
+            });
           }
+
+          return response.json().then(function(result) {
+            console.log('Enhance API success response:', result);
+
+            if (result.success) {
+              displayEnhancedPrompts(result.data.enhancedPrompts);
+              var enhancedPrompts = document.getElementById('enhanced-prompts');
+              if (enhancedPrompts) enhancedPrompts.classList.remove('hidden');
+
+              // Update credit displays if credits were updated
+              if (result.data.updatedCredits !== undefined) {
+                updateCreditDisplays(result.data.updatedCredits);
+              }
+            } else {
+              alert(result.message || 'Failed to enhance prompt');
+            }
+          });
+        })
+        .catch(function(error) {
+          console.error('Error enhancing prompt:', error);
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
           
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log('Enhance API success response:', result);
-
-        if (result.success) {
-          displayEnhancedPrompts(result.data.enhancedPrompts);
-          const enhancedPrompts = document.getElementById('enhanced-prompts');
-          if (enhancedPrompts) enhancedPrompts.classList.remove('hidden');
-
-          // Update credit displays if credits were updated
-          if (result.data.updatedCredits !== undefined) {
-            updateCreditDisplays(result.data.updatedCredits);
+          // Provide more specific error message for JSON parsing errors
+          if (error.message.includes('JSON') || error.message.includes('parsing')) {
+            alert('Error parsing enhancement response. The AI service returned invalid data. Please try again.');
+          } else {
+            alert('Error connecting to enhancement service: ' + error.message);
           }
-        } else {
-          alert(result.message || 'Failed to enhance prompt');
-        }
-      } catch (error) {
-        console.error('Error enhancing prompt:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
+        })
+        .finally(function() {
+          if (btn) btn.disabled = false;
+          if (text) text.textContent = 'Enhance Prompt';
+          if (spinner) spinner.classList.add('hidden');
         });
-        
-        // Provide more specific error message for JSON parsing errors
-        if (error.message.includes('JSON') || error.message.includes('parsing')) {
-          alert('Error parsing enhancement response. The AI service returned invalid data. Please try again.');
-        } else {
-          alert('Error connecting to enhancement service: ' + error.message);
-        }
-      } finally {
-        if (btn) btn.disabled = false;
-        if (text) text.textContent = 'Enhance Prompt';
-        if (spinner) spinner.classList.add('hidden');
       }
     });
   }
 
   // Form submission handling
-  const generateForm = document.getElementById('generate-form');
+  var generateForm = document.getElementById('generate-form');
   if (generateForm) {
     generateForm.addEventListener('submit', function(e) {
-      const image1 = document.getElementById('image1');
-      const image2 = document.getElementById('image2');
-      const hasImages = (image1 && image1.files[0]) || (image2 && image2.files[0]);
-      const usagePermission = document.getElementById('usage-permission');
-      const permissionChecked = usagePermission ? usagePermission.checked : false;
+      var image1 = document.getElementById('image1');
+      var image2 = document.getElementById('image2');
+      var hasImages = (image1 && image1.files[0]) || (image2 && image2.files[0]);
+      var usagePermission = document.getElementById('usage-permission');
+      var permissionChecked = usagePermission ? usagePermission.checked : false;
 
       console.log('Form submission - Images detected:', {
-        image1: image1 && image1.files[0] ? `${image1.files[0].name} (${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB)` : 'none',
-        image2: image2 && image2.files[0] ? `${image2.files[0].name} (${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB)` : 'none',
+        image1: image1 && image1.files[0] ? image1.files[0].name + ' (' + (image1.files[0].size / 1024 / 1024).toFixed(2) + 'MB)' : 'none',
+        image2: image2 && image2.files[0] ? image2.files[0].name + ' (' + (image2.files[0].size / 1024 / 1024).toFixed(2) + 'MB)' : 'none',
         hasImages: hasImages,
         permissionChecked: permissionChecked
       });
 
       if (hasImages && !permissionChecked) {
         e.preventDefault();
-        const permissionModal = document.getElementById('permission-modal');
+        var permissionModal = document.getElementById('permission-modal');
         if (permissionModal) permissionModal.classList.remove('hidden');
         return;
       }
 
       // Check file sizes before submission
       if (hasImages) {
-        const maxSize = 8 * 1024 * 1024; // 8MB (increased from 2MB)
-        let tooLarge = false;
+        var maxSize = 8 * 1024 * 1024; // 8MB (increased from 2MB)
+        var tooLarge = false;
 
         if (image1 && image1.files[0] && image1.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 1 too large: ${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
+          console.error('Image 1 too large: ' + (image1.files[0].size / 1024 / 1024).toFixed(2) + 'MB > 8MB');
         }
         if (image2 && image2.files[0] && image2.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 2 too large: ${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
+          console.error('Image 2 too large: ' + (image2.files[0].size / 1024 / 1024).toFixed(2) + 'MB > 8MB');
         }
 
         if (tooLarge) {
@@ -606,9 +610,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Show loading state
-      const btn = document.getElementById('generate-btn');
-      const text = document.getElementById('generate-text');
-      const spinner = document.getElementById('generate-spinner');
+      var btn = document.getElementById('generate-btn');
+      var text = document.getElementById('generate-text');
+      var spinner = document.getElementById('generate-spinner');
 
       if (btn) btn.disabled = true;
       if (text) text.textContent = 'Generating...';
@@ -618,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleImageUpload(input, index) {
-  const file = input.files[0];
+  var file = input.files[0];
   if (file) {
     // Check if file is an image
     if (!file.type.startsWith('image/')) {
@@ -636,7 +640,7 @@ function handleImageUpload(input, index) {
 
     // If file is larger than 3MB, compress it
     if (file.size > 3 * 1024 * 1024) {
-      console.log(`Compressing image ${index} (${(file.size / 1024 / 1024).toFixed(2)}MB)...`);
+      console.log('Compressing image ' + index + ' (' + (file.size / 1024 / 1024).toFixed(2) + 'MB)...');
       showCompressionStatus(index, true);
       compressImage(file, index, input);
     } else {
@@ -647,36 +651,27 @@ function handleImageUpload(input, index) {
 }
 
 function showCompressionStatus(index, show) {
-  const placeholder = document.getElementById(`image${index}-placeholder`);
+  var placeholder = document.getElementById('image' + index + '-placeholder');
   if (placeholder) {
     if (show) {
-      placeholder.innerHTML = `
-        <div class="text-center">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto mb-2"></div>
-          <div class="text-xs">Compressing...</div>
-        </div>
-      `;
+      placeholder.innerHTML = '<div class="text-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto mb-2"></div><div class="text-xs">Compressing...</div></div>';
     } else {
-      placeholder.innerHTML = `
-        <svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        <div class="text-sm">Upload Image ${index}</div>
-      `;
+      placeholder.innerHTML = '<svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg><div class="text-sm">Upload Image ' + index + '</div>';
     }
   }
 }
 
 function compressImage(file, index, input) {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+  var img = new Image();
 
   img.onload = function() {
     try {
       // Calculate new dimensions (max 1920px on longest side)
-      const maxDimension = 1920;
-      let { width, height } = img;
+      var maxDimension = 1920;
+      var width = img.width;
+      var height = img.height;
 
       if (width > height) {
         if (width > maxDimension) {
@@ -699,15 +694,15 @@ function compressImage(file, index, input) {
       canvas.toBlob(function(blob) {
         if (blob) {
           // Create a new file from the compressed blob
-          const compressedFile = new File([blob], file.name, {
+          var compressedFile = new File([blob], file.name, {
             type: file.type,
             lastModified: Date.now()
           });
 
-          console.log(`Image ${index} compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+          console.log('Image ' + index + ' compressed: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB → ' + (compressedFile.size / 1024 / 1024).toFixed(2) + 'MB');
 
           // Replace the original file with the compressed one
-          const dataTransfer = new DataTransfer();
+          var dataTransfer = new DataTransfer();
           dataTransfer.items.add(compressedFile);
           input.files = dataTransfer.files;
 
@@ -740,12 +735,12 @@ function compressImage(file, index, input) {
 }
 
 function displayImagePreview(file, index) {
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
-    const preview = document.getElementById(`image${index}-preview`);
-    const img = document.getElementById(`image${index}-img`);
-    const placeholder = document.getElementById(`image${index}-placeholder`);
-    const removeBtn = document.getElementById(`remove-image${index}`);
+    var preview = document.getElementById('image' + index + '-preview');
+    var img = document.getElementById('image' + index + '-img');
+    var placeholder = document.getElementById('image' + index + '-placeholder');
+    var removeBtn = document.getElementById('remove-image' + index);
 
     if (img && e.target && e.target.result) img.src = e.target.result;
     if (preview) preview.classList.remove('hidden');
@@ -753,19 +748,19 @@ function displayImagePreview(file, index) {
     if (removeBtn) removeBtn.classList.remove('hidden');
 
     // Show permission section
-    const permissionSection = document.getElementById('permission-section');
+    var permissionSection = document.getElementById('permission-section');
     if (permissionSection) permissionSection.classList.remove('hidden');
 
-    console.log(`Image ${index} ready for upload: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    console.log('Image ' + index + ' ready for upload: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
   };
   reader.readAsDataURL(file);
 }
 
 function removeImage(index) {
-  const input = document.getElementById(`image${index}`);
-  const preview = document.getElementById(`image${index}-preview`);
-  const placeholder = document.getElementById(`image${index}-placeholder`);
-  const removeBtn = document.getElementById(`remove-image${index}`);
+  var input = document.getElementById('image' + index);
+  var preview = document.getElementById('image' + index + '-preview');
+  var placeholder = document.getElementById('image' + index + '-placeholder');
+  var removeBtn = document.getElementById('remove-image' + index);
 
   if (input) input.value = '';
   if (preview) preview.classList.add('hidden');
@@ -773,30 +768,28 @@ function removeImage(index) {
   if (removeBtn) removeBtn.classList.add('hidden');
 
   // Hide permission section if no images
-  const image1 = document.getElementById('image1');
-  const image2 = document.getElementById('image2');
-  const hasImage1 = image1 && image1.files[0];
-  const hasImage2 = image2 && image2.files[0];
+  var image1 = document.getElementById('image1');
+  var image2 = document.getElementById('image2');
+  var hasImage1 = image1 && image1.files[0];
+  var hasImage2 = image2 && image2.files[0];
   
   if (!hasImage1 && !hasImage2) {
-    const permissionSection = document.getElementById('permission-section');
+    var permissionSection = document.getElementById('permission-section');
     if (permissionSection) permissionSection.classList.add('hidden');
   }
 }
 
 function displayEnhancedPrompts(prompts) {
-  const textarea = document.getElementById('enhanced-prompts-textarea');
+  var textarea = document.getElementById('enhanced-prompts-textarea');
   if (!textarea) return;
   
   // Format prompts with numbers and clear separation
-  const formattedPrompts = prompts.map((prompt, index) => 
-    `${index + 1}. ${prompt}`
-  ).join('\n\n');
+  var formattedPrompts = prompts.map(function(prompt, index) { return (index + 1) + '. ' + prompt; }).join('\n\n');
   
   textarea.value = formattedPrompts;
   
   // Remove any existing click event listeners
-  const newTextarea = textarea.cloneNode(true);
+  var newTextarea = textarea.cloneNode(true);
   newTextarea.value = formattedPrompts;
   newTextarea.id = 'enhanced-prompts-textarea'; // Ensure ID is preserved
   textarea.parentNode.replaceChild(newTextarea, textarea);
@@ -804,17 +797,17 @@ function displayEnhancedPrompts(prompts) {
   // Make the new textarea clickable to select prompts
   newTextarea.addEventListener('click', function(e) {
     // Get the clicked line by finding the line at the cursor position
-    const cursorPosition = this.selectionStart;
-    const textBeforeCursor = this.value.substring(0, cursorPosition);
-    const lines = this.value.split('\n\n');
+    var cursorPosition = this.selectionStart;
+    var textBeforeCursor = this.value.substring(0, cursorPosition);
+    var lines = this.value.split('\n\n');
     
     // Count how many line breaks are before the cursor
-    const lineBreaksBeforeCursor = (textBeforeCursor.match(/\n\n/g) || []).length;
-    const clickedLine = lineBreaksBeforeCursor;
+    var lineBreaksBeforeCursor = (textBeforeCursor.match(/\n\n/g) || []).length;
+    var clickedLine = lineBreaksBeforeCursor;
     
     if (clickedLine >= 0 && clickedLine < lines.length) {
-      const selectedPrompt = lines[clickedLine].replace(/^\d+\.\s*/, '');
-      const promptTextarea = document.getElementById('prompt');
+      var selectedPrompt = lines[clickedLine].replace(/^\d+\.\s*/, '');
+      var promptTextarea = document.getElementById('prompt');
       if (promptTextarea) {
         promptTextarea.value = selectedPrompt;
         promptTextarea.focus(); // Focus on the main prompt textarea
@@ -828,16 +821,16 @@ function displayEnhancedPrompts(prompts) {
 // Function to update all credit displays on the page
 function updateCreditDisplays(newCredits) {
   // Update credit display in generate page header
-  const generateCreditElements = document.querySelectorAll('.font-bold');
-  generateCreditElements.forEach(element => {
+  var generateCreditElements = document.querySelectorAll('.font-bold');
+  generateCreditElements.forEach(function(element) {
     if (element.textContent.match(/^\d+$/) && element.nextElementSibling && element.nextElementSibling.textContent === 'credits') {
       element.textContent = newCredits;
     }
   });
 
   // Update credit display in main header (if visible)
-  const headerCreditElements = document.querySelectorAll('.text-yellow-300.font-semibold');
-  headerCreditElements.forEach(element => {
+  var headerCreditElements = document.querySelectorAll('.text-yellow-300.font-semibold');
+  headerCreditElements.forEach(function(element) {
     if (element.textContent.match(/^\d+$/)) {
       element.textContent = newCredits;
     }
@@ -848,8 +841,8 @@ function updateCreditDisplays(newCredits) {
 
 // Update credits on page load if we have a success message (indicating recent transaction)
 document.addEventListener('DOMContentLoaded', function() {
-  const successMessage = document.querySelector('.bg-green-900\\/20');
-  if (successMessage && successMessage.textContent.includes('generated successfully')) {
+  var successMessage = document.querySelector('[class*="bg-green"]');
+  if (successMessage && successMessage.textContent.indexOf('generated successfully') !== -1) {
     // Fetch current credits from server
     fetch('/api/user/credits', {
       method: 'GET',
@@ -857,15 +850,15 @@ document.addEventListener('DOMContentLoaded', function() {
         'Content-Type': 'application/json',
       }
     })
-    .then(response => {
+    .then(function(response) {
       console.log('Credits response status:', response.status);
-      console.log('Credits response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Credits response headers:', Array.from(response.headers.entries()));
       return response.text();
     })
-    .then(text => {
+    .then(function(text) {
       console.log('Credits response text:', text);
       try {
-        const data = JSON.parse(text);
+        var data = JSON.parse(text);
         if (data.success && data.credits !== undefined) {
           updateCreditDisplays(data.credits);
         }
@@ -874,9 +867,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Response text:', text);
       }
     })
-    .catch(error => {
+    .catch(function(error) {
       console.log('Could not fetch updated credits:', error);
     });
   }
 });
 </script>
+<?php
+// End of file
+?>

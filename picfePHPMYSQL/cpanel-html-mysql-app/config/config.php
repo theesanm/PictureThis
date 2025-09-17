@@ -7,7 +7,9 @@
 // ==========================================
 // For local development: set to false
 // For production server: set to true
-define('IS_PRODUCTION', true); // true = production, false = development
+if (!defined('IS_PRODUCTION')) {
+    define('IS_PRODUCTION', false); // true = production, false = development
+}
 
 // ==========================================
 // LOAD ENVIRONMENT CONFIGURATION
@@ -48,16 +50,16 @@ function getConfigValue($section, $key, $default = null) {
 // ==========================================
 
 // Application settings
-define('APP_ENV', $appEnv);
-define('APP_NAME', getConfigValue('app', 'name', 'PictureThis'));
-define('APP_URL', getConfigValue('app', 'url', 'http://localhost:8000'));
-define('APP_DEBUG', getConfigValue('app', 'debug', !IS_PRODUCTION));
+if (!defined('APP_ENV')) define('APP_ENV', $appEnv);
+if (!defined('APP_NAME')) define('APP_NAME', getConfigValue('app', 'name', 'PictureThis'));
+if (!defined('APP_URL')) define('APP_URL', getConfigValue('app', 'url', 'http://localhost:8000'));
+if (!defined('APP_DEBUG')) define('APP_DEBUG', getConfigValue('app', 'debug', !IS_PRODUCTION));
 
 // Database configuration
-define('DB_HOST', getConfigValue('database', 'host', '127.0.0.1'));
-define('DB_USER', getConfigValue('database', 'user', 'root'));
-define('DB_PASS', getConfigValue('database', 'pass', ''));
-define('DB_NAME', getConfigValue('database', 'name', 'picturethis'));
+if (!defined('DB_HOST')) define('DB_HOST', getConfigValue('database', 'host', '127.0.0.1'));
+if (!defined('DB_USER')) define('DB_USER', getConfigValue('database', 'user', 'root'));
+if (!defined('DB_PASS')) define('DB_PASS', getConfigValue('database', 'pass', ''));
+if (!defined('DB_NAME')) define('DB_NAME', getConfigValue('database', 'name', 'picturethis'));
 
 // PayFast configuration
 define('PAYFAST_MERCHANT_ID', getConfigValue('payfast', 'merchant_id', ''));
@@ -91,8 +93,8 @@ define('SERVER_TIMEZONE', 'UTC');
 define('DEFAULT_USER_TIMEZONE', 'UTC');
 define('TOKEN_GRACE_PERIOD_MINUTES', 5);
 
-// Set timezone
-date_default_timezone_set(SERVER_TIMEZONE);
+// Note: Timezone is set in index.php to match system timezone for session calculations
+// date_default_timezone_set(SERVER_TIMEZONE);
 
 // ==========================================
 // RUNTIME CONSTANTS (for backward compatibility)

@@ -12,7 +12,7 @@ return [
     'database' => [
         'host' => '127.0.0.1', // Your production database host
         'user' => 'cfoxcozj_picThisdb', // Your production database user
-        'pass' => 'LfUYHI%]{sjb5A*u', // Actual production database password
+        'pass' => 'LfUYHI%]{sjb5A*u', // Your production database password
         'name' => 'cfoxcozj_PictureThis', // Your production database name
     ],
     'payfast' => [

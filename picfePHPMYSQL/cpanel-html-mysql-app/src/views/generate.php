@@ -2,6 +2,9 @@
 // Generate page - matches the functionality of the picfe app
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
+// Cache busting - add timestamp to prevent browser caching
+$cacheBust = time();
+
 // Initialize variables with defaults
 $user = isset($user) ? $user : (isset($_SESSION['user']) ? $_SESSION['user'] : null);
 $settings = isset($settings) && is_array($settings) ? $settings : [];
@@ -96,7 +99,7 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
               class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               <?php if ($enhanceCost > 0 && $displayCredits < $enhanceCost): ?>disabled<?php endif; ?>
             >
-              <span id="enhance-text">Enhance Prompt</span>
+              <span id="enhance-text">Enhance with AI</span>
               <div id="enhance-spinner" class="hidden ml-2">
                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               </div>
@@ -108,22 +111,6 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
             </button>
           </div>    
           <?php endif; ?>
-
-          <!-- Enhanced Prompts -->
-          <div id="enhanced-prompts" class="hidden">
-            <div class="flex justify-between items-center mb-2">
-              <label for="enhanced-prompts-textarea" class="block text-sm font-medium text-gray-300">Enhanced Prompts</label>
-              <button type="button" id="close-enhanced-prompts" class="text-gray-400 hover:text-white text-sm" title="Close enhanced prompts">✕</button>
-            </div>
-            <textarea
-              id="enhanced-prompts-textarea"
-              rows="6"
-              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white resize-y min-h-[120px]"
-              placeholder="Enhanced prompts will appear here..."
-              readonly
-            ></textarea>
-            <div class="text-xs text-gray-500 mt-1">Click on any prompt line to use it, or resize this box to see more content</div>
-          </div>
 
           <!-- Reference Images -->
           <div>
@@ -373,15 +360,23 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
       </div>
     </div>
   </div>
+
+  <!-- Include Agent Modal -->
+  <?php include __DIR__ . '/agent_modal.php'; ?>
+
 </div>
 
 <script>
 // Wrap all JavaScript in DOM ready event
 document.addEventListener('DOMContentLoaded', function() {
+  // Global variables for agent session
+  var sessionTimer = null;
+  var sessionExpiryTime = null;
+
   // Toggle guidance function
   window.toggleGuidance = function() {
-    const content = document.getElementById('guidance-content');
-    const chevron = document.getElementById('guidance-chevron');
+    var content = document.getElementById('guidance-content');
+    var chevron = document.getElementById('guidance-chevron');
     if (content.classList.contains('hidden')) {
       content.classList.remove('hidden');
       chevron.style.transform = 'rotate(0deg)';
@@ -392,8 +387,8 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // Image upload handling
-  const image1Input = document.getElementById('image1');
-  const image2Input = document.getElementById('image2');
+  var image1Input = document.getElementById('image1');
+  var image2Input = document.getElementById('image2');
   
   if (image1Input) {
     image1Input.addEventListener('change', function(e) {
@@ -408,8 +403,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Remove image handlers
-  const removeImage1Btn = document.getElementById('remove-image1');
-  const removeImage2Btn = document.getElementById('remove-image2');
+  var removeImage1Btn = document.getElementById('remove-image1');
+  var removeImage2Btn = document.getElementById('remove-image2');
   
   if (removeImage1Btn) {
     removeImage1Btn.addEventListener('click', function() {
@@ -424,178 +419,71 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Permission modal handling
-  const acceptPermissionBtn = document.getElementById('accept-permission');
-  const declinePermissionBtn = document.getElementById('decline-permission');
-  const closePermissionModalBtn = document.getElementById('close-permission-modal');
+  var acceptPermissionBtn = document.getElementById('accept-permission');
+  var declinePermissionBtn = document.getElementById('decline-permission');
+  var closePermissionModalBtn = document.getElementById('close-permission-modal');
   
   if (acceptPermissionBtn) {
     acceptPermissionBtn.addEventListener('click', function() {
-      const usagePermission = document.getElementById('usage-permission');
+      var usagePermission = document.getElementById('usage-permission');
       if (usagePermission) usagePermission.checked = true;
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
   
   if (declinePermissionBtn) {
     declinePermissionBtn.addEventListener('click', function() {
-      const usagePermission = document.getElementById('usage-permission');
+      var usagePermission = document.getElementById('usage-permission');
       if (usagePermission) usagePermission.checked = false;
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
   
   if (closePermissionModalBtn) {
     closePermissionModalBtn.addEventListener('click', function() {
-      const permissionModal = document.getElementById('permission-modal');
+      var permissionModal = document.getElementById('permission-modal');
       if (permissionModal) permissionModal.classList.add('hidden');
     });
   }
 
-  // Close enhanced prompts button
-  const closeEnhancedPromptsBtn = document.getElementById('close-enhanced-prompts');
-  if (closeEnhancedPromptsBtn) {
-    closeEnhancedPromptsBtn.addEventListener('click', function() {
-      const enhancedPrompts = document.getElementById('enhanced-prompts');
-      if (enhancedPrompts) enhancedPrompts.classList.add('hidden');
-    });
-  }
-
-  // Enhance prompt functionality
-  const enhanceBtn = document.getElementById('enhance-btn');
-  if (enhanceBtn) {
-    enhanceBtn.addEventListener('click', async function() {
-      const prompt = document.getElementById('prompt');
-      if (!prompt || !prompt.value.trim()) {
-        alert('Please enter a prompt first');
-        return;
-      }
-
-      const btn = this;
-      const text = document.getElementById('enhance-text');
-      const spinner = document.getElementById('enhance-spinner');
-
-      if (btn) btn.disabled = true;
-      if (text) text.textContent = 'Enhancing...';
-      if (spinner) spinner.classList.remove('hidden');
-
-      try {
-        console.log('Sending enhance request for prompt:', prompt.value.trim());
-        
-        // Get fresh CSRF token from meta tag
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        if (!csrfMeta) {
-          throw new Error('CSRF token not found. Please refresh the page.');
-        }
-        const csrfToken = csrfMeta.getAttribute('content');
-        if (!csrfToken) {
-          throw new Error('Invalid CSRF token. Please refresh the page.');
-        }
-        console.log('Using CSRF token:', csrfToken.substring(0, 10) + '...');
-        
-        const response = await fetch('/api/enhance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ prompt: prompt.value.trim() })
-        });
-
-        console.log('Enhance response status:', response.status);
-        console.log('Enhance response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Enhance API error response:', errorText);
-          console.error('CSRF token used:', csrfToken);
-          
-          // Check if it's a CSRF token error
-          if (errorText.includes('Invalid request')) {
-            console.log('CSRF token error detected, attempting to refresh page...');
-            alert('Session expired. Refreshing page to continue...');
-            window.location.reload();
-            return;
-          }
-          
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log('Enhance API success response:', result);
-
-        if (result.success) {
-          displayEnhancedPrompts(result.data.enhancedPrompts);
-          const enhancedPrompts = document.getElementById('enhanced-prompts');
-          if (enhancedPrompts) enhancedPrompts.classList.remove('hidden');
-
-          // Update credit displays if credits were updated
-          if (result.data.updatedCredits !== undefined) {
-            updateCreditDisplays(result.data.updatedCredits);
-          }
-        } else {
-          alert(result.message || 'Failed to enhance prompt');
-        }
-      } catch (error) {
-        console.error('Error enhancing prompt:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
-        
-        // Provide more specific error message for JSON parsing errors
-        if (error.message.includes('JSON') || error.message.includes('parsing')) {
-          alert('Error parsing enhancement response. The AI service returned invalid data. Please try again.');
-        } else {
-          alert('Error connecting to enhancement service: ' + error.message);
-        }
-      } finally {
-        if (btn) btn.disabled = false;
-        if (text) text.textContent = 'Enhance Prompt';
-        if (spinner) spinner.classList.add('hidden');
-      }
-    });
-  }
-
   // Form submission handling
-  const generateForm = document.getElementById('generate-form');
+  var generateForm = document.getElementById('generate-form');
   if (generateForm) {
     generateForm.addEventListener('submit', function(e) {
-      const image1 = document.getElementById('image1');
-      const image2 = document.getElementById('image2');
-      const hasImages = (image1 && image1.files[0]) || (image2 && image2.files[0]);
-      const usagePermission = document.getElementById('usage-permission');
-      const permissionChecked = usagePermission ? usagePermission.checked : false;
+      var image1 = document.getElementById('image1');
+      var image2 = document.getElementById('image2');
+      var hasImages = (image1 && image1.files[0]) || (image2 && image2.files[0]);
+      var usagePermission = document.getElementById('usage-permission');
+      var permissionChecked = usagePermission ? usagePermission.checked : false;
 
       console.log('Form submission - Images detected:', {
-        image1: image1 && image1.files[0] ? `${image1.files[0].name} (${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB)` : 'none',
-        image2: image2 && image2.files[0] ? `${image2.files[0].name} (${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB)` : 'none',
+        image1: image1 && image1.files[0] ? image1.files[0].name + ' (' + (image1.files[0].size / 1024 / 1024).toFixed(2) + 'MB)' : 'none',
+        image2: image2 && image2.files[0] ? image2.files[0].name + ' (' + (image2.files[0].size / 1024 / 1024).toFixed(2) + 'MB)' : 'none',
         hasImages: hasImages,
         permissionChecked: permissionChecked
       });
 
       if (hasImages && !permissionChecked) {
         e.preventDefault();
-        const permissionModal = document.getElementById('permission-modal');
+        var permissionModal = document.getElementById('permission-modal');
         if (permissionModal) permissionModal.classList.remove('hidden');
         return;
       }
 
       // Check file sizes before submission
       if (hasImages) {
-        const maxSize = 8 * 1024 * 1024; // 8MB (increased from 2MB)
-        let tooLarge = false;
+        var maxSize = 8 * 1024 * 1024; // 8MB (increased from 2MB)
+        var tooLarge = false;
 
         if (image1 && image1.files[0] && image1.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 1 too large: ${(image1.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
+          console.error('Image 1 too large: ' + (image1.files[0].size / 1024 / 1024).toFixed(2) + 'MB > 8MB');
         }
         if (image2 && image2.files[0] && image2.files[0].size > maxSize) {
           tooLarge = true;
-          console.error(`Image 2 too large: ${(image2.files[0].size / 1024 / 1024).toFixed(2)}MB > 8MB`);
+          console.error('Image 2 too large: ' + (image2.files[0].size / 1024 / 1024).toFixed(2) + 'MB > 8MB');
         }
 
         if (tooLarge) {
@@ -606,19 +494,367 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Show loading state
-      const btn = document.getElementById('generate-btn');
-      const text = document.getElementById('generate-text');
-      const spinner = document.getElementById('generate-spinner');
+      var btn = document.getElementById('generate-btn');
+      var text = document.getElementById('generate-text');
+      var spinner = document.getElementById('generate-spinner');
 
       if (btn) btn.disabled = true;
       if (text) text.textContent = 'Generating...';
       if (spinner) spinner.classList.remove('hidden');
+
+      // Close agent session if one is active
+      if (typeof window.currentAgentSession !== 'undefined' && window.currentAgentSession) {
+        closeAgentSessionOnImageGeneration(window.currentAgentSession);
+      }
     });
   }
-});
+
+  // Update credits on page load if we have a success message (indicating recent transaction)
+  var successMessage = document.querySelector('.bg-green-900\\/20');
+  if (successMessage && successMessage.textContent.includes('generated successfully')) {
+    // Fetch current credits from server
+    fetch('/api/user/credits', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(function(response) {
+      console.log('Credits response status:', response.status);
+      console.log('Credits response headers:', Array.from(response.headers.entries()));
+      return response.text();
+    })
+    .then(function(text) {
+      console.log('Credits response text:', text);
+      try {
+        var data = JSON.parse(text);
+        if (data.success && data.credits !== undefined) {
+          updateCreditDisplays(data.credits);
+        }
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        console.error('Response text:', text);
+      }
+    })
+    .catch(function(error) {
+      console.log('Could not fetch updated credits:', error);
+    });
+  }
+
+  // Event listeners
+  // DUPLICATE CODE - Commented out to avoid conflicts
+  /*
+  window.startAgentSession = function(originalPrompt) {
+    console.log('startAgentSession called with prompt:', originalPrompt);
+    // Convert to promise-based approach instead of async/await
+    showAgentModal();
+
+    // Get fresh CSRF token
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfMeta) {
+      console.error('CSRF token not found');
+      alert('CSRF token not found');
+      hideAgentModal();
+      return;
+    }
+    var csrfToken = csrfMeta.getAttribute('content');
+    console.log('CSRF token found:', csrfToken ? 'YES' : 'NO');
+
+    console.log('Making API request to /api/prompt-agent/start');
+    fetch('/api/prompt-agent/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({ prompt: originalPrompt })
+    })
+    .then(function(response) {
+      console.log('API response received, status:', response.status);
+      if (!response.ok) {
+        // Handle HTTP error responses
+        if (response.status === 401) {
+          console.log('401 Unauthorized - redirecting to login');
+          throw new Error('Authentication required. Please log in to use the agent.');
+        } else if (response.status === 400) {
+          return response.json().then(function(data) {
+            console.log('400 Bad Request, response data:', data);
+            throw new Error(data.message || 'Invalid request');
+          });
+        } else {
+          console.log('Other error status:', response.status);
+          throw new Error('Server error: ' + response.status);
+        }
+      }
+      return response.json();
+    })
+    .then(function(result) {
+      console.log('API response parsed:', result);
+      if (result.success) {
+        window.currentAgentSession = result.data.sessionId;
+        
+        // Parse expiresAt more robustly
+        var expiresAtStr = result.data.expiresAt;
+        
+        // Try to parse MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+        if (expiresAtStr && typeof expiresAtStr === 'string') {
+          // Replace space with 'T' to make it ISO format, assume UTC
+          var isoString = expiresAtStr.replace(' ', 'T') + 'Z';
+          sessionEndTime = new Date(isoString).getTime();
+          
+          // If parsing failed, try alternative methods
+          if (isNaN(sessionEndTime)) {
+            // Fallback: parse manually
+            var parts = expiresAtStr.split(' ');
+            if (parts.length === 2) {
+              var dateParts = parts[0].split('-');
+              var timeParts = parts[1].split(':');
+              if (dateParts.length === 3 && timeParts.length === 3) {
+                sessionEndTime = new Date(
+                  parseInt(dateParts[0]),     // year
+                  parseInt(dateParts[1]) - 1, // month (0-based)
+                  parseInt(dateParts[2]),     // day
+                  parseInt(timeParts[0]),     // hour
+                  parseInt(timeParts[1]),     // minute
+                  parseInt(timeParts[2])      // second
+                ).getTime();
+              }
+            }
+          }
+        }
+        
+        // If still invalid, set to 30 minutes from now as fallback
+        if (!sessionEndTime || isNaN(sessionEndTime)) {
+          console.warn('Failed to parse expiresAt:', expiresAtStr, 'Using fallback');
+          sessionEndTime = new Date().getTime() + (30 * 60 * 1000); // 30 minutes
+        }
+
+        // Clear loading message and add welcome message
+        if (agentMessages) {
+          agentMessages.innerHTML = '';
+          addMessage('agent', result.data.welcomeMessage);
+          scrollToLatestContent();
+        }
+
+        // Start session timer
+        if (sessionEndTime && sessionEndTime > new Date().getTime()) {
+          startSessionTimer();
+        } else {
+          console.error('Invalid session end time:', sessionEndTime, 'Current time:', new Date().getTime());
+          addMessage('system', '⚠️ Session configuration error. Please try again.');
+          setTimeout(function() { endAgentSession(); }, 3000);
+        }
+
+        // Enable input
+        agentInput.disabled = false;
+        sendAgentMessage.disabled = false;
+        agentInput.focus();
+
+      } else {
+        throw new Error(result.message || 'Failed to start agent session');
+      }
+    })
+    .catch(function(error) {
+      console.error('Failed to start agent session:', error);
+      
+      // Show user-friendly error message
+      if (error.message.includes('Authentication required')) {
+        alert('Please log in to use the AI prompt enhancement agent.');
+        // Redirect to login page
+        window.location.href = '/login';
+      } else if (error.message.includes('Insufficient credits')) {
+        alert('You don\'t have enough credits to use the agent. Please purchase more credits.');
+        hideAgentModal();
+      } else {
+        alert('Failed to start agent session: ' + error.message);
+        hideAgentModal();
+      }
+    });
+  }
+  */
+
+  // DUPLICATE CODE - Commented out to avoid conflicts
+  /*
+    if (agentModal) {
+      agentModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function hideAgentModal() {
+    if (agentModal) {
+      agentModal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+  }
+
+  // Helper function to auto-scroll the agent modal to show latest content
+  function scrollToLatestContent() {
+    setTimeout(function() {
+      // First scroll the messages area to the bottom
+      if (agentMessages) {
+        agentMessages.scrollTop = agentMessages.scrollHeight;
+      }
+
+      // Then scroll the refined prompt into view if it's visible
+      var agentRefinedPrompt = document.getElementById('agent-refined-prompt');
+      if (agentRefinedPrompt && !agentRefinedPrompt.classList.contains('hidden')) {
+        agentRefinedPrompt.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }, 100);
+  }
+
+
+
+  function sendAgentMessageHandler() {
+    var message = agentInput.value.trim();
+    if (!message || !window.currentAgentSession) return;
+
+    // Disable input while processing
+    agentInput.disabled = true;
+    sendAgentMessage.disabled = true;
+
+    // Show sending state
+    document.getElementById('send-text').textContent = 'Sending...';
+    document.getElementById('send-spinner').classList.remove('hidden');
+
+    // Get CSRF token
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = csrfMeta.getAttribute('content');
+
+    fetch('/api/prompt-agent/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        sessionId: window.currentAgentSession,
+        message: message
+      })
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        // Handle HTTP error responses
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (response.status === 400) {
+          return response.json().then(function(data) {
+            throw new Error(data.message || 'Invalid request');
+          });
+        } else {
+          throw new Error('Server error: ' + response.status);
+        }
+      }
+      return response.json();
+    })
+    .then(function(result) {
+      // Add user message to UI
+      addMessage('user', message);
+      agentInput.value = '';
+
+      if (result.success) {
+        // Add agent response
+        addMessage('agent', result.data.message);
+
+        // Show refined prompt if provided
+        if (result.data.refinedPrompt) {
+          showRefinedPrompt(result.data.refinedPrompt);
+        }
+
+        // Auto-scroll to show the latest content
+        scrollToLatestContent();
+
+        // Update credits display
+        if (result.data.creditsUsed) {
+          updateCreditDisplays(-result.data.creditsUsed);
+        }
+
+      } else {
+        if (result.message.includes('rate limit') || result.message.includes('limit')) {
+          addMessage('system', '⚠️ ' + result.message);
+          scrollToLatestContent();
+        } else {
+          throw new Error(result.message || 'Failed to send message');
+        }
+      }
+    })
+    .catch(function(error) {
+      console.error('Failed to send message:', error);
+      addMessage('system', '❌ Error: ' + error.message);
+      scrollToLatestContent();
+    })
+    .finally(function() {
+      // Re-enable input
+      agentInput.disabled = false;
+      sendAgentMessage.disabled = false;
+      document.getElementById('send-text').textContent = 'Send';
+      document.getElementById('send-spinner').classList.add('hidden');
+      agentInput.focus();
+    });
+  }
+
+  function endAgentSession() {
+    if (window.currentAgentSession) {
+      // Get CSRF token
+      var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+      var csrfToken = csrfMeta.getAttribute('content');
+
+      fetch('/api/prompt-agent/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({
+          sessionId: window.currentAgentSession
+        })
+      })
+      .catch(function(error) {
+        console.error('Failed to end session:', error);
+      });
+    }
+
+    window.currentAgentSession = null;
+    if (sessionTimer) {
+      clearInterval(sessionTimer);
+      sessionTimer = null;
+    }
+    hideAgentModal();
+  }
+
+
+
+
+
+  function updateAgentCreditDisplays(creditChange) {
+    // Update credit displays (reuse existing function from generate.php)
+    if (typeof updateCreditDisplays === 'function') {
+      // Get current credits and add the change
+      var creditElements = document.querySelectorAll('.font-bold');
+      creditElements.forEach(function(element) {
+        if (element.textContent.match(/^\d+$/)) {
+          var currentCredits = parseInt(element.textContent);
+          element.textContent = Math.max(0, currentCredits + creditChange);
+        }
+      });
+    }
+  }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', function() {
+    if (window.currentAgentSession) {
+      // Note: This won't actually send the request due to browser limitations
+      // The session will be cleaned up by the server based on expiration
+      navigator.sendBeacon('/api/prompt-agent/end', JSON.stringify({
+        sessionId: window.currentAgentSession
+      }));
+    }
+  });
+  */
 
 function handleImageUpload(input, index) {
-  const file = input.files[0];
+  var file = input.files[0];
   if (file) {
     // Check if file is an image
     if (!file.type.startsWith('image/')) {
@@ -636,7 +872,7 @@ function handleImageUpload(input, index) {
 
     // If file is larger than 3MB, compress it
     if (file.size > 3 * 1024 * 1024) {
-      console.log(`Compressing image ${index} (${(file.size / 1024 / 1024).toFixed(2)}MB)...`);
+      console.log('Compressing image ' + index + ' (' + (file.size / 1024 / 1024).toFixed(2) + 'MB)...');
       showCompressionStatus(index, true);
       compressImage(file, index, input);
     } else {
@@ -647,36 +883,27 @@ function handleImageUpload(input, index) {
 }
 
 function showCompressionStatus(index, show) {
-  const placeholder = document.getElementById(`image${index}-placeholder`);
+  var placeholder = document.getElementById('image' + index + '-placeholder');
   if (placeholder) {
     if (show) {
-      placeholder.innerHTML = `
-        <div class="text-center">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto mb-2"></div>
-          <div class="text-xs">Compressing...</div>
-        </div>
-      `;
+      placeholder.innerHTML = '<div class=\"text-center\"><div class=\"animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto mb-2\"></div><div class=\"text-xs\">Compressing...</div></div>';
     } else {
-      placeholder.innerHTML = `
-        <svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        <div class="text-sm">Upload Image ${index}</div>
-      `;
+      placeholder.innerHTML = '<svg class=\"mx-auto h-8 w-8 mb-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 6v6m0 0v6m0-6h6m-6 0H6\"></path></svg><div class=\"text-sm\">Upload Image ' + index + '</div>';
     }
   }
 }
 
 function compressImage(file, index, input) {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+  var img = new Image();
 
   img.onload = function() {
     try {
       // Calculate new dimensions (max 1920px on longest side)
-      const maxDimension = 1920;
-      let { width, height } = img;
+      var maxDimension = 1920;
+      var width = img.width;
+      var height = img.height;
 
       if (width > height) {
         if (width > maxDimension) {
@@ -699,15 +926,15 @@ function compressImage(file, index, input) {
       canvas.toBlob(function(blob) {
         if (blob) {
           // Create a new file from the compressed blob
-          const compressedFile = new File([blob], file.name, {
+          var compressedFile = new File([blob], file.name, {
             type: file.type,
             lastModified: Date.now()
           });
 
-          console.log(`Image ${index} compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+          console.log('Image ' + index + ' compressed: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB → ' + (compressedFile.size / 1024 / 1024).toFixed(2) + 'MB');
 
           // Replace the original file with the compressed one
-          const dataTransfer = new DataTransfer();
+          var dataTransfer = new DataTransfer();
           dataTransfer.items.add(compressedFile);
           input.files = dataTransfer.files;
 
@@ -740,12 +967,12 @@ function compressImage(file, index, input) {
 }
 
 function displayImagePreview(file, index) {
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
-    const preview = document.getElementById(`image${index}-preview`);
-    const img = document.getElementById(`image${index}-img`);
-    const placeholder = document.getElementById(`image${index}-placeholder`);
-    const removeBtn = document.getElementById(`remove-image${index}`);
+    var preview = document.getElementById('image' + index + '-preview');
+    var img = document.getElementById('image' + index + '-img');
+    var placeholder = document.getElementById('image' + index + '-placeholder');
+    var removeBtn = document.getElementById('remove-image' + index);
 
     if (img && e.target && e.target.result) img.src = e.target.result;
     if (preview) preview.classList.remove('hidden');
@@ -753,19 +980,19 @@ function displayImagePreview(file, index) {
     if (removeBtn) removeBtn.classList.remove('hidden');
 
     // Show permission section
-    const permissionSection = document.getElementById('permission-section');
+    var permissionSection = document.getElementById('permission-section');
     if (permissionSection) permissionSection.classList.remove('hidden');
 
-    console.log(`Image ${index} ready for upload: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    console.log('Image ' + index + ' ready for upload: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
   };
   reader.readAsDataURL(file);
 }
 
 function removeImage(index) {
-  const input = document.getElementById(`image${index}`);
-  const preview = document.getElementById(`image${index}-preview`);
-  const placeholder = document.getElementById(`image${index}-placeholder`);
-  const removeBtn = document.getElementById(`remove-image${index}`);
+  var input = document.getElementById('image' + index);
+  var preview = document.getElementById('image' + index + '-preview');
+  var placeholder = document.getElementById('image' + index + '-placeholder');
+  var removeBtn = document.getElementById('remove-image' + index);
 
   if (input) input.value = '';
   if (preview) preview.classList.add('hidden');
@@ -773,71 +1000,70 @@ function removeImage(index) {
   if (removeBtn) removeBtn.classList.add('hidden');
 
   // Hide permission section if no images
-  const image1 = document.getElementById('image1');
-  const image2 = document.getElementById('image2');
-  const hasImage1 = image1 && image1.files[0];
-  const hasImage2 = image2 && image2.files[0];
+  var image1 = document.getElementById('image1');
+  var image2 = document.getElementById('image2');
+  var hasImage1 = image1 && image1.files[0];
+  var hasImage2 = image2 && image2.files[0];
   
   if (!hasImage1 && !hasImage2) {
-    const permissionSection = document.getElementById('permission-section');
+    var permissionSection = document.getElementById('permission-section');
     if (permissionSection) permissionSection.classList.add('hidden');
   }
 }
 
-function displayEnhancedPrompts(prompts) {
-  const textarea = document.getElementById('enhanced-prompts-textarea');
-  if (!textarea) return;
-  
-  // Format prompts with numbers and clear separation
-  const formattedPrompts = prompts.map((prompt, index) => 
-    `${index + 1}. ${prompt}`
-  ).join('\n\n');
-  
-  textarea.value = formattedPrompts;
-  
-  // Remove any existing click event listeners
-  const newTextarea = textarea.cloneNode(true);
-  newTextarea.value = formattedPrompts;
-  newTextarea.id = 'enhanced-prompts-textarea'; // Ensure ID is preserved
-  textarea.parentNode.replaceChild(newTextarea, textarea);
-  
-  // Make the new textarea clickable to select prompts
-  newTextarea.addEventListener('click', function(e) {
-    // Get the clicked line by finding the line at the cursor position
-    const cursorPosition = this.selectionStart;
-    const textBeforeCursor = this.value.substring(0, cursorPosition);
-    const lines = this.value.split('\n\n');
-    
-    // Count how many line breaks are before the cursor
-    const lineBreaksBeforeCursor = (textBeforeCursor.match(/\n\n/g) || []).length;
-    const clickedLine = lineBreaksBeforeCursor;
-    
-    if (clickedLine >= 0 && clickedLine < lines.length) {
-      const selectedPrompt = lines[clickedLine].replace(/^\d+\.\s*/, '');
-      const promptTextarea = document.getElementById('prompt');
-      if (promptTextarea) {
-        promptTextarea.value = selectedPrompt;
-        promptTextarea.focus(); // Focus on the main prompt textarea
-        console.log('Selected prompt:', selectedPrompt);
-        // Keep the enhanced prompts box visible for reference
+// Function to close agent session when image is generated
+function closeAgentSessionOnImageGeneration(sessionId) {
+  var prompt = document.getElementById('prompt');
+  var finalPrompt = prompt ? prompt.value : '';
+
+  // Get fresh CSRF token
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  if (!csrfMeta) {
+    console.error('CSRF token not found for session closure');
+    return;
+  }
+  var csrfToken = csrfMeta.getAttribute('content');
+
+  fetch('/api/prompt-agent/close-on-generation', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      sessionId: sessionId,
+      finalPrompt: finalPrompt
+    })
+  })
+  .then(function(response) {
+    if (response.ok) {
+      console.log('Agent session closed successfully on image generation');
+      // Reset agent session variable
+      if (typeof window.currentAgentSession !== 'undefined') {
+        window.currentAgentSession = null;
       }
+    } else {
+      console.error('Failed to close agent session on image generation');
     }
+  })
+  .catch(function(error) {
+    console.error('Error closing agent session:', error);
   });
 }
 
-// Function to update all credit displays on the page
 function updateCreditDisplays(newCredits) {
   // Update credit display in generate page header
-  const generateCreditElements = document.querySelectorAll('.font-bold');
-  generateCreditElements.forEach(element => {
+  var generateCreditElements = document.querySelectorAll('.font-bold');
+  generateCreditElements.forEach(function(element) {
     if (element.textContent.match(/^\d+$/) && element.nextElementSibling && element.nextElementSibling.textContent === 'credits') {
       element.textContent = newCredits;
     }
   });
 
   // Update credit display in main header (if visible)
-  const headerCreditElements = document.querySelectorAll('.text-yellow-300.font-semibold');
-  headerCreditElements.forEach(element => {
+  var headerCreditElements = document.querySelectorAll('.text-yellow-300.font-semibold');
+  headerCreditElements.forEach(function(element) {
     if (element.textContent.match(/^\d+$/)) {
       element.textContent = newCredits;
     }
@@ -846,37 +1072,400 @@ function updateCreditDisplays(newCredits) {
   console.log('Credits updated to:', newCredits);
 }
 
-// Update credits on page load if we have a success message (indicating recent transaction)
+// Agent Modal JavaScript
+// Note: currentAgentSession, sessionTimer, and sessionExpiryTime are already declared as global variables
+
+// Add message to chat
+// Send message to agent
+// Show refined prompt
+// Use refined prompt
+// Event listeners
+});
+
+// Start session timer
+// Close agent modal
+// Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-  const successMessage = document.querySelector('.bg-green-900\\/20');
-  if (successMessage && successMessage.textContent.includes('generated successfully')) {
-    // Fetch current credits from server
-    fetch('/api/user/credits', {
-      method: 'GET',
+  // Global variables for agent session
+  var sessionTimer = null;
+  var sessionExpiryTime = null;
+  window.currentAgentSession = null;
+
+  // Agent modal functions
+  function startAgentSession(originalPrompt) {
+    console.log('startAgentSession called with prompt:', originalPrompt);
+    showAgentModal();
+    
+    // Get fresh CSRF token
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfMeta) {
+      console.error('CSRF token not found');
+      alert('CSRF token not found');
+      closeAgentModal();
+      return;
+    }
+    var csrfToken = csrfMeta.getAttribute('content');
+    console.log('CSRF token found:', csrfToken ? 'YES' : 'NO');
+
+    console.log('Making API request to /api/prompt-agent/start');
+    fetch('/api/prompt-agent/start', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        prompt: originalPrompt
+      })
     })
-    .then(response => {
-      console.log('Credits response status:', response.status);
-      console.log('Credits response headers:', Object.fromEntries(response.headers.entries()));
-      return response.text();
-    })
-    .then(text => {
-      console.log('Credits response text:', text);
-      try {
-        const data = JSON.parse(text);
-        if (data.success && data.credits !== undefined) {
-          updateCreditDisplays(data.credits);
+    .then(function(response) {
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (response.status === 400) {
+          return response.json().then(function(data) {
+            throw new Error(data.message || 'Invalid request');
+          });
+        } else {
+          throw new Error('Server error: ' + response.status);
         }
-      } catch (e) {
-        console.error('JSON parse error:', e);
-        console.error('Response text:', text);
+      }
+      return response.json();
+    })
+    .then(function(result) {
+      console.log('Agent session start result:', result);
+
+      if (result.success) {
+        window.currentAgentSession = result.data.sessionId;
+        sessionExpiryTime = null;
+
+        var expiresAtStr = result.data.expiresAt;
+        console.log('Raw expiresAt:', expiresAtStr);
+
+        if (expiresAtStr) {
+          var sessionEndTime = null;
+          
+          // Check if it's a Unix timestamp (number)
+          if (typeof expiresAtStr === 'number' || !isNaN(parseInt(expiresAtStr))) {
+            // Unix timestamp in seconds, convert to milliseconds
+            sessionEndTime = parseInt(expiresAtStr) * 1000;
+            console.log('Parsed Unix timestamp:', new Date(sessionEndTime));
+          } else {
+            // Try parsing as date string
+            try {
+              sessionEndTime = new Date(expiresAtStr).getTime();
+              console.log('Parsed date string:', new Date(sessionEndTime));
+            } catch (e) {
+              console.warn('Failed to parse date string, trying other formats');
+            }
+
+            // If still failed, try manual parsing
+            if (!sessionEndTime || isNaN(sessionEndTime)) {
+              try {
+                var timeParts = expiresAtStr.split(/[- :]/);
+                if (timeParts.length >= 6) {
+                  sessionEndTime = new Date(
+                    parseInt(timeParts[0]),
+                    parseInt(timeParts[1]) - 1,
+                    parseInt(timeParts[2]),
+                    parseInt(timeParts[3]),
+                    parseInt(timeParts[4]),
+                    parseInt(timeParts[5])
+                  ).getTime();
+                }
+              } catch (e) {
+                console.warn('Failed to parse manual date');
+              }
+            }
+          }
+        }
+        
+        if (!sessionEndTime || isNaN(sessionEndTime)) {
+          console.warn('Failed to parse expiresAt:', expiresAtStr, 'Using fallback');
+          sessionEndTime = new Date().getTime() + (30 * 60 * 1000);
+        }
+
+        // Set the global session expiry time for the timer
+        sessionExpiryTime = sessionEndTime;
+
+        var agentMessages = document.getElementById('agent-messages');
+        if (agentMessages) {
+          agentMessages.innerHTML = '';
+          addMessage('agent', result.data.welcomeMessage);
+        }
+
+        if (sessionEndTime && sessionEndTime > new Date().getTime()) {
+          startSessionTimer();
+        } else {
+          console.error('Invalid session end time:', sessionEndTime);
+          addMessage('system', '⚠️ Session configuration error. Please try again.');
+          setTimeout(function() { closeAgentModal(); }, 3000);
+        }
+
+        var agentInput = document.getElementById('agent-input');
+        var sendAgentMessage = document.getElementById('send-agent-message');
+        if (agentInput) agentInput.disabled = false;
+        if (sendAgentMessage) sendAgentMessage.disabled = false;
+        if (agentInput) agentInput.focus();
+
+      } else {
+        throw new Error(result.message || 'Failed to start agent session');
       }
     })
-    .catch(error => {
-      console.log('Could not fetch updated credits:', error);
+    .catch(function(error) {
+      console.error('Failed to start agent session:', error);
+      alert('Failed to start agent session: ' + error.message);
+      closeAgentModal();
+    });
+  }
+
+  function sendAgentMessage() {
+    var agentInput = document.getElementById('agent-input');
+    var sendAgentMessage = document.getElementById('send-agent-message');
+    
+    var message = agentInput.value.trim();
+    if (!message) return;
+
+    agentInput.disabled = true;
+    sendAgentMessage.disabled = true;
+
+    addMessage('agent', '🤔 Thinking...');
+
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = csrfMeta.getAttribute('content');
+
+    fetch('/api/prompt-agent/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        sessionId: window.currentAgentSession,
+        message: message
+      })
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (response.status === 400) {
+          return response.json().then(function(data) {
+            throw new Error(data.message || 'Invalid request');
+          });
+        } else {
+          throw new Error('Server error: ' + response.status);
+        }
+      }
+      return response.json();
+    })
+    .then(function(result) {
+      addMessage('user', message);
+      agentInput.value = '';
+
+      if (result.success) {
+        addMessage('agent', result.data.message);
+
+        if (result.data.refinedPrompt) {
+          showRefinedPrompt(result.data.refinedPrompt);
+        }
+
+        if (result.data.creditsUsed) {
+          updateCreditDisplays(-result.data.creditsUsed);
+        }
+
+      } else {
+        throw new Error(result.message || 'Failed to send message');
+      }
+    })
+    .catch(function(error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message: ' + error.message);
+    })
+    .finally(function() {
+      agentInput.disabled = false;
+      sendAgentMessage.disabled = false;
+      agentInput.focus();
+    });
+  }
+
+  function showRefinedPrompt(prompt) {
+    var agentRefinedPrompt = document.getElementById('agent-refined-prompt');
+    var refinedPromptText = document.getElementById('refined-prompt-text');
+    
+    if (!agentRefinedPrompt || !refinedPromptText) return;
+
+    refinedPromptText.textContent = prompt;
+    agentRefinedPrompt.classList.remove('hidden');
+  }
+
+  function useRefinedPrompt() {
+    console.log('useRefinedPrompt called');
+    var refinedPromptText = document.getElementById('refined-prompt-text');
+    var promptInput = document.getElementById('prompt');
+
+    console.log('Prompt text:', refinedPromptText ? refinedPromptText.textContent : 'null');
+    console.log('Prompt input found:', !!promptInput);
+
+    if (promptInput && refinedPromptText) {
+      promptInput.value = refinedPromptText.textContent;
+      console.log('Setting prompt input value');
+      closeAgentModal();
+    } else {
+      console.log('Missing elements or prompt text');
+    }
+  }
+
+  function startSessionTimer() {
+    if (sessionTimer) clearInterval(sessionTimer);
+
+    sessionTimer = setInterval(function() {
+      if (!sessionExpiryTime) return;
+
+      var now = Date.now();
+      var remaining = Math.max(0, sessionExpiryTime - now);
+      var minutes = Math.floor(remaining / 60000);
+      var seconds = Math.floor((remaining % 60000) / 1000);
+
+      var sessionTimerDisplay = document.getElementById('agent-session-timer');
+      if (sessionTimerDisplay) {
+        sessionTimerDisplay.textContent = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+      }
+
+      if (remaining <= 0) {
+        clearInterval(sessionTimer);
+        sessionTimer = null;
+        addMessage('system', '⏰ Session expired. Please start a new session.');
+        setTimeout(function() { closeAgentModal(); }, 3000);
+      }
+    }, 1000);
+  }
+
+  function updateCreditDisplays(creditChange) {
+    var creditElements = document.querySelectorAll('.font-bold');
+    creditElements.forEach(function(element) {
+      if (element.textContent.match(/^\d+$/)) {
+        var currentCredits = parseInt(element.textContent);
+        element.textContent = Math.max(0, currentCredits + creditChange);
+      }
+    });
+  }
+
+  // Agent modal functions
+  function showAgentModal() {
+    var modal = document.getElementById('prompt-agent-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeAgentModal() {
+    var modal = document.getElementById('prompt-agent-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+    
+    // Clear session timer
+    if (sessionTimer) {
+      clearInterval(sessionTimer);
+      sessionTimer = null;
+    }
+    
+    // Clear session data
+    sessionExpiryTime = null;
+    window.currentAgentSession = null;
+  }
+
+  function addMessage(type, content) {
+    var messagesContainer = document.getElementById('agent-messages');
+    if (!messagesContainer) return;
+
+    var messageDiv = document.createElement('div');
+    messageDiv.className = 'flex ' + (type === 'user' ? 'justify-end' : 'justify-start') + ' mb-4';
+
+    var messageContent = document.createElement('div');
+    messageContent.className = 'max-w-xs lg:max-w-md px-4 py-2 rounded-lg ' + 
+      (type === 'user' ? 'bg-purple-600 text-white' : 
+       type === 'agent' ? 'bg-gray-700 text-gray-300' : 
+       'bg-red-600 text-white');
+
+    messageContent.textContent = content;
+    messageDiv.appendChild(messageContent);
+    messagesContainer.appendChild(messageDiv);
+
+    // Auto-scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function scrollToLatestContent() {
+    var messagesContainer = document.getElementById('agent-messages');
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }
+
+  // Agent modal events
+  const enhanceBtn = document.getElementById('enhance-btn');
+  if (enhanceBtn) {
+    enhanceBtn.addEventListener('click', function() {
+      console.log('Enhance button clicked');
+      const prompt = document.getElementById('prompt');
+      if (!prompt || !prompt.value.trim()) {
+        alert('Please enter a prompt first');
+        return;
+      }
+      console.log('Starting agent session with prompt:', prompt.value.trim());
+      startAgentSession(prompt.value.trim());
+    });
+  }
+
+  const closeBtn = document.getElementById('close-agent-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeAgentModal);
+  }
+
+  const sendBtn = document.getElementById('send-agent-message');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendAgentMessage);
+  }
+
+  const input = document.getElementById('agent-input');
+  if (input) {
+    input.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendAgentMessage();
+      }
+    });
+  }
+
+  const useBtn = document.getElementById('use-refined-prompt');
+  if (useBtn) {
+    console.log('Found use-refined-prompt button, attaching event listener');
+    console.log('Button disabled state:', useBtn.disabled);
+    console.log('Button classes:', useBtn.className);
+    useBtn.addEventListener('click', function(e) {
+      console.log('Button clicked!');
+      useRefinedPrompt();
+    });
+  } else {
+    console.log('Could not find use-refined-prompt button');
+  }
+
+  // Close modal when clicking outside
+  const modal = document.getElementById('prompt-agent-modal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeAgentModal();
+      }
     });
   }
 });
 </script>
+
+<?php include __DIR__ . '/agent_modal.php'; ?>
+
+</body>
+</html>

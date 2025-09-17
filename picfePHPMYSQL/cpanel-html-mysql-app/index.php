@@ -8,11 +8,18 @@ if (file_exists(__DIR__ . '/config/config.php')) {
     if (!defined('APP_NAME')) {
         define('APP_NAME', 'PictureThis');
     }
+    // Fallback timezone if config not loaded
+    if (!defined('SERVER_TIMEZONE')) {
+        define('SERVER_TIMEZONE', 'UTC');
+    }
 }
+
+// Set timezone to match system timezone for session expiry calculations
+date_default_timezone_set('Africa/Johannesburg');
 
 // Session configuration for better compatibility
 ini_set('session.cookie_domain', ''); // Allow sessions to work across subdomains
-ini_set('session.cookie_secure', 1); // Require HTTPS for sessions
+ini_set('session.cookie_secure', 0); // Allow HTTP for development
 ini_set('session.cookie_httponly', 1); // Prevent JavaScript access to session cookie
 ini_set('session.use_only_cookies', 1); // Use only cookies for sessions
 
@@ -272,8 +279,10 @@ if (strpos($path, '/api/') === 0) {
     // Lazy-load controllers
     require_once __DIR__ . '/src/controllers/PricingController.php';
     require_once __DIR__ . '/src/controllers/GenerateController.php';
+    require_once __DIR__ . '/src/controllers/PromptAgentController.php';
     $pricingCtrl = new PricingController();
     $generateCtrl = new GenerateController();
+    $agentCtrl = new PromptAgentController();
 
     if ($path === '/api/payments/status') {
         $pricingCtrl->paymentStatus();
@@ -307,6 +316,32 @@ if (strpos($path, '/api/') === 0) {
 
     if ($path === '/api/user/credits') {
         $generateCtrl->getUserCredits();
+        exit;
+    }
+
+    // Agent API routes
+    if ($path === '/api/prompt-agent/start') {
+        $agentCtrl->startSession();
+        exit;
+    }
+
+    if ($path === '/api/prompt-agent/message') {
+        $agentCtrl->sendMessage();
+        exit;
+    }
+
+    if ($path === '/api/prompt-agent/session') {
+        $agentCtrl->getSession();
+        exit;
+    }
+
+    if ($path === '/api/prompt-agent/end') {
+        $agentCtrl->endSession();
+        exit;
+    }
+
+    if ($path === '/api/prompt-agent/close-on-generation') {
+        $agentCtrl->closeSessionOnImageGeneration();
         exit;
     }
 }

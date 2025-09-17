@@ -109,6 +109,44 @@ $sqlStatements = [
         UNIQUE KEY `settings_k_unique` (`k`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
+    // Agent session tables
+    "CREATE TABLE IF NOT EXISTS `prompt_agent_sessions` (
+        `id` VARCHAR(255) PRIMARY KEY,
+        `user_id` BIGINT UNSIGNED NOT NULL,
+        `original_prompt` TEXT NOT NULL,
+        `session_status` ENUM('active', 'completed', 'expired') DEFAULT 'active',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `expires_at` DATETIME NOT NULL,
+        `total_llm_calls` INT DEFAULT 0,
+        `total_credits_used` INT DEFAULT 0,
+        `last_activity_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `session_metadata` TEXT NULL,
+        INDEX `idx_user_id` (`user_id`),
+        INDEX `idx_status` (`session_status`),
+        INDEX `idx_expires_at` (`expires_at`),
+        INDEX `idx_created_at` (`created_at`),
+        INDEX `idx_last_activity` (`last_activity_at`),
+        INDEX `idx_user_status` (`user_id`, `session_status`),
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    "CREATE TABLE IF NOT EXISTS `prompt_agent_messages` (
+        `id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+        `session_id` VARCHAR(255) NOT NULL,
+        `message_type` ENUM('user', 'agent', 'system') NOT NULL,
+        `content` TEXT NOT NULL,
+        `suggested_prompts` TEXT NULL,
+        `credits_used` INT DEFAULT 0,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `message_metadata` TEXT NULL,
+        INDEX `idx_session_id` (`session_id`),
+        INDEX `idx_message_type` (`message_type`),
+        INDEX `idx_created_at` (`created_at`),
+        INDEX `idx_session_created` (`session_id`, `created_at`),
+        FOREIGN KEY (`session_id`) REFERENCES `prompt_agent_sessions` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
     // Payments table (for PayFast integration)
     "CREATE TABLE IF NOT EXISTS `payments` (
         `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
