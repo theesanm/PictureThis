@@ -169,22 +169,40 @@ echo "<!DOCTYPE html>
 
 function checkEnvironment() {
     $issues = [];
+    $currentDir = __DIR__;
 
     // Check if GitHub folder exists OR if files are already deployed
     $hasGithub = @is_dir('github');
     $hasConfig = @is_dir('config') && @file_exists('config/config.php');
     $hasTests = @is_dir('tests') && @file_exists('tests/diagnostics.php');
 
+    $debug = "Working directory: $currentDir\n";
+    $debug .= "GitHub folder exists: " . ($hasGithub ? 'YES' : 'NO') . "\n";
+    $debug .= "Config in root exists: " . ($hasConfig ? 'YES' : 'NO') . "\n";
+    $debug .= "Tests in root exist: " . ($hasTests ? 'YES' : 'NO') . "\n";
+
     if ($hasGithub) {
+        $debug .= "Checking GitHub folder structure:\n";
         // Check github folder contents
         if (!@is_dir('github/config') || !@file_exists('github/config/config.php')) {
             $issues[] = 'GitHub folder exists but github/config/config.php not found';
+            $debug .= "- github/config/config.php: MISSING\n";
+        } else {
+            $debug .= "- github/config/config.php: FOUND\n";
         }
+
         if (!@is_dir('github/tests') || !@file_exists('github/tests/diagnostics.php')) {
             $issues[] = 'GitHub folder exists but github/tests/diagnostics.php not found';
+            $debug .= "- github/tests/diagnostics.php: MISSING\n";
+        } else {
+            $debug .= "- github/tests/diagnostics.php: FOUND\n";
         }
+
         if (!@is_dir('github/src')) {
             $issues[] = 'GitHub folder exists but github/src/ not found';
+            $debug .= "- github/src/: MISSING\n";
+        } else {
+            $debug .= "- github/src/: FOUND\n";
         }
     } elseif (!$hasConfig) {
         $issues[] = 'Neither github/ folder nor deployed config found';
@@ -211,14 +229,18 @@ function checkEnvironment() {
         } elseif ($hasConfig && $hasTests) {
             $message .= ' - Application already deployed';
         }
-        return ['success' => true, 'message' => $message];
+        return ['success' => true, 'message' => $debug . $message];
     } else {
-        return ['success' => false, 'message' => 'Environment issues: ' . implode(', ', $issues)];
+        return ['success' => false, 'message' => $debug . 'Environment issues: ' . implode(', ', $issues)];
     }
 }
 
 function copyFiles() {
     try {
+        // Debug: Show current working directory
+        $currentDir = __DIR__;
+        $message = "Working directory: $currentDir\n";
+
         // Check if test files already exist (likely already deployed)
         if (is_dir('tests') && file_exists('tests/diagnostics.php')) {
             return ['success' => true, 'message' => 'Files already exist in current directory - skipping copy'];
@@ -227,24 +249,27 @@ function copyFiles() {
         // Try to copy from github folder if it exists
         $source = 'github/';
         if (is_dir($source)) {
+            $message .= "GitHub folder found at: $currentDir/github/\n";
+
             // Check if github has the expected structure
             if (!is_dir($source . 'tests') || !file_exists($source . 'tests/diagnostics.php')) {
-                return ['success' => false, 'message' => 'GitHub folder exists but tests/diagnostics.php not found in github/tests/'];
+                return ['success' => false, 'message' => $message . 'GitHub folder exists but tests/diagnostics.php not found in github/tests/'];
             }
 
             if (!is_dir($source . 'config') || !file_exists($source . 'config/config.php')) {
-                return ['success' => false, 'message' => 'GitHub folder exists but config/config.php not found in github/config/'];
+                return ['success' => false, 'message' => $message . 'GitHub folder exists but config/config.php not found in github/config/'];
             }
 
+            $message .= "GitHub structure verified - ready to copy\n";
             $exclude = ['.git', 'node_modules', '.env', 'debug.log'];
 
             if (copyDirectory($source, './', $exclude)) {
-                return ['success' => true, 'message' => 'Files copied successfully from github/ to current directory'];
+                return ['success' => true, 'message' => $message . 'Files copied successfully from github/ to current directory'];
             } else {
-                return ['success' => false, 'message' => 'Failed to copy files from github/'];
+                return ['success' => false, 'message' => $message . 'Failed to copy files from github/'];
             }
         } else {
-            return ['success' => false, 'message' => 'GitHub folder not found at: ' . __DIR__ . '/github/'];
+            return ['success' => false, 'message' => "GitHub folder not found. Expected at: $currentDir/github/"];
         }
 
     } catch (Exception $e) {
