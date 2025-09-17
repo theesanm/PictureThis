@@ -29,13 +29,36 @@ $testPayload = [
 // Set up the request BEFORE any output
 $_POST['csrf_token'] = $csrfToken;
 
-// Write the JSON payload to php://input BEFORE loading the controller
+// Create a simple test that bypasses the input reading
 $jsonPayload = json_encode($testPayload);
-file_put_contents('php://input', $jsonPayload);
 
 // Now we can output
 echo "=== Testing Agent API Endpoint ===\n\n";
 echo "Test payload: " . $jsonPayload . "\n\n";
+
+// Test what the controller actually does
+echo "Testing controller input reading...\n";
+$rawInput = file_get_contents('php://input');
+echo "Raw php://input: '" . $rawInput . "'\n";
+
+if (empty($rawInput)) {
+    echo "❌ php://input is empty - this is why the controller fails!\n";
+    echo "The controller expects JSON input but gets nothing.\n\n";
+
+    // Let's try to provide the input directly
+    echo "Providing test input directly...\n";
+    // We'll need to test this differently
+} else {
+    $input = json_decode($rawInput, true);
+    $originalPrompt = trim($input['prompt'] ?? '');
+    echo "Controller would find prompt: '" . $originalPrompt . "'\n";
+    if (empty($originalPrompt)) {
+        echo "❌ Controller would reject: Original prompt is required\n";
+    } else {
+        echo "✅ Controller would accept the prompt\n";
+    }
+}
+echo "\n";
 
 try {
     require_once 'src/controllers/PromptAgentController.php';
