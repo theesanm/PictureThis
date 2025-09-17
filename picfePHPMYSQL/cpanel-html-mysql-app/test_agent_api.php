@@ -1,13 +1,13 @@
 <?php
-// Test the agent API with proper authentication
-// This script logs in first, then tests the agent endpoint
+// Test the agent API by directly setting session (bypassing login)
+// This isolates whether the issue is authentication or the API itself
 
 // Test user credentials (from setup_database.php)
 $testEmail = 'admin@picturethis.com';
 $testPassword = 'admin123';
 $baseUrl = 'https://demo.cfox.co.za';
 
-echo "=== Testing Agent API with Authentication ===\n\n";
+echo "=== Testing Agent API (Bypassing Authentication) ===\n\n";
 
 // Check if cookies file is writable
 $cookiesFile = 'cookies.txt';
@@ -22,163 +22,117 @@ if (!is_writable(dirname($cookiesFile) ?: '.')) {
 
 echo "Directory is writable for cookies\n\n";
 
-// Step 1: Visit login page first to get CSRF token
-echo "Step 1: Visiting login page to get CSRF token...\n";
+// Step 1: Create a simple session by visiting the homepage
+echo "Step 1: Creating session by visiting homepage...\n";
 
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $baseUrl . '/login');
+curl_setopt($ch, CURLOPT_URL, $baseUrl . '/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
 curl_setopt($ch, CURLOPT_HEADER, true);
 
-$loginPageResponse = curl_exec($ch);
-$loginPageHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$homeResponse = curl_exec($ch);
+$homeHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 // Separate headers from body
-$loginPageHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-$loginPageHeaders = substr($loginPageResponse, 0, $loginPageHeaderSize);
-$loginPageBody = substr($loginPageResponse, $loginPageHeaderSize);
+$homeHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$homeHeaders = substr($homeResponse, 0, $homeHeaderSize);
+$homeBody = substr($homeResponse, $homeHeaderSize);
 
 curl_close($ch);
 
-echo "✅ Login page loaded (HTTP $loginPageHttpCode)\n";
+echo "✅ Homepage loaded (HTTP $homeHttpCode)\n";
 
-// Extract CSRF token from the login page HTML
-if (preg_match('/name="csrf_token" value="([^"]+)"/', $loginPageBody, $matches)) {
-    $csrfToken = $matches[1];
-    echo "✅ Extracted CSRF token: " . substr($csrfToken, 0, 10) . "...\n";
+// Extract session cookie from headers
+$sessionId = null;
+if (preg_match('/Set-Cookie: PHPSESSID=([^;]+)/', $homeHeaders, $matches)) {
+    $sessionId = $matches[1];
+    echo "✅ Extracted session ID: " . substr($sessionId, 0, 10) . "...\n";
 } else {
-    echo "❌ Could not extract CSRF token from login page\n";
-    echo "Login page content:\n" . substr($loginPageBody, 0, 500) . "\n";
+    echo "❌ Could not extract session ID from homepage\n";
     exit(1);
 }
 
 echo "\n";
 
-// Step 2: Login with the extracted CSRF token
-echo "Step 2: Logging in with valid CSRF token...\n";
-$loginData = [
-    'email' => $testEmail,
-    'password' => $testPassword,
-    'csrf_token' => $csrfToken
+// Step 2: Manually set user session by making a direct API call to set session
+echo "Step 2: Setting user session manually...\n";
+
+// For this test, we'll create a simple PHP script that sets the session
+// and then make a request to it
+$sessionScript = 'set_session.php';
+$sessionScriptContent = '<?php
+session_id("' . $sessionId . '");
+session_start();
+$_SESSION["user"] = [
+    "id" => 1,
+    "fullName" => "Admin User",
+    "email" => "admin@picturethis.com"
 ];
+echo "Session set successfully";
+?>';
 
-$loginPostData = http_build_query($loginData);
+file_put_contents($sessionScript, $sessionScriptContent);
 
+$sessionUrl = $baseUrl . '/' . $sessionScript;
 $ch2 = curl_init();
-curl_setopt($ch2, CURLOPT_URL, $baseUrl . '/login');
-curl_setopt($ch2, CURLOPT_POST, true);
-curl_setopt($ch2, CURLOPT_POSTFIELDS, $loginPostData);
+curl_setopt($ch2, CURLOPT_URL, $sessionUrl);
 curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch2, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
 curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);
-curl_setopt($ch2, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/x-www-form-urlencoded'
-]);
-curl_setopt($ch2, CURLOPT_HEADER, true);
 
-$loginResponse = curl_exec($ch2);
-$loginHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-
-// Separate headers from body for login
-$loginHeaderSize = curl_getinfo($ch2, CURLINFO_HEADER_SIZE);
-$loginHeaders = substr($loginResponse, 0, $loginHeaderSize);
-$loginBody = substr($loginResponse, $loginHeaderSize);
-
-if (curl_errno($ch2)) {
-    echo "❌ Login failed: " . curl_error($ch2) . "\n";
-    curl_close($ch2);
-    exit(1);
-}
+$sessionResponse = curl_exec($ch2);
+$sessionHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
 
 curl_close($ch2);
 
-echo "✅ Login completed (HTTP $loginHttpCode)\n";
-echo "Login Response Headers:\n" . $loginHeaders . "\n";
-echo "Login Response Body:\n" . substr($loginBody, 0, 200) . "\n\n";
+echo "Session setup response (HTTP $sessionHttpCode): $sessionResponse\n";
 
-// Debug: Check if cookies were saved
-if (file_exists($cookiesFile)) {
-    echo "Cookies file created\n";
-    $cookies = file_get_contents($cookiesFile);
-    echo "Cookies content: " . $cookies . "\n";
-} else {
-    echo "❌ Cookies file not created\n";
-    // Try to manually extract session cookie from headers
-    if (preg_match('/Set-Cookie: ([^;]+)/', $loginHeaders, $matches)) {
-        $sessionCookie = $matches[1];
-        echo "Found session cookie in headers: $sessionCookie\n";
-        file_put_contents($cookiesFile, "# Netscape HTTP Cookie File\n$baseUrl\tFALSE\t/\tFALSE\t0\t" . str_replace('=', "\t", $sessionCookie) . "\n");
-        echo "Manually saved session cookie to file\n";
-    }
+// Clean up the temporary script
+if (file_exists($sessionScript)) {
+    unlink($sessionScript);
 }
 
 echo "\n";
 
-// Step 3: Test the agent API with the session cookie
+// Step 3: Test the agent API with the session
 echo "Step 3: Testing agent API...\n";
 
-// Debug: Check cookies before API call
-if (file_exists($cookiesFile)) {
-    echo "Cookies file exists before API call\n";
-    $cookies = file_get_contents($cookiesFile);
-    echo "Cookies content: " . $cookies . "\n";
-} else {
-    echo "❌ Cookies file missing before API call\n";
-}
-
-echo "\n";
-
-// Generate new CSRF token for the API call (using the session from login)
+// Generate CSRF token (this will work now that we have a session)
 require_once 'src/utils/CSRF.php';
-$csrf2 = new CSRF();
-$csrfToken2 = $csrf2->generateToken();
+$csrf = new CSRF();
+$csrfToken = $csrf->generateToken();
 
 $apiData = [
     'prompt' => 'A beautiful sunset over mountains',
-    'csrf_token' => $csrfToken2
+    'csrf_token' => $csrfToken
 ];
 
 $jsonPayload = json_encode($apiData);
 
-$ch2 = curl_init();
-curl_setopt($ch2, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
-curl_setopt($ch2, CURLOPT_POST, true);
-curl_setopt($ch2, CURLOPT_POSTFIELDS, $jsonPayload);
-curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
-curl_setopt($ch2, CURLOPT_HTTPHEADER, [
+$ch3 = curl_init();
+curl_setopt($ch3, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
+curl_setopt($ch3, CURLOPT_POST, true);
+curl_setopt($ch3, CURLOPT_POSTFIELDS, $jsonPayload);
+curl_setopt($ch3, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch3, CURLOPT_COOKIEFILE, $cookiesFile);
+curl_setopt($ch3, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json'
 ]);
-curl_setopt($ch2, CURLOPT_VERBOSE, true);
-curl_setopt($ch2, CURLOPT_HEADER, true); // Include headers in response
+curl_setopt($ch3, CURLOPT_HEADER, true);
 
-$apiResponse = curl_exec($ch2);
-$apiHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+$apiResponse = curl_exec($ch3);
+$apiHttpCode = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
 
 // Separate headers from body
-$headerSize = curl_getinfo($ch2, CURLINFO_HEADER_SIZE);
+$headerSize = curl_getinfo($ch3, CURLINFO_HEADER_SIZE);
 $headers = substr($apiResponse, 0, $headerSize);
 $body = substr($apiResponse, $headerSize);
 
-if (curl_errno($ch2)) {
-    echo "❌ API call failed: " . curl_error($ch2) . "\n";
-    curl_close($ch2);
-    exit(1);
-}
+curl_close($ch3);
 
-curl_close($ch2);
-
-echo "API Request Headers:\n";
-echo "Content-Type: application/json\n";
-echo "Cookies from file: " . (file_exists($cookiesFile) ? file_get_contents($cookiesFile) : 'NO COOKIES FILE') . "\n\n";
-
-echo "API Response Headers (HTTP $apiHttpCode):\n";
-echo $headers . "\n";
-
-echo "API Response Body:\n";
+echo "API Response (HTTP $apiHttpCode):\n";
 echo $body . "\n\n";
 
 if ($apiHttpCode === 200) {
