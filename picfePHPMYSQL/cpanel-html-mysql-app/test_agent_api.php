@@ -26,12 +26,16 @@ $testPayload = [
     'csrf_token' => $csrfToken
 ];
 
-// Set up the request
+// Set up the request BEFORE any output
 $_POST['csrf_token'] = $csrfToken;
-file_put_contents('php://input', json_encode($testPayload));
 
-// Now test the agent controller
+// Write the JSON payload to php://input BEFORE loading the controller
+$jsonPayload = json_encode($testPayload);
+file_put_contents('php://input', $jsonPayload);
+
+// Now we can output
 echo "=== Testing Agent API Endpoint ===\n\n";
+echo "Test payload: " . $jsonPayload . "\n\n";
 
 try {
     require_once 'src/controllers/PromptAgentController.php';
