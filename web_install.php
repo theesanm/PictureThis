@@ -195,13 +195,13 @@ function checkEnvironment() {
         $debug .= "Checking GitHub folder structure:\n";
 
         // Check for the complete PHP app structure in github
-        $githubConfig = @is_dir('github/config') && @file_exists('github/config/config.php');
-        $githubTests = @file_exists('github/tests/diagnostics.php');
-        $githubSrc = @is_dir('github/src');
+        $githubConfig = @is_dir('github/picfePHPMYSQL/cpanel-html-mysql-app/config') && @file_exists('github/picfePHPMYSQL/cpanel-html-mysql-app/config/config.php');
+        $githubTests = @file_exists('github/picfePHPMYSQL/cpanel-html-mysql-app/tests/diagnostics.php');
+        $githubSrc = @is_dir('github/picfePHPMYSQL/cpanel-html-mysql-app/src');
 
-        $debug .= "- github/config/config.php: " . ($githubConfig ? 'FOUND' : 'MISSING') . "\n";
-        $debug .= "- github/tests/diagnostics.php: " . ($githubTests ? 'FOUND' : 'MISSING') . "\n";
-        $debug .= "- github/src/: " . ($githubSrc ? 'FOUND' : 'MISSING') . "\n";
+        $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/config/config.php: " . ($githubConfig ? 'FOUND' : 'MISSING') . "\n";
+        $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/tests/diagnostics.php: " . ($githubTests ? 'FOUND' : 'MISSING') . "\n";
+        $debug .= "- github/picfePHPMYSQL/cpanel-html-mysql-app/src/: " . ($githubSrc ? 'FOUND' : 'MISSING') . "\n";
 
         if ($githubConfig && $githubTests && $githubSrc) {
             $debug .= "Complete PHP app found in github/ folder - ready to deploy\n";
@@ -253,7 +253,7 @@ function copyFiles() {
         }
 
         // Check if github folder exists with the complete PHP app
-        $source = 'github/';
+        $source = 'github/picfePHPMYSQL/cpanel-html-mysql-app/';
         if (is_dir($source)) {
             $message .= "GitHub folder found - checking for PHP app structure\n";
 
@@ -261,17 +261,17 @@ function copyFiles() {
             if (is_dir($source . 'config') && file_exists($source . 'config/config.php') &&
                 is_dir($source . 'src') && file_exists($source . 'tests/diagnostics.php')) {
 
-                $message .= "Complete PHP app found in github/ folder\n";
-                $message .= "Copying PHP app from github/ to root directory...\n";
+                $message .= "Complete PHP app found in github/picfePHPMYSQL/cpanel-html-mysql-app/ folder\n";
+                $message .= "Copying PHP app from github/picfePHPMYSQL/cpanel-html-mysql-app/ to root directory...\n";
 
                 // Files/folders to exclude from copying
                 $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php', '.DS_Store', 'backend', 'picfe', 'sql', 'picfePHPMYSQL', 'tmp', '.next', '.vite'];
 
                 if (copyDirectory($source, './', $exclude)) {
                     $message .= "Successfully copied PHP app to root directory\n";
-                    return ['success' => true, 'message' => $message . 'PHP app deployed from github/ to root directory'];
+                    return ['success' => true, 'message' => $message . 'PHP app deployed from github/picfePHPMYSQL/cpanel-html-mysql-app/ to root directory'];
                 } else {
-                    return ['success' => false, 'message' => $message . 'Failed to copy PHP app from github/ to root'];
+                    return ['success' => false, 'message' => $message . 'Failed to copy PHP app from github/picfePHPMYSQL/cpanel-html-mysql-app/ to root'];
                 }
             } else {
                 return ['success' => false, 'message' => $message . 'GitHub folder exists but does not contain complete PHP app structure'];
@@ -279,7 +279,7 @@ function copyFiles() {
         }
 
         // If neither condition is met
-        return ['success' => false, 'message' => $message . 'PHP app not found. Expected: Complete app in github/ folder'];
+        return ['success' => false, 'message' => $message . 'PHP app not found. Expected: Complete app in github/picfePHPMYSQL/cpanel-html-mysql-app/ folder'];
 
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'PHP app deployment error: ' . $e->getMessage()];
