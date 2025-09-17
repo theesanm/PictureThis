@@ -85,20 +85,7 @@ $output .= "\n";
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
-// Start session directly in this script (same process, no curl)
-session_id($sessionId);
-session_start();
-
-// Set the user session directly
-$_SESSION['user'] = [
-    'id' => 1,
-    'fullName' => 'Admin User',
-    'email' => 'admin@picturethis.com'
-];
-
-$output .= "✅ Session started and user set directly in test script\n";
-
-// Generate CSRF token (this will work now that we have a session)
+// Generate CSRF token (session is already started from Step 2)
 require_once 'src/utils/CSRF.php';
 $csrf = new CSRF();
 $csrfToken = $csrf->generateToken();
