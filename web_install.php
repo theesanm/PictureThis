@@ -175,12 +175,22 @@ function checkEnvironment() {
     $hasGithub = @is_dir('github');
     $hasConfig = @is_dir('config') && @file_exists('config/config.php');
     $hasTests = @is_dir('tests') && @file_exists('tests/diagnostics.php');
+    $hasSrc = @is_dir('src');
 
     $debug = "Working directory: $currentDir\n";
     $debug .= "GitHub folder exists: " . ($hasGithub ? 'YES' : 'NO') . "\n";
     $debug .= "Config in root exists: " . ($hasConfig ? 'YES' : 'NO') . "\n";
     $debug .= "Tests in root exist: " . ($hasTests ? 'YES' : 'NO') . "\n";
+    $debug .= "Src in root exists: " . ($hasSrc ? 'YES' : 'NO') . "\n";
 
+    // First priority: Check if PHP app is already deployed in root
+    if ($hasConfig && $hasTests && $hasSrc) {
+        $debug .= "PHP app already deployed in root directory\n";
+        $message = 'Environment check passed - PHP app already deployed in root';
+        return ['success' => true, 'message' => $debug . $message];
+    }
+
+    // Second priority: Check if GitHub folder has the PHP app
     if ($hasGithub) {
         $debug .= "Checking GitHub folder structure:\n";
         // Check github folder contents
@@ -204,12 +214,6 @@ function checkEnvironment() {
         } else {
             $debug .= "- github/src/: FOUND\n";
         }
-    } elseif (!$hasConfig) {
-        $issues[] = 'Neither github/ folder nor deployed config found';
-    }
-
-    if (!$hasGithub && !$hasTests) {
-        $issues[] = 'Neither github/ folder nor deployed tests found';
     }
 
     // Check PHP version
@@ -226,7 +230,7 @@ function checkEnvironment() {
         $message = 'Environment check passed';
         if ($hasGithub) {
             $message .= ' - GitHub folder found with PHP app structure';
-        } elseif ($hasConfig && $hasTests) {
+        } elseif ($hasConfig && $hasTests && $hasSrc) {
             $message .= ' - PHP app already deployed in root';
         }
         return ['success' => true, 'message' => $debug . $message];
@@ -237,14 +241,10 @@ function checkEnvironment() {
 
 function copyFiles() {
     try {
-        // For PHP app deployment, we don't need to copy files
-        // The app files should already be in the correct location
-        // This step just verifies the app structure exists
-
         $currentDir = __DIR__;
         $message = "Working directory: $currentDir\n";
 
-        // Check if this is already a properly deployed PHP app
+        // Check if this is already a properly deployed PHP app in root
         if (is_dir('config') && file_exists('config/config.php') &&
             is_dir('src') && is_dir('tests') && file_exists('tests/diagnostics.php')) {
 
