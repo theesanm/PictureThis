@@ -37,5 +37,8 @@ return [
         'retention_days' => 7,
         'min_images_per_user' => 3,
     ],
+    'agent' => [
+        'session_timeout_minutes' => 60, // Change this value to set agent session timeout
+    ],
 ];
 ?>

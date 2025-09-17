@@ -38,5 +38,8 @@ return [
         'min_images_per_user' => 3,
         'upload_max_size' => 20971520,
     ],
+    'agent' => [
+        'session_timeout_minutes' => 60, // Change this value to set agent session timeout
+    ],
 ];
 ?>

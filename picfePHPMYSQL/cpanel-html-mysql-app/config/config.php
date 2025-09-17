@@ -64,6 +64,9 @@ define('FROM_EMAIL', $config['email']['from_email'] ?? 'noreply@localhost');
 define('IMAGE_RETENTION_DAYS', $config['images']['retention_days'] ?? 7);
 define('MIN_IMAGES_PER_USER', $config['images']['min_images_per_user'] ?? 3);
 
+// Agent configuration
+define('AGENT_SESSION_TIMEOUT_MINUTES', $config['agent']['session_timeout_minutes'] ?? 30);
+
 // OpenRouter App Title
 define('OPENROUTER_APP_TITLE', 'PictureThis AI');
 

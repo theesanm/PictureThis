@@ -73,7 +73,7 @@ class DatabaseTestHelper {
             'user_id' => $userId,
             'original_prompt' => 'Test prompt for enhancement',
             'session_status' => 'active',
-            'expires_at' => date('Y-m-d H:i:s', strtotime('+30 minutes')),
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+' . AGENT_SESSION_TIMEOUT_MINUTES . ' minutes')),
             'total_llm_calls' => 0,
             'total_credits_used' => 0
         ], $overrides);

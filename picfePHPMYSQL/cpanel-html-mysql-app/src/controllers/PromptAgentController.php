@@ -83,8 +83,8 @@ class PromptAgentController {
             $pdo = get_db();
             $userId = $_SESSION['user']['id'];
             $sessionId = $this->generateSessionId();
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
-            $this->debugLog("Session expiry set to: $expiresAt (Unix: " . strtotime($expiresAt) . ")");
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+' . AGENT_SESSION_TIMEOUT_MINUTES . ' minutes'));
+            $this->debugLog("Session expiry set to: $expiresAt (Unix: " . strtotime($expiresAt) . ") - Timeout: " . AGENT_SESSION_TIMEOUT_MINUTES . " minutes");
 
             // Get enhance prompt cost from settings
             $enhanceCost = 1; // Default

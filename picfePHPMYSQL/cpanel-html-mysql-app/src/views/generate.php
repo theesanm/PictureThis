@@ -405,6 +405,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Global variables for agent session
   var sessionTimer = null;
   var sessionExpiryTime = null;
+  
+  // Agent session timeout configuration (in minutes)
+  const AGENT_SESSION_TIMEOUT_MINUTES = <?php echo AGENT_SESSION_TIMEOUT_MINUTES; ?>;
 
   // Toggle guidance function
   window.toggleGuidance = function() {
@@ -656,10 +659,10 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
         
-        // If still invalid, set to 30 minutes from now as fallback
+        // If still invalid, set to configured timeout from now as fallback
         if (!sessionEndTime || isNaN(sessionEndTime)) {
           console.warn('Failed to parse expiresAt:', expiresAtStr, 'Using fallback');
-          sessionEndTime = new Date().getTime() + (30 * 60 * 1000); // 30 minutes
+          sessionEndTime = new Date().getTime() + (AGENT_SESSION_TIMEOUT_MINUTES * 60 * 1000); // Configured timeout
         }
 
         // Clear loading message and add welcome message
