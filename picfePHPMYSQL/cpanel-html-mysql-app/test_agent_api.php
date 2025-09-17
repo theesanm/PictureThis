@@ -64,53 +64,46 @@ if (preg_match('/Set-Cookie: PHPSESSID=([^;]+)/', $homeHeaders, $matches)) {
 
 $output .= "\n";
 
-// Step 2: Manually set user session by making a direct API call to set session
-$output .= "Step 2: Setting user session manually...\n";
+// Step 2: Start session directly and set user
+$output .= "Step 2: Starting session directly and setting user...\n";
 
-// For this test, we'll create a simple PHP script that sets the session
-// and then make a request to it
-$sessionScript = 'set_session.php';
-$sessionScriptContent = '<?php
-session_id("' . $sessionId . '");
+// Start session directly in this script (same process, no curl)
+session_id($sessionId);
 session_start();
-$_SESSION["user"] = [
-    "id" => 1,
-    "fullName" => "Admin User",
-    "email" => "admin@picturethis.com"
+
+// Set the user session directly
+$_SESSION['user'] = [
+    'id' => 1,
+    'fullName' => 'Admin User',
+    'email' => 'admin@picturethis.com'
 ];
-echo "Session set successfully";
-?>';
 
-file_put_contents($sessionScript, $sessionScriptContent);
-
-$sessionUrl = $baseUrl . '/' . $sessionScript;
-$ch2 = curl_init();
-curl_setopt($ch2, CURLOPT_URL, $sessionUrl);
-curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
-curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);
-
-$sessionResponse = curl_exec($ch2);
-$sessionHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-
-curl_close($ch2);
-
-$output .= "Session setup response (HTTP $sessionHttpCode): $sessionResponse\n";
-
-// Clean up the temporary script
-if (file_exists($sessionScript)) {
-    unlink($sessionScript);
-}
+$output .= "✅ Session started and user set directly in test script\n";
 
 $output .= "\n";
 
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
+// Start session directly in this script (same process, no curl)
+session_id($sessionId);
+session_start();
+
+// Set the user session directly
+$_SESSION['user'] = [
+    'id' => 1,
+    'fullName' => 'Admin User',
+    'email' => 'admin@picturethis.com'
+];
+
+$output .= "✅ Session started and user set directly in test script\n";
+
 // Generate CSRF token (this will work now that we have a session)
 require_once 'src/utils/CSRF.php';
 $csrf = new CSRF();
 $csrfToken = $csrf->generateToken();
+
+$output .= "✅ CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n";
 
 $apiData = [
     'prompt' => 'A beautiful sunset over mountains',
