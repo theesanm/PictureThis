@@ -132,7 +132,7 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
               class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               <?php if ($enhanceCost > 0 && $displayCredits < $enhanceCost): ?>disabled<?php endif; ?>
             >
-              <span id="enhance-text">Enhance with AI</span>
+              <span id="enhance-text">Enhance</span>
               <div id="enhance-spinner" class="hidden ml-2">
                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               </div>
