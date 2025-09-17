@@ -40,6 +40,36 @@ if (isset($_GET['__debug']) && $_GET['__debug']) {
 }
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
+// Allow direct access to /tests/ directory (for diagnostics and debugging)
+if (strpos($path, '/tests/') === 0) {
+    // Let the web server serve files from /tests/ directory directly
+    $requestedFile = __DIR__ . $path;
+    if (file_exists($requestedFile) && !is_dir($requestedFile)) {
+        // Serve the file with appropriate content type
+        $extension = strtolower(pathinfo($requestedFile, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'html' => 'text/html',
+            'php' => 'text/html', // PHP files will be executed by the web server
+            'txt' => 'text/plain',
+            'json' => 'application/json',
+            'css' => 'text/css',
+            'js' => 'application/javascript'
+        ];
+
+        if (isset($contentTypes[$extension])) {
+            header('Content-Type: ' . $contentTypes[$extension]);
+        }
+
+        // For PHP files, let the web server handle execution
+        if ($extension === 'php') {
+            include $requestedFile;
+        } else {
+            readfile($requestedFile);
+        }
+        exit;
+    }
+}
+
 // Handle home page
 if ($path === '/' || $path === '') {
     require_once __DIR__ . '/src/controllers/HomeController.php';
