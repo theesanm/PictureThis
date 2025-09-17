@@ -22,21 +22,31 @@ $loginData = [
     'csrf_token' => $csrfToken
 ];
 
-$loginCommand = "curl -X POST '{$baseUrl}/login' " .
-    "-H 'Content-Type: application/x-www-form-urlencoded' " .
-    "-d 'email={$testEmail}&password={$testPassword}&csrf_token={$csrfToken}' " .
-    "-c cookies.txt -L -s";
+$loginPostData = http_build_query($loginData);
 
-echo "Login command: $loginCommand\n";
-exec($loginCommand, $loginOutput, $loginReturnCode);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $baseUrl . '/login');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $loginPostData);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_COOKIEJAR, 'cookies.txt');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/x-www-form-urlencoded'
+]);
 
-if ($loginReturnCode !== 0) {
-    echo "❌ Login failed with return code: $loginReturnCode\n";
-    echo "Output: " . implode("\n", $loginOutput) . "\n";
+$loginResponse = curl_exec($ch);
+$loginHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+if (curl_errno($ch)) {
+    echo "❌ Login failed: " . curl_error($ch) . "\n";
+    curl_close($ch);
     exit(1);
 }
 
-echo "✅ Login completed\n\n";
+curl_close($ch);
+
+echo "✅ Login completed (HTTP $loginHttpCode)\n\n";
 
 // Step 2: Test the agent API with the session cookie
 echo "Step 2: Testing agent API...\n";
@@ -50,21 +60,33 @@ $apiData = [
 ];
 
 $jsonPayload = json_encode($apiData);
-$apiCommand = "curl -X POST '{$baseUrl}/api/prompt-agent/start' " .
-    "-H 'Content-Type: application/json' " .
-    "-d '{$jsonPayload}' " .
-    "-b cookies.txt -s";
 
-echo "API command: $apiCommand\n";
-echo "Payload: $jsonPayload\n\n";
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
+curl_setopt($ch2, CURLOPT_POST, true);
+curl_setopt($ch2, CURLOPT_POSTFIELDS, $jsonPayload);
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_COOKIEFILE, 'cookies.txt');
+curl_setopt($ch2, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json'
+]);
 
-exec($apiCommand, $apiOutput, $apiReturnCode);
+$apiResponse = curl_exec($ch2);
+$apiHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
 
-echo "API Response:\n";
-echo implode("\n", $apiOutput) . "\n\n";
+if (curl_errno($ch2)) {
+    echo "❌ API call failed: " . curl_error($ch2) . "\n";
+    curl_close($ch2);
+    exit(1);
+}
 
-if ($apiReturnCode === 0) {
-    $response = json_decode(implode("\n", $apiOutput), true);
+curl_close($ch2);
+
+echo "API Response (HTTP $apiHttpCode):\n";
+echo $apiResponse . "\n\n";
+
+if ($apiHttpCode === 200) {
+    $response = json_decode($apiResponse, true);
     if ($response && isset($response['success']) && $response['success']) {
         echo "✅ Agent API test PASSED!\n";
     } else {
@@ -74,7 +96,7 @@ if ($apiReturnCode === 0) {
         }
     }
 } else {
-    echo "❌ API call failed with return code: $apiReturnCode\n";
+    echo "❌ API call failed with HTTP code: $apiHttpCode\n";
 }
 
 // Clean up
