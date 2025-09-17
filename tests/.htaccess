@@ -1,0 +1,33 @@
+# Test Suite .htaccess
+# Ensures proper web access for cPanel environments
+
+# Allow access to test files
+<Files "*.php">
+    Allow from all
+</Files>
+
+# Prevent access to sensitive files
+<Files "config.php">
+    Deny from all
+</Files>
+
+<Files ".env">
+    Deny from all
+</Files>
+
+# Enable PHP error reporting for debugging
+php_flag display_errors on
+php_flag display_startup_errors on
+php_value error_reporting E_ALL
+
+# Set proper content types
+AddType application/json .json
+AddType text/plain .txt
+AddType text/html .html
+
+# Prevent caching of test results
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</IfModule>
