@@ -9,6 +9,13 @@ $baseUrl = 'https://demo.cfox.co.za';
 
 echo "=== Testing Agent API (Bypassing Authentication) ===\n\n";
 
+// Test user credentials (from setup_database.php)
+$testEmail = 'admin@picturethis.com';
+$testPassword = 'admin123';
+$baseUrl = 'https://demo.cfox.co.za';
+
+echo "=== Testing Agent API (Bypassing Authentication) ===\n\n";
+
 // Check if cookies file is writable
 $cookiesFile = 'cookies.txt';
 if (file_exists($cookiesFile)) {
@@ -96,8 +103,8 @@ if (file_exists($sessionScript)) {
 
 echo "\n";
 
-// Step 3: Test the agent API with the session
-echo "Step 3: Testing agent API...\n";
+// Step 3: Generate CSRF token and test the agent API
+echo "Step 3: Generating CSRF token and testing agent API...\n";
 
 // Generate CSRF token (this will work now that we have a session)
 require_once 'src/utils/CSRF.php';
