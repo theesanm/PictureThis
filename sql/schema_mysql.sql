@@ -96,4 +96,31 @@ CREATE TABLE user_permissions (
   CONSTRAINT fk_perm_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE prompt_agent_sessions (
+  id VARCHAR(255) PRIMARY KEY,
+  user_id INT NOT NULL,
+  original_prompt TEXT NOT NULL,
+  session_status ENUM('active', 'completed', 'expired') DEFAULT 'active',
+  total_llm_calls INT DEFAULT 0,
+  total_credits_used INT DEFAULT 0,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX (user_id),
+  INDEX (session_status),
+  INDEX (expires_at),
+  CONSTRAINT fk_agent_session_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE prompt_agent_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id VARCHAR(255) NOT NULL,
+  message_type ENUM('user', 'agent') NOT NULL,
+  content TEXT NOT NULL,
+  suggested_prompts TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (session_id),
+  CONSTRAINT fk_agent_message_session FOREIGN KEY (session_id) REFERENCES prompt_agent_sessions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- End of schema
