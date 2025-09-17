@@ -109,6 +109,16 @@ class PromptAgentController {
         }
 
         try {
+            // Check API key before doing any database operations
+            $apiKey = defined('OPENROUTER_API_KEY_RUNTIME') ? OPENROUTER_API_KEY_RUNTIME :
+                      (defined('OPENROUTER_API_KEY') ? OPENROUTER_API_KEY :
+                      getenv('OPENROUTER_API_KEY'));
+            
+            if (empty($apiKey) || strlen(trim($apiKey)) < 10) {
+                $this->debugLog('ERROR: OpenRouter API key not configured at session start');
+                $this->sendJsonResponse(['success' => false, 'message' => 'AI service is temporarily unavailable. Please contact support.'], 503);
+            }
+
             require_once __DIR__ . '/../lib/db.php';
             $pdo = get_db();
             $userId = $_SESSION['user']['id'];
@@ -646,15 +656,14 @@ class PromptAgentController {
         $apiKey = defined('OPENROUTER_API_KEY_RUNTIME') ? OPENROUTER_API_KEY_RUNTIME :
                   (defined('OPENROUTER_API_KEY') ? OPENROUTER_API_KEY :
                   getenv('OPENROUTER_API_KEY'));
-        $this->debugLog('API Key source: ' . 
-                       (defined('OPENROUTER_API_KEY_RUNTIME') ? 'OPENROUTER_API_KEY_RUNTIME' :
-                       (defined('OPENROUTER_API_KEY') ? 'OPENROUTER_API_KEY' : 'getenv')));
-        $this->debugLog('API Key length: ' . strlen($apiKey ?? ''));
         
-        if (!$apiKey || trim($apiKey) === '') {
-            $this->debugLog('ERROR: OpenRouter API key is empty or not configured');
+        // More robust API key validation
+        if (empty($apiKey) || strlen(trim($apiKey)) < 10) {
+            $this->debugLog('ERROR: OpenRouter API key is missing, empty, or too short (length: ' . strlen($apiKey ?? '') . ')');
             throw new Exception('OpenRouter API key not configured. Please contact administrator.');
         }
+        
+        $this->debugLog('API key validation passed (length: ' . strlen($apiKey) . '), proceeding with API call');
 
         // Build conversation context
         $context = "Original prompt: \"$originalPrompt\"\n\n";
