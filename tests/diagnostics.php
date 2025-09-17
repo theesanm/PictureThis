@@ -285,15 +285,82 @@ class Diagnostics {
     }
 }
 
+// Debug mode - show basic info without running tests
+if (isset($_GET['debug'])) {
+    header('Content-Type: text/plain');
+    echo "=== PictureThis Debug Info ===\n\n";
+
+    echo "PHP Version: " . PHP_VERSION . "\n";
+    echo "Current Directory: " . __DIR__ . "\n";
+    echo "Parent Directory: " . dirname(__DIR__) . "\n\n";
+
+    echo "File Checks:\n";
+    $files = [
+        '../config/config.php',
+        '../src/lib/db.php',
+        '../index.php'
+    ];
+
+    foreach ($files as $file) {
+        echo "- $file: " . (file_exists($file) ? "EXISTS" : "MISSING") . "\n";
+    }
+
+    echo "\nDirectory Checks:\n";
+    $dirs = [
+        '../config',
+        '../src',
+        '../src/lib',
+        '../tests'
+    ];
+
+    foreach ($dirs as $dir) {
+        echo "- $dir: " . (is_dir($dir) ? "EXISTS" : "MISSING") . "\n";
+    }
+
+    echo "\nConfig Check:\n";
+    if (file_exists('../config/config.php')) {
+        echo "Config file exists, attempting to load...\n";
+        try {
+            require_once '../config/config.php';
+            echo "Config loaded successfully\n";
+            echo "IS_PRODUCTION: " . (defined('IS_PRODUCTION') ? (IS_PRODUCTION ? 'true' : 'false') : 'NOT_DEFINED') . "\n";
+            echo "DB_HOST: " . (defined('DB_HOST') ? DB_HOST : 'NOT_DEFINED') . "\n";
+            echo "DB_NAME: " . (defined('DB_NAME') ? DB_NAME : 'NOT_DEFINED') . "\n";
+        } catch (Exception $e) {
+            echo "Error loading config: " . $e->getMessage() . "\n";
+        }
+    } else {
+        echo "Config file missing\n";
+    }
+
+    exit;
+}
+
 // Run diagnostics if requested
 if (isset($_GET['run'])) {
     header('Content-Type: application/json');
 
-    $diagnostics = new Diagnostics();
-    $diagnostics->runAllTests();
-    $results = $diagnostics->getResults();
+    try {
+        $diagnostics = new Diagnostics();
+        $diagnostics->runAllTests();
+        $results = $diagnostics->getResults();
 
-    echo json_encode($results);
+        echo json_encode($results);
+    } catch (Exception $e) {
+        echo json_encode([
+            'error' => true,
+            'message' => 'PHP Error: ' . $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+    } catch (Error $e) {
+        echo json_encode([
+            'error' => true,
+            'message' => 'PHP Fatal Error: ' . $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+    }
     exit;
 }
 ?>
@@ -333,6 +400,7 @@ if (isset($_GET['run'])) {
 
         <div style="text-align: center; margin: 20px 0;">
             <button id="run-tests" onclick="runDiagnostics()">Run Full Diagnostics</button>
+            <button onclick="window.open('?debug=1', '_blank')" style="background: #6c757d; margin-left: 10px;">Debug Info</button>
             <div id="loading" class="loading">Running tests... Please wait.</div>
         </div>
 
