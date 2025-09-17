@@ -13,7 +13,7 @@ echo "=== Agent Debug Test ===\n\n";
 echo "1. PHP Environment:\n";
 echo "   PHP Version: " . phpversion() . "\n";
 echo "   Current directory: " . __DIR__ . "\n";
-echo "   Script filename: " . (__SERVER['SCRIPT_FILENAME'] ?? 'NOT_SET') . "\n\n";
+echo "   Script filename: " . ($_SERVER['SCRIPT_FILENAME'] ?? 'NOT_SET') . "\n\n";
 
 // Test 2: Load configuration
 echo "2. Configuration Test:\n";
