@@ -265,7 +265,7 @@ function copyFiles() {
                 $message .= "Copying PHP app from github/picfePHPMYSQL/cpanel-html-mysql-app/ to root directory...\n";
 
                 // Files/folders to exclude from copying
-                $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php', '.DS_Store', 'backend', 'picfe', 'sql', 'picfePHPMYSQL', 'tmp', '.next', '.vite'];
+                $exclude = ['.git', 'node_modules', '.env', 'debug.log', 'web_install.php', '.DS_Store', 'backend', 'picfe', 'sql', 'tmp', '.next', '.vite'];
 
                 if (copyDirectory($source, './', $exclude)) {
                     $message .= "Successfully copied PHP app to root directory\n";
