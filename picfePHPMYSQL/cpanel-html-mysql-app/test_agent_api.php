@@ -143,13 +143,23 @@ curl_setopt($ch3, CURLOPT_POST, true);
 curl_setopt($ch3, CURLOPT_POSTFIELDS, $jsonPayload);
 curl_setopt($ch3, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch3, CURLOPT_COOKIEFILE, $cookiesFile);
+curl_setopt($ch3, CURLOPT_COOKIEJAR, $cookiesFile); // Also save cookies
 curl_setopt($ch3, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json'
 ]);
 curl_setopt($ch3, CURLOPT_HEADER, true);
 
+// Debug: Show what cookies are being sent
+$cookieData = file_get_contents($cookiesFile);
+$output .= "Cookies being sent with API request:\n";
+if ($cookieData) {
+    $output .= $cookieData . "\n";
+} else {
+    $output .= "No cookies found in file\n";
+}
+
 $apiResponse = curl_exec($ch3);
-$apiHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$apiHttpCode = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
 
 // Separate headers from body
 $headerSize = curl_getinfo($ch3, CURLINFO_HEADER_SIZE);
