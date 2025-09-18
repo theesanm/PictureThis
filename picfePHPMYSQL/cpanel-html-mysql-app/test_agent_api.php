@@ -92,6 +92,15 @@ $csrfToken = $csrf->generateToken();
 
 $output .= "✅ CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n";
 
+// Debug: Check session data before API call
+$output .= "Session data before API call:\n";
+$output .= "- Session ID: " . session_id() . "\n";
+$output .= "- Session save path: " . session_save_path() . "\n";
+$output .= "- User in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO') . "\n";
+if (isset($_SESSION['user'])) {
+    $output .= "- User data: " . json_encode($_SESSION['user']) . "\n";
+}
+
 $apiData = [
     'prompt' => 'A beautiful sunset over mountains',
     'csrf_token' => $csrfToken
@@ -111,7 +120,7 @@ curl_setopt($ch3, CURLOPT_HTTPHEADER, [
 curl_setopt($ch3, CURLOPT_HEADER, true);
 
 $apiResponse = curl_exec($ch3);
-$apiHttpCode = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
+$apiHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 // Separate headers from body
 $headerSize = curl_getinfo($ch3, CURLINFO_HEADER_SIZE);
@@ -120,8 +129,13 @@ $body = substr($apiResponse, $headerSize);
 
 curl_close($ch3);
 
-$output .= "API Response (HTTP $apiHttpCode):\n";
+$output .= "\nAPI Response (HTTP $apiHttpCode):\n";
 $output .= $body . "\n\n";
+
+// Debug: Check session data after API call
+$output .= "Session data after API call:\n";
+$output .= "- Session still active: " . (session_status() === PHP_SESSION_ACTIVE ? 'YES' : 'NO') . "\n";
+$output .= "- User still in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO') . "\n";
 
 if ($apiHttpCode === 200) {
     $response = json_decode($body, true);
