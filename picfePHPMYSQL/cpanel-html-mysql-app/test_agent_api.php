@@ -1,9 +1,23 @@
 <?php
+// Start output buffering IMMEDIATELY to prevent headers from being sent
+ob_start();
+
+// Initialize session FIRST, before ANY output
+session_start();
+
+// Check if running from command line
+if (php_sapi_name() !== 'cli') {
+    // Web browser mode - set headers for proper output
+    header('Content-Type: text/plain');
+    header('Cache-Control: no-cache');
+    header('Connection: close');
+
+    // Increase execution time for web
+    set_time_limit(60);
+}
+
 // Test the agent API by directly setting session (bypassing login)
 // This isolates whether the issue is authentication or the API itself
-
-// Start output buffering to prevent headers from being sent
-ob_start();
 
 // Test user credentials (from setup_database.php)
 $testEmail = 'admin@picturethis.com';
@@ -11,10 +25,12 @@ $testPassword = 'admin123';
 $baseUrl = 'https://demo.cfox.co.za';
 
 // Collect all output
-$output = "=== Testing Agent API (Bypassing Authentication) ===\n\n";
+$output = "=== Web Browser Mode - Testing Agent API ===\n\n";
+$output .= "Note: This test may take up to 60 seconds...\n\n";
+$output .= "=== Testing Agent API (Bypassing Authentication) ===\n\n";
 
 // Check if cookies file is writable
-$cookiesFile = 'cookies.txt';
+$cookiesFile = '/tmp/cookies_' . uniqid() . '.txt';
 if (file_exists($cookiesFile)) {
     unlink($cookiesFile);
 }
@@ -26,20 +42,34 @@ if (!is_writable(dirname($cookiesFile) ?: '.')) {
     exit(1);
 }
 
-$output .= "Directory is writable for cookies\n\n";
+$output .= "Directory is writable for cookies\n";
+$output .= "Cookies file path: $cookiesFile\n\n";
 
 // Step 1: Create a simple session by visiting the homepage
 $output .= "Step 1: Creating session by visiting homepage...\n";
+
+// Ensure cookies file exists
+if (!file_exists($cookiesFile)) {
+    touch($cookiesFile);
+}
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $baseUrl . '/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_HEADER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
 $homeResponse = curl_exec($ch);
 $homeHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+// Debug: Check for cURL errors
+if (curl_error($ch)) {
+    $output .= "cURL error: " . curl_error($ch) . "\n";
+}
 
 // Separate headers from body
 $homeHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
@@ -50,11 +80,35 @@ curl_close($ch);
 
 $output .= "✅ Homepage loaded (HTTP $homeHttpCode)\n";
 
+// Debug: Show headers
+$output .= "Homepage headers:\n";
+$output .= $homeHeaders . "\n\n";
+
+// Debug: Check if cookies were saved after homepage visit
+if (file_exists($cookiesFile)) {
+    $cookieContent = file_get_contents($cookiesFile);
+    $output .= "Cookies saved after homepage: " . (strlen($cookieContent) > 0 ? "YES (" . strlen($cookieContent) . " bytes)" : "EMPTY") . "\n";
+    if (strlen($cookieContent) > 0) {
+        $output .= "Cookies content:\n```\n$cookieContent```\n";
+    }
+} else {
+    $output .= "❌ Cookies file not created after homepage visit\n";
+}
+
 // Extract session cookie from headers
 $sessionId = null;
-if (preg_match('/Set-Cookie: PHPSESSID=([^;]+)/', $homeHeaders, $matches)) {
+if (preg_match('/set-cookie: PHPSESSID=([^;]+)/i', $homeHeaders, $matches)) {
     $sessionId = $matches[1];
     $output .= "✅ Extracted session ID: " . substr($sessionId, 0, 10) . "...\n";
+
+    // Use the extracted session ID (session already started above)
+    session_id($sessionId);
+    $output .= "✅ Using extracted session ID\n";
+
+    // Manually write the cookie to the file in Netscape format
+    $cookieLine = "demo.cfox.co.za\tFALSE\t/\tFALSE\t0\tPHPSESSID\t$sessionId\n";
+    file_put_contents($cookiesFile, $cookieLine, FILE_APPEND);
+    $output .= "✅ Manually saved cookie to file\n";
 } else {
     $output .= "❌ Could not extract session ID from homepage\n";
     echo $output;
@@ -67,6 +121,11 @@ $output .= "\n";
 // Step 2: Set user session via HTTP (web server context)
 $output .= "Step 2: Setting user session via HTTP...\n";
 
+// Ensure cookies file exists
+if (!file_exists($cookiesFile)) {
+    touch($cookiesFile);
+}
+
 // Use HTTP request to set session in web server context
 $sessionUrl = $baseUrl . '/set_session_http.php';
 $ch2 = curl_init();
@@ -75,10 +134,18 @@ curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);
 curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
 curl_setopt($ch2, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch2, CURLOPT_HEADER, true);
+curl_setopt($ch2, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 10);
 
 $sessionResponse = curl_exec($ch2);
 $sessionHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+
+// Debug: Check for cURL errors
+if (curl_error($ch2)) {
+    $output .= "cURL error in session setup: " . curl_error($ch2) . "\n";
+}
 
 // Separate headers from body for session response
 $sessionHeaderSize = curl_getinfo($ch2, CURLINFO_HEADER_SIZE);
@@ -89,6 +156,14 @@ curl_close($ch2);
 
 $output .= "Session setup response (HTTP $sessionHttpCode): $sessionBody\n";
 
+// Debug: Check cookies after session setup
+if (file_exists($cookiesFile)) {
+    $cookieContent = file_get_contents($cookiesFile);
+    $output .= "Cookies after session setup: " . (strlen($cookieContent) > 0 ? "YES (" . strlen($cookieContent) . " bytes)" : "EMPTY") . "\n";
+} else {
+    $output .= "❌ Cookies file missing after session setup\n";
+}
+
 if ($sessionHttpCode === 200) {
     $sessionData = json_decode($sessionBody, true);
     if ($sessionData && isset($sessionData['success']) && $sessionData['success']) {
@@ -96,6 +171,12 @@ if ($sessionHttpCode === 200) {
         if (isset($sessionData['session_id'])) {
             $sessionId = $sessionData['session_id']; // Update session ID to match HTTP session
             $output .= "✅ Updated session ID to: " . substr($sessionId, 0, 10) . "...\n";
+        }
+
+        // Manually set the user data in the local session
+        if (isset($sessionData['user'])) {
+            $_SESSION['user'] = $sessionData['user'];
+            $output .= "✅ Manually set user data in local session\n";
         }
     } else {
         $output .= "❌ Failed to set session via HTTP\n";
@@ -115,17 +196,10 @@ $output .= "\n";
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
-// Start session with the correct session ID from HTTP setup
-session_id($sessionId);
-session_start();
-
-$output .= "✅ Session started with correct ID for CSRF token generation\n";
-
 // Generate CSRF token (session should now contain user data)
 require_once 'src/utils/CSRF.php';
 $csrf = new CSRF();
 $csrfToken = $csrf->generateToken();
-
 $output .= "✅ CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n";
 
 // Debug: Check session data before API call
@@ -136,38 +210,52 @@ $output .= "- User in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO') . "
 if (isset($_SESSION['user'])) {
     $output .= "- User data: " . json_encode($_SESSION['user']) . "\n";
 }
+if (isset($_SESSION['csrf_token'])) {
+    $output .= "- CSRF token in session: " . substr($_SESSION['csrf_token'], 0, 10) . "...\n";
+}
+$output .= "- All session keys: " . implode(', ', array_keys($_SESSION)) . "\n";
 
 $apiData = [
     'prompt' => 'A beautiful sunset over mountains',
     'csrf_token' => $csrfToken
 ];
 
+// Always send as JSON for API consistency
 $jsonPayload = json_encode($apiData);
+$contentType = 'application/json';
 
 $ch3 = curl_init();
 curl_setopt($ch3, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
 curl_setopt($ch3, CURLOPT_POST, true);
 curl_setopt($ch3, CURLOPT_POSTFIELDS, $jsonPayload);
+curl_setopt($ch3, CURLOPT_HTTPHEADER, [
+    'Content-Type: ' . $contentType
+]);
 curl_setopt($ch3, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch3, CURLOPT_COOKIEFILE, $cookiesFile);
 curl_setopt($ch3, CURLOPT_COOKIEJAR, $cookiesFile);
 curl_setopt($ch3, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch3, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json'
-]);
 curl_setopt($ch3, CURLOPT_HEADER, true);
+curl_setopt($ch3, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch3, CURLOPT_CONNECTTIMEOUT, 10);
 
 // Debug: Show what cookies are being sent
 if (file_exists($cookiesFile)) {
     $cookieData = file_get_contents($cookiesFile);
     $output .= "Cookies being sent with API request:\n";
     if ($cookieData) {
-        $output .= $cookieData . "\n";
+        $output .= "```\n$cookieData```\n";
     } else {
         $output .= "Cookies file exists but is empty\n";
     }
 } else {
     $output .= "Cookies file does not exist\n";
+}
+
+if (php_sapi_name() !== 'cli') {
+    $output .= "Request type: JSON (web mode)\n";
+} else {
+    $output .= "Request type: JSON (CLI mode)\n";
 }
 
 $apiResponse = curl_exec($ch3);
@@ -215,4 +303,9 @@ $output .= "\n=== Test Complete ===\n";
 // Output everything at once
 echo $output;
 ob_end_flush();
+
+// Final flush for web browsers
+if (php_sapi_name() !== 'cli') {
+    flush();
+}
 ?>

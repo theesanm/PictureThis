@@ -58,6 +58,17 @@ class CSRF {
             $token = $headers['X-CSRF-Token'] ?? $headers['X-CSRF-TOKEN'] ?? '';
         }
 
+        // Check JSON payload if no token found in POST or headers
+        if (empty($token)) {
+            $jsonInput = file_get_contents('php://input');
+            if (!empty($jsonInput)) {
+                $jsonData = json_decode($jsonInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && isset($jsonData[self::TOKEN_NAME])) {
+                    $token = $jsonData[self::TOKEN_NAME];
+                }
+            }
+        }
+
         if (empty($token)) {
             return false;
         }
