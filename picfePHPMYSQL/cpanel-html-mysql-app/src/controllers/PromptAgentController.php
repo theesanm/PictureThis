@@ -77,6 +77,16 @@ class PromptAgentController {
     public function startSession() {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
+        // Debug session information
+        $this->debugLog('Session status: ' . session_status());
+        $this->debugLog('Session ID: ' . session_id());
+        $this->debugLog('Session save path: ' . session_save_path());
+        $this->debugLog('Session user exists: ' . (isset($_SESSION['user']) ? 'YES' : 'NO'));
+        if (isset($_SESSION['user'])) {
+            $this->debugLog('Session user data: ' . json_encode($_SESSION['user']));
+        }
+        $this->debugLog('All session data: ' . json_encode($_SESSION));
+
         // Handle CORS preflight requests
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             header('Access-Control-Allow-Origin: *');
