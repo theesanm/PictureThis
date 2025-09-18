@@ -243,8 +243,30 @@ if ($currentSessionId !== $sessionId) {
 
 $output .= "\n";
 
-// Step 3: Generate CSRF token and test the agent API
-$output .= "Step 3: Generating CSRF token and testing agent API...\n";
+// Add connectivity test before API call
+$output .= "Connectivity Test:\n";
+$testCh = curl_init();
+curl_setopt($testCh, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
+curl_setopt($testCh, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($testCh, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($testCh, CURLOPT_TIMEOUT, 10);
+curl_setopt($testCh, CURLOPT_CONNECTTIMEOUT, 5);
+curl_setopt($testCh, CURLOPT_NOBODY, true); // HEAD request
+
+$testResponse = curl_exec($testCh);
+$testHttpCode = curl_getinfo($testCh, CURLINFO_HTTP_CODE);
+$testError = curl_error($testCh);
+
+curl_close($testCh);
+
+$output .= "- HEAD request to API endpoint: HTTP $testHttpCode\n";
+if ($testError) {
+    $output .= "- Connectivity error: $testError\n";
+} else {
+    $output .= "- Connectivity: OK\n";
+}
+
+$output .= "\n";
 
 // Now generate CSRF token in the correct session
 echo "=== DEBUG: Loading CSRF Class ===\n";
@@ -307,6 +329,15 @@ curl_setopt($ch3, CURLOPT_HEADER, true);
 curl_setopt($ch3, CURLOPT_TIMEOUT, 30);
 curl_setopt($ch3, CURLOPT_CONNECTTIMEOUT, 10);
 
+// Add additional debugging options
+curl_setopt($ch3, CURLOPT_VERBOSE, true);
+curl_setopt($ch3, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch3, CURLOPT_SSL_VERIFYHOST, false);
+
+// Capture verbose output
+$verbose = fopen('php://temp', 'rw+');
+curl_setopt($ch3, CURLOPT_STDERR, $verbose);
+
 // Debug: Show what cookies are being sent
 if (file_exists($cookiesFile)) {
     $cookieData = file_get_contents($cookiesFile);
@@ -329,8 +360,14 @@ if (php_sapi_name() !== 'cli') {
 $apiResponse = curl_exec($ch3);
 $apiHttpCode = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
 
+// Get verbose output
+rewind($verbose);
+$verboseLog = stream_get_contents($verbose);
+fclose($verbose);
+
 // Debug: Show detailed API response info
 $output .= "API cURL info: " . print_r(curl_getinfo($ch3), true) . "\n";
+$output .= "API cURL verbose output:\n" . $verboseLog . "\n\n";
 
 // Debug: Check for cURL errors in API call
 if (curl_error($ch3)) {
