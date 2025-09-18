@@ -6,6 +6,41 @@ ini_set('display_errors', 1);
 // Start output buffering IMMEDIATELY to prevent headers from being sent
 ob_start();
 
+// Initial// Step 3: Generate CSRF token and test the agent API
+$output .= "Step 3: Generating CSRF token and testing agent API...\n";
+
+// CRITICAL FIX: Switch to the server's session ID before generating CSRF token
+$currentSessionId = session_id();
+if ($currentSessionId !== $sessionId) {
+    $output .= "Switching from local session ($currentSessionId) to server session ($sessionId)...\n";
+    session_write_close(); // Close current session
+    session_id($sessionId); // Set to server's session ID
+    session_start(); // Start with server's session ID
+    $output .= "✅ Successfully switched to server session: " . session_id() . "\n";
+    
+    // Re-set user data in the correct session
+    $_SESSION['user'] = $sessionData['user'];
+    $output .= "✅ Re-set user data in server session\n";
+} else {
+    $output .= "Session IDs already match - no switch needed\n";
+}
+
+// Now generate CSRF token in the correct session
+echo "=== DEBUG: Loading CSRF Class ===\n";
+try {
+    require_once 'src/utils/CSRF.php';
+    echo "CSRF class loaded successfully\n";
+    $csrf = new CSRF();
+    $csrfToken = $csrf->generateToken();
+    echo "CSRF token generated in server session: " . substr($csrfToken, 0, 10) . "...\n\n";
+} catch (Exception $e) {
+    echo "ERROR loading CSRF: " . $e->getMessage() . "\n";
+    exit(1);
+} catch (Error $e) {
+    echo "FATAL ERROR loading CSRF: " . $e->getMessage() . "\n";
+    exit(1);
+}
+
 // Initialize session FIRST, before ANY output
 session_start();
 
@@ -244,7 +279,9 @@ try {
 
 // Debug: Check session data before API call
 $output .= "Session data before API call:\n";
-$output .= "- Session ID: " . session_id() . "\n";
+$output .= "- Current Session ID: " . session_id() . "\n";
+$output .= "- Server Session ID: " . $sessionId . "\n";
+$output .= "- Session IDs match: " . (session_id() === $sessionId ? 'YES' : 'NO - THIS IS THE PROBLEM!') . "\n";
 $output .= "- Session save path: " . session_save_path() . "\n";
 $output .= "- User in session: " . (isset($_SESSION['user']) ? 'YES' : 'NO') . "\n";
 if (isset($_SESSION['user'])) {
