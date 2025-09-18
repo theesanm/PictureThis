@@ -247,14 +247,47 @@ $output .= "\n";
 $output .= "API Key Verification:\n";
 try {
     $config = require 'config/config.php';
+    $output .= "- Config loaded successfully\n";
     $apiKey = $config['openrouter']['api_key'] ?? 'NOT_SET';
     $output .= "- API Key from config: " . (strlen($apiKey) > 10 ? substr($apiKey, 0, 15) . '...' : $apiKey) . "\n";
     $output .= "- API Key length: " . strlen($apiKey) . "\n";
-    $output .= "- OPENROUTER_API_KEY constant: " . (defined('OPENROUTER_API_KEY') ? substr(OPENROUTER_API_KEY, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
-    $output .= "- OPENROUTER_API_KEY_RUNTIME constant: " . (defined('OPENROUTER_API_KEY_RUNTIME') ? substr(OPENROUTER_API_KEY_RUNTIME, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
 } catch (Exception $e) {
     $output .= "- Error loading config: " . $e->getMessage() . "\n";
+    $output .= "- Config file exists: " . (file_exists('config/config.php') ? 'YES' : 'NO') . "\n";
+    $output .= "- Current working directory: " . getcwd() . "\n";
 }
+
+$output .= "- OPENROUTER_API_KEY constant: " . (defined('OPENROUTER_API_KEY') ? substr(OPENROUTER_API_KEY, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
+$output .= "- OPENROUTER_API_KEY_RUNTIME constant: " . (defined('OPENROUTER_API_KEY_RUNTIME') ? substr(OPENROUTER_API_KEY_RUNTIME, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
+
+// Test OpenRouter API directly
+if (defined('OPENROUTER_API_KEY_RUNTIME') && strlen(OPENROUTER_API_KEY_RUNTIME) > 10) {
+    $output .= "\nDirect OpenRouter API Test:\n";
+    $testUrl = 'https://openrouter.ai/api/v1/auth/key';
+    $chTest = curl_init();
+    curl_setopt($chTest, CURLOPT_URL, $testUrl);
+    curl_setopt($chTest, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . OPENROUTER_API_KEY_RUNTIME,
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($chTest, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($chTest, CURLOPT_TIMEOUT, 10);
+    curl_setopt($chTest, CURLOPT_SSL_VERIFYPEER, false);
+
+    $testResponse = curl_exec($chTest);
+    $testHttpCode = curl_getinfo($chTest, CURLINFO_HTTP_CODE);
+    $testError = curl_error($chTest);
+
+    curl_close($chTest);
+
+    $output .= "- OpenRouter auth test: HTTP $testHttpCode\n";
+    if ($testError) {
+        $output .= "- Test error: $testError\n";
+    } else {
+        $output .= "- Test response: " . substr($testResponse, 0, 100) . "...\n";
+    }
+}
+
 $output .= "\n";
 
 // Now generate CSRF token in the correct session
