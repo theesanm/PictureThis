@@ -6,41 +6,6 @@ ini_set('display_errors', 1);
 // Start output buffering IMMEDIATELY to prevent headers from being sent
 ob_start();
 
-// Initial// Step 3: Generate CSRF token and test the agent API
-$output .= "Step 3: Generating CSRF token and testing agent API...\n";
-
-// CRITICAL FIX: Switch to the server's session ID before generating CSRF token
-$currentSessionId = session_id();
-if ($currentSessionId !== $sessionId) {
-    $output .= "Switching from local session ($currentSessionId) to server session ($sessionId)...\n";
-    session_write_close(); // Close current session
-    session_id($sessionId); // Set to server's session ID
-    session_start(); // Start with server's session ID
-    $output .= "✅ Successfully switched to server session: " . session_id() . "\n";
-    
-    // Re-set user data in the correct session
-    $_SESSION['user'] = $sessionData['user'];
-    $output .= "✅ Re-set user data in server session\n";
-} else {
-    $output .= "Session IDs already match - no switch needed\n";
-}
-
-// Now generate CSRF token in the correct session
-echo "=== DEBUG: Loading CSRF Class ===\n";
-try {
-    require_once 'src/utils/CSRF.php';
-    echo "CSRF class loaded successfully\n";
-    $csrf = new CSRF();
-    $csrfToken = $csrf->generateToken();
-    echo "CSRF token generated in server session: " . substr($csrfToken, 0, 10) . "...\n\n";
-} catch (Exception $e) {
-    echo "ERROR loading CSRF: " . $e->getMessage() . "\n";
-    exit(1);
-} catch (Error $e) {
-    echo "FATAL ERROR loading CSRF: " . $e->getMessage() . "\n";
-    exit(1);
-}
-
 // Initialize session FIRST, before ANY output
 session_start();
 
@@ -258,17 +223,37 @@ if ($sessionHttpCode === 200) {
 
 $output .= "\n";
 
+// CRITICAL FIX: Switch to the server's session ID before generating CSRF token
+$currentSessionId = session_id();
+if ($currentSessionId !== $sessionId) {
+    $output .= "Switching from local session ($currentSessionId) to server session ($sessionId)...\n";
+    session_write_close(); // Close current session
+    session_id($sessionId); // Set to server's session ID
+    session_start(); // Start with server's session ID
+    $output .= "✅ Successfully switched to server session: " . session_id() . "\n";
+    
+    // Re-set user data in the correct session
+    if (isset($sessionData['user'])) {
+        $_SESSION['user'] = $sessionData['user'];
+        $output .= "✅ Re-set user data in server session\n";
+    }
+} else {
+    $output .= "Session IDs already match - no switch needed\n";
+}
+
+$output .= "\n";
+
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
-// Generate CSRF token (session should now contain user data)
+// Now generate CSRF token in the correct session
 echo "=== DEBUG: Loading CSRF Class ===\n";
 try {
     require_once 'src/utils/CSRF.php';
     echo "CSRF class loaded successfully\n";
     $csrf = new CSRF();
     $csrfToken = $csrf->generateToken();
-    echo "CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n\n";
+    echo "CSRF token generated in server session: " . substr($csrfToken, 0, 10) . "...\n\n";
 } catch (Exception $e) {
     echo "ERROR loading CSRF: " . $e->getMessage() . "\n";
     exit(1);
