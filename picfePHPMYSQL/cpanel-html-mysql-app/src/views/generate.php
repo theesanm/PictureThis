@@ -1455,7 +1455,29 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function useRefinedPrompt() {
-    console.log('useRefinedPrompt called - closing modal (prompt already updated)');
+    console.log('useRefinedPrompt called - transferring prompt to main input');
+
+    // Get the refined prompt text
+    var refinedPromptText = document.getElementById('refined-prompt-text');
+    if (!refinedPromptText) {
+      console.error('Could not find refined prompt text element');
+      closeAgentModal();
+      return;
+    }
+
+    var prompt = refinedPromptText.textContent;
+    console.log('Refined prompt to transfer:', prompt);
+
+    // Set it in the main prompt input
+    var mainPromptInput = document.getElementById('prompt');
+    if (mainPromptInput) {
+      mainPromptInput.value = prompt;
+      console.log('Successfully transferred prompt to main input');
+    } else {
+      console.error('Could not find main prompt input element');
+    }
+
+    // Close the modal
     closeAgentModal();
   }
 
