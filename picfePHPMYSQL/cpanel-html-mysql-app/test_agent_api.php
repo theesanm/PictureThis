@@ -87,7 +87,8 @@ if ($sessionHttpCode === 200) {
     if ($sessionData && isset($sessionData['success']) && $sessionData['success']) {
         $output .= "✅ Session set successfully via HTTP\n";
         if (isset($sessionData['session_id'])) {
-            $output .= "✅ Session ID from server: " . substr($sessionData['session_id'], 0, 10) . "...\n";
+            $sessionId = $sessionData['session_id']; // Update session ID to match HTTP session
+            $output .= "✅ Updated session ID to: " . substr($sessionId, 0, 10) . "...\n";
         }
     } else {
         $output .= "❌ Failed to set session via HTTP\n";
@@ -107,10 +108,11 @@ $output .= "\n";
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
-// Start session to access the same session created by HTTP
+// Start session with the correct session ID from HTTP setup
+session_id($sessionId);
 session_start();
 
-$output .= "✅ Session started for CSRF token generation\n";
+$output .= "✅ Session started with correct ID for CSRF token generation\n";
 
 // Generate CSRF token (session should now contain user data)
 require_once 'src/utils/CSRF.php';
