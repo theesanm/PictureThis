@@ -243,29 +243,18 @@ if ($currentSessionId !== $sessionId) {
 
 $output .= "\n";
 
-// Add connectivity test before API call
-$output .= "Connectivity Test:\n";
-$testCh = curl_init();
-curl_setopt($testCh, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
-curl_setopt($testCh, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($testCh, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($testCh, CURLOPT_TIMEOUT, 10);
-curl_setopt($testCh, CURLOPT_CONNECTTIMEOUT, 5);
-curl_setopt($testCh, CURLOPT_NOBODY, true); // HEAD request
-
-$testResponse = curl_exec($testCh);
-$testHttpCode = curl_getinfo($testCh, CURLINFO_HTTP_CODE);
-$testError = curl_error($testCh);
-
-curl_close($testCh);
-
-$output .= "- HEAD request to API endpoint: HTTP $testHttpCode\n";
-if ($testError) {
-    $output .= "- Connectivity error: $testError\n";
-} else {
-    $output .= "- Connectivity: OK\n";
+// Add API key verification before making the API call
+$output .= "API Key Verification:\n";
+try {
+    $config = require 'config/config.php';
+    $apiKey = $config['openrouter']['api_key'] ?? 'NOT_SET';
+    $output .= "- API Key from config: " . (strlen($apiKey) > 10 ? substr($apiKey, 0, 15) . '...' : $apiKey) . "\n";
+    $output .= "- API Key length: " . strlen($apiKey) . "\n";
+    $output .= "- OPENROUTER_API_KEY constant: " . (defined('OPENROUTER_API_KEY') ? substr(OPENROUTER_API_KEY, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
+    $output .= "- OPENROUTER_API_KEY_RUNTIME constant: " . (defined('OPENROUTER_API_KEY_RUNTIME') ? substr(OPENROUTER_API_KEY_RUNTIME, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
+} catch (Exception $e) {
+    $output .= "- Error loading config: " . $e->getMessage() . "\n";
 }
-
 $output .= "\n";
 
 // Now generate CSRF token in the correct session
@@ -313,6 +302,23 @@ $output .= "- Prompt: " . $apiData['prompt'] . "\n";
 $output .= "- CSRF Token: " . substr($apiData['csrf_token'], 0, 10) . "...\n";
 $output .= "- JSON Payload: $jsonPayload\n";
 $output .= "- Content-Type: $contentType\n\n";
+
+// Show the exact HTTP request that will be made
+$output .= "Exact HTTP Request:\n";
+$output .= "POST /api/prompt-agent/start HTTP/1.1\n";
+$output .= "Host: demo.cfox.co.za\n";
+$output .= "User-Agent: PHP-cURL\n";
+$output .= "Accept: */*\n";
+if (file_exists($cookiesFile)) {
+    $cookieData = file_get_contents($cookiesFile);
+    if ($cookieData) {
+        $output .= "Cookie: " . trim($cookieData) . "\n";
+    }
+}
+$output .= "Content-Type: $contentType\n";
+$output .= "Content-Length: " . strlen($jsonPayload) . "\n";
+$output .= "\n";
+$output .= "$jsonPayload\n\n";
 
 $ch3 = curl_init();
 curl_setopt($ch3, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
