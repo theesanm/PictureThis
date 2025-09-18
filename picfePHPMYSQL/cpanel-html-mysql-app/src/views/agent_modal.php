@@ -1,19 +1,19 @@
 <!-- Interactive Prompt Enhancement Agent Modal -->
-<div id="prompt-agent-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="bg-gray-800 rounded-xl max-w-4xl w-full mx-4 h-3/4 flex flex-col">
+<div id="prompt-agent-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 p-2 md:p-4">
+    <div class="bg-gray-800 rounded-xl max-w-4xl w-full mx-auto h-[90vh] md:h-3/4 flex flex-col">
         <!-- Agent Header -->
-        <div class="flex justify-between items-center p-4 md:p-6 border-b border-gray-700">
+        <div class="flex justify-between items-center p-3 md:p-6 border-b border-gray-700">
             <h2 class="text-lg md:text-xl font-bold text-white">PictureThis Agent</h2>
             <div class="flex items-center gap-2 md:gap-4">
                 <div class="text-xs md:text-sm text-gray-400">
                     <span id="agent-session-timer">5:00</span> remaining
                 </div>
-                <button id="close-agent-modal" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                <button id="close-agent-modal" class="text-gray-400 hover:text-white text-xl md:text-2xl">&times;</button>
             </div>
         </div>
 
         <!-- Chat Messages Area -->
-        <div id="agent-messages" class="flex-1 overflow-y-auto p-3 md:p-6 flex flex-col">
+        <div id="agent-messages" class="flex-1 overflow-y-auto p-3 md:p-6 flex flex-col space-y-3 md:space-y-4">
             <!-- Messages will be dynamically added here -->
             <div class="text-center text-gray-400 py-4 md:py-8">
                 <div class="animate-pulse">Initializing agent...</div>
@@ -48,7 +48,7 @@
                 >
                 <button
                     id="send-agent-message"
-                    class="px-4 md:px-6 py-2 md:py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed text-sm md:text-base"
+                    class="px-3 md:px-6 py-2 md:py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed text-sm md:text-base whitespace-nowrap"
                     disabled
                 >
                     <span id="send-text">Send</span>

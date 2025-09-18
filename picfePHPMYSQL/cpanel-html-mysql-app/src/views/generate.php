@@ -78,10 +78,10 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
     <!-- Left side: Input form -->
-    <div class="lg:col-span-1">
-      <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6">
+    <div class="lg:col-span-1 order-2 lg:order-1">
+      <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700 mb-4 md:mb-6">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold">Create an Image</h2>
           <div class="flex items-center gap-2">
@@ -116,8 +116,8 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
             <textarea
               id="prompt"
               name="prompt"
-              rows="4"
-              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white resize-y min-h-[100px]"
+              rows="3"
+              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white resize-y min-h-[80px] md:min-h-[100px] text-sm md:text-base"
               placeholder="Example: A photorealistic portrait of a young woman with flowing red hair, studio lighting, golden hour, highly detailed skin texture, professional photography, 8K resolution..."
               required
             ></textarea>
@@ -320,8 +320,8 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
     </div>
 
     <!-- Right side: Generated image preview -->
-    <div class="lg:col-span-2">
-      <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+    <div class="lg:col-span-2 order-1 lg:order-2">
+      <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700">
         <h2 class="text-2xl font-bold mb-6">Generated Image</h2>
 
         <div id="image-preview" class="bg-gray-900 rounded-lg p-8 flex items-center justify-center min-h-[500px]">

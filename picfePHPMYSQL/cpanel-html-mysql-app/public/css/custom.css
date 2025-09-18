@@ -1,1 +1,95 @@
-/* Custom styles for PictureThis - Add your custom CSS here */
+/* Custom styles for PictureThis - Mobile optimizations */
+
+/* Mobile-specific improvements for generate page */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better spacing for mobile */
+  .mobile-spacing {
+    margin-bottom: 1rem;
+  }
+
+  /* Improve form elements on mobile */
+  input[type="text"], textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Better modal experience on mobile */
+  #prompt-agent-modal .bg-gray-800 {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  /* Improve chat message readability */
+  #agent-messages {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Better button spacing in agent modal */
+  #send-agent-message {
+    flex-shrink: 0;
+  }
+
+  /* Improve image preview on mobile */
+  #image-preview {
+    min-height: 300px;
+  }
+
+  /* Better form layout on mobile */
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+
+  /* Improve reference image grid on mobile */
+  .grid-cols-2 {
+    gap: 0.75rem;
+  }
+
+  .grid-cols-2 > div {
+    aspect-ratio: 1;
+  }
+}
+
+/* General mobile improvements */
+@media (max-width: 640px) {
+  /* Reduce padding on small screens */
+  .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Better text sizing */
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+
+  .text-lg {
+    font-size: 1.125rem;
+  }
+}
+
+/* Touch-friendly enhancements */
+@media (hover: none) and (pointer: coarse) {
+  /* Improve hover states for touch devices */
+  .hover\:bg-purple-700:hover {
+    background-color: rgb(147 51 234 / var(--tw-bg-opacity));
+  }
+
+  .hover\:bg-blue-700:hover {
+    background-color: rgb(29 78 216 / var(--tw-bg-opacity));
+  }
+
+  /* Better focus states for keyboard navigation */
+  .focus\:ring-2:focus {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+}
