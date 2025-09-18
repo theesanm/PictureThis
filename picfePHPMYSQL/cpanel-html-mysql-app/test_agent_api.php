@@ -64,35 +64,55 @@ if (preg_match('/Set-Cookie: PHPSESSID=([^;]+)/', $homeHeaders, $matches)) {
 
 $output .= "\n";
 
-// Step 2: Start session directly and set user
-$output .= "Step 2: Starting session directly and setting user...\n";
+// Step 2: Set user session via HTTP (web server context)
+$output .= "Step 2: Setting user session via HTTP...\n";
 
-// Configure session to match web server settings
-ini_set('session.save_path', '/var/cpanel/php/sessions/ea-php84');
-ini_set('session.name', 'PHPSESSID');
-ini_set('session.cookie_domain', '.cfox.co.za');
-ini_set('session.cookie_path', '/');
+// Use HTTP request to set session in web server context
+$sessionUrl = $baseUrl . '/set_session_http.php';
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, $sessionUrl);
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);
+curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile);
 
-// Start session directly in this script (same process, no curl)
-session_id($sessionId);
-session_start();
+$sessionResponse = curl_exec($ch2);
+$sessionHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
 
-// Set the user session directly
-$_SESSION['user'] = [
-    'id' => 1,
-    'fullName' => 'Admin User',
-    'email' => 'admin@picturethis.com'
-];
+curl_close($ch2);
 
-$output .= "✅ Session started and user set directly in test script\n";
-$output .= "✅ Session configured to match web server settings\n";
+$output .= "Session setup response (HTTP $sessionHttpCode): $sessionResponse\n";
+
+if ($sessionHttpCode === 200) {
+    $sessionData = json_decode($sessionResponse, true);
+    if ($sessionData && isset($sessionData['success']) && $sessionData['success']) {
+        $output .= "✅ Session set successfully via HTTP\n";
+        if (isset($sessionData['session_id'])) {
+            $output .= "✅ Session ID from server: " . substr($sessionData['session_id'], 0, 10) . "...\n";
+        }
+    } else {
+        $output .= "❌ Failed to set session via HTTP\n";
+        echo $output;
+        ob_end_flush();
+        exit(1);
+    }
+} else {
+    $output .= "❌ HTTP session setup failed with code: $sessionHttpCode\n";
+    echo $output;
+    ob_end_flush();
+    exit(1);
+}
 
 $output .= "\n";
 
 // Step 3: Generate CSRF token and test the agent API
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
-// Generate CSRF token (session is already started from Step 2)
+// Start session to access the same session created by HTTP
+session_start();
+
+$output .= "✅ Session started for CSRF token generation\n";
+
+// Generate CSRF token (session should now contain user data)
 require_once 'src/utils/CSRF.php';
 $csrf = new CSRF();
 $csrfToken = $csrf->generateToken();
@@ -161,6 +181,9 @@ if ($apiHttpCode === 200) {
 // Clean up
 if (file_exists($cookiesFile)) {
     unlink($cookiesFile);
+}
+if (file_exists('set_session_http.php')) {
+    unlink('set_session_http.php');
 }
 
 $output .= "\n=== Test Complete ===\n";
