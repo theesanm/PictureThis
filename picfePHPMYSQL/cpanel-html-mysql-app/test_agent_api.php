@@ -1,9 +1,20 @@
 <?php
+// Debug version - add this at the very top to see what's happening
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Start output buffering IMMEDIATELY to prevent headers from being sent
 ob_start();
 
 // Initialize session FIRST, before ANY output
 session_start();
+
+// Debug: Output basic information
+echo "=== DEBUG: Script Started ===\n";
+echo "PHP Version: " . phpversion() . "\n";
+echo "Current Time: " . date('Y-m-d H:i:s') . "\n";
+echo "Session Status: " . session_status() . "\n";
+echo "Session ID: " . session_id() . "\n\n";
 
 // Check if running from command line
 if (php_sapi_name() !== 'cli') {
@@ -16,18 +27,11 @@ if (php_sapi_name() !== 'cli') {
     set_time_limit(60);
 }
 
-// Test the agent API by directly setting session (bypassing login)
-// This isolates whether the issue is authentication or the API itself
-
-// Test user credentials (from setup_database.php)
-$testEmail = 'admin@picturethis.com';
-$testPassword = 'admin123';
-$baseUrl = 'https://demo.cfox.co.za';
-
-// Collect all output
-$output = "=== Web Browser Mode - Testing Agent API ===\n\n";
-$output .= "Note: This test may take up to 60 seconds...\n\n";
-$output .= "=== Testing Agent API (Bypassing Authentication) ===\n\n";
+// Debug: Check if required files exist
+echo "=== DEBUG: File Checks ===\n";
+echo "CSRF.php exists: " . (file_exists('src/utils/CSRF.php') ? 'YES' : 'NO') . "\n";
+echo "Config.php exists: " . (file_exists('config/config.php') ? 'YES' : 'NO') . "\n";
+echo "set_session_http.php exists: " . (file_exists('set_session_http.php') ? 'YES' : 'NO') . "\n\n";
 
 // Check if cookies file is writable
 $cookiesFile = '/tmp/cookies_' . uniqid() . '.txt';
@@ -197,10 +201,20 @@ $output .= "\n";
 $output .= "Step 3: Generating CSRF token and testing agent API...\n";
 
 // Generate CSRF token (session should now contain user data)
-require_once 'src/utils/CSRF.php';
-$csrf = new CSRF();
-$csrfToken = $csrf->generateToken();
-$output .= "✅ CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n";
+echo "=== DEBUG: Loading CSRF Class ===\n";
+try {
+    require_once 'src/utils/CSRF.php';
+    echo "CSRF class loaded successfully\n";
+    $csrf = new CSRF();
+    $csrfToken = $csrf->generateToken();
+    echo "CSRF token generated: " . substr($csrfToken, 0, 10) . "...\n\n";
+} catch (Exception $e) {
+    echo "ERROR loading CSRF: " . $e->getMessage() . "\n";
+    exit(1);
+} catch (Error $e) {
+    echo "FATAL ERROR loading CSRF: " . $e->getMessage() . "\n";
+    exit(1);
+}
 
 // Debug: Check session data before API call
 $output .= "Session data before API call:\n";
