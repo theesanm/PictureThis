@@ -33,6 +33,17 @@ echo "CSRF.php exists: " . (file_exists('src/utils/CSRF.php') ? 'YES' : 'NO') . 
 echo "Config.php exists: " . (file_exists('config/config.php') ? 'YES' : 'NO') . "\n";
 echo "set_session_http.php exists: " . (file_exists('set_session_http.php') ? 'YES' : 'NO') . "\n\n";
 
+// Test the agent API by directly setting session (bypassing login)
+// This isolates whether the issue is authentication or the API itself
+
+// Test user credentials (from setup_database.php)
+$testEmail = 'admin@picturethis.com';
+$testPassword = 'admin123';
+$baseUrl = 'https://demo.cfox.co.za';
+
+// Collect all output
+$output = "=== Testing Agent API (Bypassing Authentication) ===\n\n";
+
 // Check if cookies file is writable
 $cookiesFile = '/tmp/cookies_' . uniqid() . '.txt';
 if (file_exists($cookiesFile)) {
@@ -52,13 +63,17 @@ $output .= "Cookies file path: $cookiesFile\n\n";
 // Step 1: Create a simple session by visiting the homepage
 $output .= "Step 1: Creating session by visiting homepage...\n";
 
+// Debug: Show the URL we're trying to access
+$homeUrl = $baseUrl . '/';
+$output .= "Homepage URL: $homeUrl\n";
+
 // Ensure cookies file exists
 if (!file_exists($cookiesFile)) {
     touch($cookiesFile);
 }
 
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $baseUrl . '/');
+curl_setopt($ch, CURLOPT_URL, $homeUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_COOKIEJAR, $cookiesFile);
@@ -73,7 +88,12 @@ $homeHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 // Debug: Check for cURL errors
 if (curl_error($ch)) {
     $output .= "cURL error: " . curl_error($ch) . "\n";
+    $output .= "cURL error number: " . curl_errno($ch) . "\n";
+    $output .= "URL that failed: $homeUrl\n";
 }
+
+// Debug: Show response info
+$output .= "cURL info: " . print_r(curl_getinfo($ch), true) . "\n";
 
 // Separate headers from body
 $homeHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
