@@ -49,6 +49,22 @@ try {
         $controller = new GenerateController();
         $controller->getUserCredits();
     }
+    // Credits / payments endpoints
+    elseif ($apiPath === 'credits/initiate' || $apiPath === 'credits/initiate/') {
+        require_once __DIR__ . '/../src/controllers/PricingController.php';
+        $controller = new PricingController();
+        $controller->initiate();
+    }
+    elseif ($apiPath === 'credits/payfast/notify' || $apiPath === 'credits/payfast/notify/') {
+        require_once __DIR__ . '/../src/controllers/PricingController.php';
+        $controller = new PricingController();
+        $controller->notify();
+    }
+    elseif ($apiPath === 'payments/status' || $apiPath === 'payments/status/') {
+        require_once __DIR__ . '/../src/controllers/PricingController.php';
+        $controller = new PricingController();
+        $controller->paymentStatus();
+    }
     else {
         header('Content-Type: application/json');
         http_response_code(404);

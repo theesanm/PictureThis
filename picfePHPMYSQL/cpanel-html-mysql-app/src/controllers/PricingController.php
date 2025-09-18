@@ -393,21 +393,44 @@ class PricingController {
             }
 
             if (isset($posted['payment_status']) && strtoupper($posted['payment_status']) === 'COMPLETE') {
-                // Update user credits
-                $upd = $pdo->prepare('UPDATE users SET credits = COALESCE(credits,0) + ? WHERE id = ?');
-                $upd->execute([$credits, $userId]);
+                // Update user credits with diagnostics
+                try {
+                    $upd = $pdo->prepare('UPDATE users SET credits = COALESCE(credits,0) + ? WHERE id = ?');
+                    $ok = $upd->execute([$credits, $userId]);
+                    $rows = $upd->rowCount();
+                    error_log("ITN: UPDATE users set credits for user {$userId} returned execute=" . json_encode($ok) . " rowCount={$rows}");
+
+                    if ($rows === 0) {
+                        // No rows updated - maybe user missing. Log full user lookup for debugging.
+                        $u = $pdo->prepare('SELECT id, email, credits FROM users WHERE id = ? LIMIT 1');
+                        $u->execute([$userId]);
+                        $userRow = $u->fetch(PDO::FETCH_ASSOC);
+                        error_log('ITN: No user row updated. User lookup: ' . json_encode($userRow));
+                    }
+
+                } catch (Exception $e) {
+                    error_log('ITN: Error updating user credits: ' . $e->getMessage());
+                    // Continue to try inserting transaction record for auditing
+                }
 
                 // Insert transaction log
-                $ins = $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, stripe_payment_id, description, payment_id, created_at) VALUES (?, ?, ?, NULL, ?, ?, NOW())');
-                $desc = "PayFast purchase: {$credits} credits ({$packageId})";
-                $ins->execute([$userId, $credits, 'purchase', $desc, $posted['m_payment_id']]);
+                try {
+                    $ins = $pdo->prepare('INSERT INTO credit_transactions (user_id, amount, transaction_type, stripe_payment_id, description, payment_id, created_at) VALUES (?, ?, ?, NULL, ?, ?, NOW())');
+                    $desc = "PayFast purchase: {$credits} credits ({$packageId})";
+                    $insOk = $ins->execute([$userId, $credits, 'purchase', $desc, $posted['m_payment_id']]);
+                    $insId = $pdo->lastInsertId();
+                    error_log("ITN: Inserted credit_transactions user={$userId} credits={$credits} ok=" . json_encode($insOk) . " insertId={$insId}");
+                } catch (Exception $e) {
+                    error_log('ITN: Error inserting credit_transactions: ' . $e->getMessage());
+                }
 
                 // Mark pending payments if table exists
                 try {
-                    $pdo->prepare('UPDATE payments SET status = ?, processed_at = NOW() WHERE payment_id = ?')
+                    $res = $pdo->prepare('UPDATE payments SET status = ?, processed_at = NOW() WHERE payment_id = ?')
                         ->execute(['processed', $posted['m_payment_id']]);
+                    error_log('ITN: Updated payments table for ' . $posted['m_payment_id'] . ' result=' . json_encode($res));
                 } catch (Exception $e) {
-                    // ignore
+                    error_log('ITN: Error updating payments table: ' . $e->getMessage());
                 }
             } else {
                 error_log('Payment not complete. Status: ' . ($posted['payment_status'] ?? 'unknown'));

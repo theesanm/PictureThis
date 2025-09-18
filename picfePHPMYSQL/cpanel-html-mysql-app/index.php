@@ -287,6 +287,35 @@ try {
         exit;
     }
 
+    // Also support legacy/public-facing /payment/* routes so popup/return URLs work when this index.php is used
+    if ($path === '/payment/popup/success') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->popupSuccess();
+        exit;
+    }
+
+    if ($path === '/payment/popup/cancel') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->popupCancel();
+        exit;
+    }
+
+    if ($path === '/payment/success') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->success();
+        exit;
+    }
+
+    if ($path === '/payment/cancelled') {
+        require_once __DIR__ . '/src/controllers/PricingController.php';
+        $ctrl = new PricingController();
+        $ctrl->cancelled();
+        exit;
+    }
+
     if ($path === '/admin') {
         require_once __DIR__ . '/src/controllers/AdminController.php';
         $ctrl = new AdminController();
