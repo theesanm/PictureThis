@@ -1189,6 +1189,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('startAgentSession called with prompt:', originalPrompt);
     showAgentModal();
     
+    // Clear any previous refined prompt display
+    var agentRefinedPrompt = document.getElementById('agent-refined-prompt');
+    if (agentRefinedPrompt) {
+      agentRefinedPrompt.classList.add('hidden');
+    }
+    
     // Get fresh CSRF token
     var csrfMeta = document.querySelector('meta[name="csrf-token"]');
     if (!csrfMeta) {
@@ -1283,14 +1289,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var agentMessages = document.getElementById('agent-messages');
         if (agentMessages) {
-          agentMessages.innerHTML = '';
+          agentMessages.innerHTML = ''; // Clear previous conversation
           // Add the first agent message
           addMessage('agent', result.data.message);
-          // Set the refined prompt in the input field
-          var promptInput = document.getElementById('prompt');
-          if (promptInput && result.data.refinedPrompt) {
-            promptInput.value = result.data.refinedPrompt;
-            // Also show the refined prompt in the modal
+          // Only show the refined prompt in the modal, don't auto-update main input
+          if (result.data.refinedPrompt) {
             showRefinedPrompt(result.data.refinedPrompt);
           }
           scrollToLatestContent();
@@ -1530,6 +1533,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modal) {
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+      
+      // Clear agent input when opening modal
+      var agentInput = document.getElementById('agent-input');
+      if (agentInput) {
+        agentInput.value = '';
+      }
+      
+      // Hide refined prompt area by default
+      var agentRefinedPrompt = document.getElementById('agent-refined-prompt');
+      if (agentRefinedPrompt) {
+        agentRefinedPrompt.classList.add('hidden');
+      }
     }
   }
 
