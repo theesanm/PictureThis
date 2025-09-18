@@ -21,7 +21,7 @@ return [
         'env' => 'production',
     ],
     'openrouter' => [
-        'api_key' => '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',
+        'api_key' => 'REPLACE_WITH_YOUR_ACTUAL_OPENROUTER_API_KEY', // Get from https://openrouter.ai/keys
         'app_url' => 'https://demo.cfox.co.za',
         'gemini_model' => 'google/gemini-2.5-flash-image-preview',
         'model' => '@preset/picture-this-agent',
@@ -29,7 +29,7 @@ return [
     'email' => [
         'smtp_host' => 'metallurgix.aserv.co.za',
         'smtp_username' => 'cfoxcozj',
-        'smtp_password' => 'Runx141kw007@',
+        'smtp_password' => '',
         'smtp_port' => '587',
         'from_email' => 'picturethis@cfox.co.za',
     ],

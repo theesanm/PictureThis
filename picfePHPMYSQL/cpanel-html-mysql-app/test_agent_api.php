@@ -6,6 +6,21 @@ ini_set('display_errors', 1);
 // Start output buffering IMMEDIATELY to prevent headers from being sent
 ob_start();
 
+// Load configuration FIRST to set constants
+echo "=== DEBUG: Loading Configuration ===\n";
+try {
+    require_once 'config/config.php';
+    echo "Configuration loaded successfully\n";
+    echo "IS_PRODUCTION: " . (defined('IS_PRODUCTION') ? (IS_PRODUCTION ? 'true' : 'false') : 'NOT_DEFINED') . "\n";
+    echo "APP_ENV: " . (defined('APP_ENV') ? APP_ENV : 'NOT_DEFINED') . "\n\n";
+} catch (Exception $e) {
+    echo "ERROR loading config: " . $e->getMessage() . "\n";
+    exit(1);
+} catch (Error $e) {
+    echo "FATAL ERROR loading config: " . $e->getMessage() . "\n";
+    exit(1);
+}
+
 // Initialize session FIRST, before ANY output
 session_start();
 
@@ -246,22 +261,22 @@ $output .= "\n";
 // Add API key verification before making the API call
 $output .= "API Key Verification:\n";
 try {
-    $config = require 'config/config.php';
     $output .= "- Config loaded successfully\n";
-    $apiKey = $config['openrouter']['api_key'] ?? 'NOT_SET';
-    $output .= "- API Key from config: " . (strlen($apiKey) > 10 ? substr($apiKey, 0, 15) . '...' : $apiKey) . "\n";
+    $apiKey = defined('OPENROUTER_API_KEY') ? OPENROUTER_API_KEY : 'NOT_DEFINED';
+    $output .= "- API Key loaded: " . (strlen($apiKey) > 10 ? 'YES (' . strlen($apiKey) . ' chars)' : 'NO') . "\n";
     $output .= "- API Key length: " . strlen($apiKey) . "\n";
 } catch (Exception $e) {
     $output .= "- Error loading config: " . $e->getMessage() . "\n";
-    $output .= "- Config file exists: " . (file_exists('config/config.php') ? 'YES' : 'NO') . "\n";
     $output .= "- Current working directory: " . getcwd() . "\n";
 }
 
-$output .= "- OPENROUTER_API_KEY constant: " . (defined('OPENROUTER_API_KEY') ? substr(OPENROUTER_API_KEY, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
-$output .= "- OPENROUTER_API_KEY_RUNTIME constant: " . (defined('OPENROUTER_API_KEY_RUNTIME') ? substr(OPENROUTER_API_KEY_RUNTIME, 0, 15) . '...' : 'NOT_DEFINED') . "\n";
+    $output .= "- OPENROUTER_API_KEY constant: " . (defined('OPENROUTER_API_KEY') ? 'LOADED' : 'NOT_DEFINED') . "\n";
+    $output .= "- OPENROUTER_API_KEY_RUNTIME constant: " . (defined('OPENROUTER_API_KEY_RUNTIME') ? 'LOADED' : 'NOT_DEFINED') . "\n";
+    $output .= "- OPENROUTER_MODEL_RUNTIME constant: " . (defined('OPENROUTER_MODEL_RUNTIME') ? OPENROUTER_MODEL_RUNTIME : 'NOT_DEFINED') . "\n";
+    $output .= "- OPENROUTER_GEMINI_MODEL_RUNTIME constant: " . (defined('OPENROUTER_GEMINI_MODEL_RUNTIME') ? OPENROUTER_GEMINI_MODEL_RUNTIME : 'NOT_DEFINED') . "\n";
 
 // Test OpenRouter API directly
-if (defined('OPENROUTER_API_KEY_RUNTIME') && strlen(OPENROUTER_API_KEY_RUNTIME) > 10) {
+if (defined('OPENROUTER_API_KEY_RUNTIME') && strlen(OPENROUTER_API_KEY_RUNTIME) > 10 && OPENROUTER_API_KEY_RUNTIME !== 'REPLACE_WITH_YOUR_ACTUAL_OPENROUTER_API_KEY') {
     $output .= "\nDirect OpenRouter API Test:\n";
     $testUrl = 'https://openrouter.ai/api/v1/auth/key';
     $chTest = curl_init();
@@ -286,11 +301,39 @@ if (defined('OPENROUTER_API_KEY_RUNTIME') && strlen(OPENROUTER_API_KEY_RUNTIME) 
     } else {
         $output .= "- Test response: " . substr($testResponse, 0, 100) . "...\n";
     }
+} else {
+    $output .= "\nDirect OpenRouter API Test: SKIPPED (API key not set or is placeholder)\n";
 }
 
 $output .= "\n";
 
-// Now generate CSRF token in the correct session
+// Show what the OpenRouter API call would look like from the agent controller
+$output .= "Expected OpenRouter API call from agent controller:\n";
+$openRouterPayload = [
+    "model" => defined('OPENROUTER_MODEL_RUNTIME') ? OPENROUTER_MODEL_RUNTIME : 'NOT_SET',
+    "messages" => [
+        [
+            "role" => "system",
+            "content" => "You are an expert AI image generation prompt engineer..."
+        ],
+        [
+            "role" => "user", 
+            "content" => "Original prompt: \"A beautiful sunset over mountains\"\n\nConversation history:\n\nUser's latest message: A beautiful sunset over mountains"
+        ]
+    ],
+    "max_tokens" => 1000,
+    "temperature" => 0.7
+];
+$openRouterJson = json_encode($openRouterPayload, JSON_PRETTY_PRINT);
+$output .= "URL: https://openrouter.ai/api/v1/chat/completions\n";
+$output .= "Method: POST\n";
+$output .= "Headers:\n";
+$output .= "  Authorization: Bearer [API_KEY_MASKED]\n";
+$output .= "  Content-Type: application/json\n";
+$output .= "  HTTP-Referer: " . (defined('OPENROUTER_APP_URL_RUNTIME') ? OPENROUTER_APP_URL_RUNTIME : 'NOT_SET') . "\n";
+$output .= "  X-Title: PictureThis Agent\n";
+$output .= "Payload:\n";
+$output .= "$openRouterJson\n\n";
 echo "=== DEBUG: Loading CSRF Class ===\n";
 try {
     require_once 'src/utils/CSRF.php';
@@ -334,7 +377,22 @@ $output .= "API Request Data:\n";
 $output .= "- Prompt: " . $apiData['prompt'] . "\n";
 $output .= "- CSRF Token: " . substr($apiData['csrf_token'], 0, 10) . "...\n";
 $output .= "- JSON Payload: $jsonPayload\n";
-$output .= "- Content-Type: $contentType\n\n";
+$output .= "- Content-Type: $contentType\n";
+$output .= "- Expected Model to be used: " . (defined('OPENROUTER_MODEL_RUNTIME') ? OPENROUTER_MODEL_RUNTIME : 'NOT_DEFINED') . "\n\n";
+
+// Generate equivalent curl command for manual testing
+$output .= "Equivalent curl command for manual testing:\n";
+$curlCommand = "curl -X POST '$baseUrl/api/prompt-agent/start' \\\n";
+$curlCommand .= "  -H 'Content-Type: application/json' \\\n";
+if (file_exists($cookiesFile)) {
+    $cookieData = file_get_contents($cookiesFile);
+    if ($cookieData) {
+        $curlCommand .= "  -H 'Cookie: " . trim($cookieData) . "' \\\n";
+    }
+}
+$curlCommand .= "  -d '$jsonPayload' \\\n";
+$curlCommand .= "  --verbose";
+$output .= "```\n$curlCommand\n```\n\n";
 
 // Show the exact HTTP request that will be made
 $output .= "Exact HTTP Request:\n";
