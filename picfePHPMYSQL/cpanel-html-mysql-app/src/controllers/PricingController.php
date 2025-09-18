@@ -4,10 +4,10 @@ require_once __DIR__ . '/../utils/CSRF.php';
 
 class PricingController {
     protected $CREDIT_PACKAGES = [
-        'small' => ['credits' => 250, 'price' => 200.00, 'name' => '250 Credits'],
-        'medium' => ['credits' => 375, 'price' => 250.00, 'name' => '375 Credits'],
-        'large' => ['credits' => 500, 'price' => 300.00, 'name' => '500 Credits'],
-        'premium' => ['credits' => 800, 'price' => 450.00, 'name' => '800 Credits']
+        'small' => ['credits' => 100, 'price' => 100.00, 'name' => '100 Credits'],
+        'medium' => ['credits' => 250, 'price' => 200.00, 'name' => '250 Credits'],
+        'large' => ['credits' => 375, 'price' => 250.00, 'name' => '375 Credits'],
+        'premium' => ['credits' => 500, 'price' => 300.00, 'name' => '500 Credits']
     ];
 
     protected function getPayfastConfig() {

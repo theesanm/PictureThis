@@ -21,7 +21,7 @@ return [
         'env' => 'development',
     ],
     'openrouter' => [
-        'api_key' => 'REPLACE_WITH_YOUR_ACTUAL_OPENROUTER_API_KEY', // Get from https://openrouter.ai/keys
+        'api_key' => '', // Get from https://openrouter.ai/keys
         'app_url' => 'https://demo.cfox.co.za',
         'gemini_model' => 'google/gemini-2.5-flash-image-preview',
         'model' => '@preset/picture-this-agent',

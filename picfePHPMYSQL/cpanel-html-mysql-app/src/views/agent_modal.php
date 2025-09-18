@@ -1,6 +1,7 @@
 <!-- Interactive Prompt Enhancement Agent Modal -->
 <div id="prompt-agent-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 p-2 md:p-4">
-    <div class="bg-gray-800 rounded-xl max-w-4xl w-full mx-auto h-[90vh] md:h-3/4 flex flex-col">
+    <!-- On mobile we keep modal near bottom and allow scrolling; on desktop center it -->
+    <div class="bg-gray-800 rounded-t-xl md:rounded-xl w-full mx-auto max-w-lg sm:max-w-xl md:max-w-4xl max-h-[90vh] md:h-3/4 flex flex-col overflow-hidden">
         <!-- Agent Header -->
         <div class="flex justify-between items-center p-3 md:p-6 border-b border-gray-700">
             <h2 class="text-lg md:text-xl font-bold text-white">PictureThis Agent</h2>
@@ -12,8 +13,9 @@
             </div>
         </div>
 
-        <!-- Chat Messages Area -->
-        <div id="agent-messages" class="flex-1 overflow-y-auto p-3 md:p-6 flex flex-col space-y-3 md:space-y-4">
+    <!-- Chat Messages Area -->
+    <!-- Add bottom padding so messages are not hidden behind the input on mobile/virtual keyboards -->
+    <div id="agent-messages" class="flex-1 overflow-y-auto p-3 md:p-6 flex flex-col space-y-3 md:space-y-4" style="padding-bottom:calc(3.5rem + env(safe-area-inset-bottom, 0px));">
             <!-- Messages will be dynamically added here -->
             <div class="text-center text-gray-400 py-4 md:py-8">
                 <div class="animate-pulse">Initializing agent...</div>
@@ -25,10 +27,13 @@
             <div class="border-t border-gray-700 pt-2 md:pt-4">
                 <h3 class="text-sm md:text-lg font-semibold text-white mb-2 md:mb-3">Current Refined Prompt</h3>
                 <div id="refined-prompt-container" class="bg-gray-700 p-2 md:p-4 rounded-lg border border-gray-600">
-                    <div id="refined-prompt-text" class="text-xs md:text-sm text-gray-300 mb-2 md:mb-3 leading-tight"></div>
+                    <div class="flex items-start gap-2">
+                        <div id="refined-prompt-text" class="text-xs md:text-sm text-gray-300 mb-2 md:mb-3 leading-tight flex-1"></div>
+                        <button id="copy-refined-prompt" class="text-sm text-gray-300 hover:text-white ml-2 px-2 py-1 border border-gray-600 rounded-md">Copy</button>
+                    </div>
                     <button
                         id="use-refined-prompt"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 md:py-2 text-sm md:text-base rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="w-full mt-2 bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-2 md:py-2 text-sm md:text-base rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Use This Prompt for Image Generation
                     </button>
@@ -37,7 +42,8 @@
         </div>
 
         <!-- Message Input -->
-        <div class="p-3 md:p-6 border-t border-gray-700">
+        <!-- Make input sticky to bottom so it's always visible; messages have bottom padding to prevent overlap -->
+    <div class="p-3 md:p-6 border-t border-gray-700 bg-gray-800 sticky bottom-0 z-20" style="padding-bottom:env(safe-area-inset-bottom, 0px);">
             <div class="flex gap-2 md:gap-3">
                 <input
                     type="text"
@@ -67,7 +73,49 @@
 <script>
 // Interactive Prompt Enhancement Agent JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    // Agent modal JavaScript has been moved to generate.php to avoid duplicate DOMContentLoaded handlers
-    // This script block is kept for future compatibility but is now empty
+    // Small helper to copy refined prompt to clipboard and show a brief confirmation
+    var copyBtn = document.getElementById('copy-refined-prompt');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            var textEl = document.getElementById('refined-prompt-text');
+            var text = textEl ? textEl.innerText || textEl.textContent : '';
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(function() {
+                var old = copyBtn.innerText;
+                copyBtn.innerText = 'Copied!';
+                setTimeout(function() { copyBtn.innerText = old; }, 1500);
+            }).catch(function() {
+                alert('Could not copy to clipboard');
+            });
+        });
+    }
+
+    // Auto-scroll messages to bottom when input is focused (helps mobile keyboards)
+    var agentMessages = document.getElementById('agent-messages');
+    var agentInput = document.getElementById('agent-input');
+    var modal = document.getElementById('prompt-agent-modal');
+    function scrollToBottom(delay) {
+        setTimeout(function() {
+            if (agentMessages) agentMessages.scrollTop = agentMessages.scrollHeight;
+        }, delay || 100);
+    }
+
+    if (agentInput && agentMessages) {
+        agentInput.addEventListener('focus', function() { scrollToBottom(300); });
+        agentInput.addEventListener('click', function() { scrollToBottom(300); });
+    }
+
+    // Observe modal open (remove 'hidden') and scroll to bottom when it opens
+    if (modal && typeof MutationObserver !== 'undefined') {
+        var mo = new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                if (m.attributeName === 'class') {
+                    var isHidden = modal.classList.contains('hidden');
+                    if (!isHidden) scrollToBottom(200);
+                }
+            });
+        });
+        mo.observe(modal, { attributes: true });
+    }
 });
 </script>

@@ -33,6 +33,22 @@ try {
         $controller = new PromptAgentController();
         $controller->endSession();
     }
+    // Add mapping for GenerateController endpoints so API calls like /api/generate and /api/enhance work
+    elseif ($apiPath === 'generate') {
+        require_once __DIR__ . '/../src/controllers/GenerateController.php';
+        $controller = new GenerateController();
+        $controller->generate();
+    }
+    elseif ($apiPath === 'enhance') {
+        require_once __DIR__ . '/../src/controllers/GenerateController.php';
+        $controller = new GenerateController();
+        $controller->enhance();
+    }
+    elseif ($apiPath === 'user/credits' || $apiPath === 'user/credits/get') {
+        require_once __DIR__ . '/../src/controllers/GenerateController.php';
+        $controller = new GenerateController();
+        $controller->getUserCredits();
+    }
     else {
         header('Content-Type: application/json');
         http_response_code(404);

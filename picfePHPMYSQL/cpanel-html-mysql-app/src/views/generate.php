@@ -79,8 +79,8 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-    <!-- Left side: Input form -->
-    <div class="lg:col-span-1 order-2 lg:order-1">
+  <!-- Left side: Input form -->
+  <div class="lg:col-span-1 order-2 lg:order-1">
       <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700 mb-4 md:mb-6">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold">Create an Image</h2>
@@ -223,22 +223,24 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
         </form>
       </div>
 
+      
+
       <!-- Prompt Writing Guide -->
       <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 mt-6">
         <div class="bg-gray-700/50 rounded-lg border border-gray-600">
-          <div class="flex items-center justify-between p-4 cursor-pointer" onclick="toggleGuidance()">
+            <div class="flex items-center justify-between p-4 cursor-pointer" onclick="toggleGuidance()">
             <div class="flex items-center gap-2">
               <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <h3 class="text-sm font-semibold text-purple-300">Prompt Writing Guide</h3>
             </div>
-            <svg id="guidance-chevron" class="w-4 h-4 text-purple-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="guidance-chevron" class="w-4 h-4 text-purple-400 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </div>
 
-          <div id="guidance-content" class="px-4 pb-4 space-y-3 text-sm text-gray-300">
+          <div id="guidance-content" class="hidden px-4 pb-4 space-y-3 text-sm text-gray-300">
             <div>
               <h4 class="font-medium text-white mb-1">🎨 Style & Realism</h4>
               <p class="text-xs text-gray-400">Specify the artistic style to help the enhance function optimize for the right model:</p>
@@ -300,6 +302,43 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
         </div>
       </div>
 
+      <!-- Generated Image (mobile only) -->
+      <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700 mt-6 block lg:hidden">
+        <h2 class="text-2xl font-bold mb-4">Generated Image</h2>
+        <div id="image-preview-mobile" class="bg-gray-900 rounded-lg p-6 flex items-center justify-center min-h-[250px]">
+          <?php if ($generatedImage): ?>
+            <div class="text-center w-full">
+              <img
+                src="<?php echo htmlspecialchars($generatedImage['imageUrl'] ?? $generatedImage['image_url']); ?>"
+                alt="Generated image"
+                class="max-w-full max-h-60 mx-auto rounded-lg shadow-lg mb-4"
+              />
+              <p class="text-gray-300 mb-4"><?php echo htmlspecialchars($generatedImage['prompt'] ?? ''); ?></p>
+              <div class="flex gap-3 justify-center">
+                <a
+                  href="<?php echo htmlspecialchars($generatedImage['imageUrl'] ?? $generatedImage['image_url']); ?>"
+                  download="generated_image_<?php echo time(); ?>.png"
+                  class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+          <?php else: ?>
+            <div class="text-center text-gray-300">
+              <svg class="mx-auto h-12 w-12 mb-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <h3 class="text-lg font-semibold mb-2 text-white">Ready to Create Amazing AI Images</h3>
+              <div class="text-sm text-gray-300">Your generated images will appear here once you create them</div>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
       <!-- Recent Images -->
       <?php if (!empty($recentImages)): ?>
       <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -321,7 +360,7 @@ unset($_SESSION['generate_success'], $_SESSION['generate_error'], $_SESSION['gen
 
     <!-- Right side: Generated image preview -->
     <div class="lg:col-span-2 order-1 lg:order-2">
-      <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700">
+      <div class="bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-700 hidden lg:block">
         <h2 class="text-2xl font-bold mb-6">Generated Image</h2>
 
         <div id="image-preview" class="bg-gray-900 rounded-lg p-8 flex items-center justify-center min-h-[500px]">
@@ -1545,6 +1584,16 @@ document.addEventListener('DOMContentLoaded', function() {
       if (agentRefinedPrompt) {
         agentRefinedPrompt.classList.add('hidden');
       }
+      // Force a small reflow/resize and scroll to bottom to fix mobile rendering
+      // Some mobile browsers need a resize event to properly calculate layout
+      setTimeout(function() {
+        // Force reflow
+        void modal.offsetHeight;
+        // Dispatch resize event
+        try { window.dispatchEvent(new Event('resize')); } catch (e) { /* ignore */ }
+        // Scroll messages to bottom
+        scrollToLatestContent();
+      }, 120);
     }
   }
 

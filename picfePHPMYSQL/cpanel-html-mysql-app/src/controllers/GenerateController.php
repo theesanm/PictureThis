@@ -299,6 +299,39 @@ class GenerateController {
             exit;
         }
 
+        // Detect AJAX / JSON requests so we can return JSON like /api/enhance
+        $isAjax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+            || (!empty($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+
+        // helper to respond according to request type
+        $respondJsonOrRedirect = function($success, $payload) use ($isAjax) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                if ($success) {
+                    echo json_encode(array_merge(['success' => true], $payload));
+                } else {
+                    echo json_encode(['success' => false, 'message' => (is_string($payload) ? $payload : ($payload['message'] ?? 'Error'))]);
+                }
+                exit;
+            } else {
+                if ($success) {
+                    // payload may contain generated_image and message
+                    if (is_array($payload) && isset($payload['generated_image'])) {
+                        $_SESSION['generated_image'] = $payload['generated_image'];
+                    }
+                    if (is_array($payload) && isset($payload['message'])) {
+                        $_SESSION['generate_success'] = $payload['message'];
+                    }
+                } else {
+                    // payload may be message string
+                    $_SESSION['generate_error'] = is_string($payload) ? $payload : ($payload['message'] ?? 'Failed to generate image');
+                }
+                header('Location: /generate');
+                exit;
+            }
+        };
+
         $this->debugLog('=== GENERATE REQUEST START ===');
         $this->debugLog('POST data received: ' . json_encode($_POST));
         $this->debugLog('FILES data received: ' . json_encode(array_map(function($file) {
@@ -311,14 +344,19 @@ class GenerateController {
             ];
         }, $_FILES)));
 
-        $prompt = trim($_POST['prompt'] ?? '');
+        // If request is JSON (AJAX), parse JSON body to get prompt
+        $prompt = '';
+        if ($isAjax && !empty($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            $inputJson = json_decode(file_get_contents('php://input'), true);
+            $prompt = trim($inputJson['prompt'] ?? '');
+        } else {
+            $prompt = trim($_POST['prompt'] ?? '');
+        }
         $userId = $_SESSION['user']['id'];
 
         // Validate prompt
         if (empty($prompt)) {
-            $_SESSION['generate_error'] = 'Please enter a prompt';
-            header('Location: /generate');
-            exit;
+            $respondJsonOrRedirect(false, 'Please enter a prompt');
         }
 
         // Check user credits
@@ -329,9 +367,7 @@ class GenerateController {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
-            $_SESSION['generate_error'] = 'User not found';
-            header('Location: /generate');
-            exit;
+            $respondJsonOrRedirect(false, 'User not found');
         }
 
         // Get credit cost from settings
@@ -350,9 +386,7 @@ class GenerateController {
         $creditCost = (int)($settings['credit_cost_per_image'] ?? 10);
         
         if ($user['credits'] < $creditCost) {
-            $_SESSION['generate_error'] = "Insufficient credits. You need {$creditCost} credits.";
-            header('Location: /generate');
-            exit;
+            $respondJsonOrRedirect(false, "Insufficient credits. You need {$creditCost} credits.");
         }
 
         // Handle uploaded images
@@ -400,9 +434,7 @@ class GenerateController {
             $this->debugLog('Image usage permission: ' . ($hasPermission ? 'GRANTED' : 'DENIED'));
 
             if (!$hasPermission) {
-                $_SESSION['generate_error'] = 'You must confirm that you have permission to use these images';
-                header('Location: /generate');
-                exit;
+                $respondJsonOrRedirect(false, 'You must confirm that you have permission to use these images');
             }
         }
 
@@ -418,9 +450,7 @@ class GenerateController {
             
             if ($existingImage) {
                 $this->debugLog('Duplicate image or recent same prompt detected, skipping save: ' . $imageUrl);
-                $_SESSION['generate_error'] = 'You recently generated an image with this prompt. Try a different prompt or wait a bit!';
-                header('Location: /generate');
-                exit;
+                $respondJsonOrRedirect(false, 'You recently generated an image with this prompt. Try a different prompt or wait a bit!');
             }
 
             // Save image record
@@ -452,19 +482,19 @@ class GenerateController {
                 $this->debugLog('Session credits updated to ' . $updatedUser['credits']);
             }
 
-            $_SESSION['generated_image'] = [
-                'imageUrl' => $imageUrl,
-                'prompt' => $prompt
-            ];
-            $_SESSION['generate_success'] = 'Image generated successfully!';
+            // Success — respond according to request type
+            $respondJsonOrRedirect(true, [
+                'generated_image' => [
+                    'imageUrl' => $imageUrl,
+                    'prompt' => $prompt
+                ],
+                'message' => 'Image generated successfully!'
+            ]);
 
         } catch (Exception $e) {
             $this->debugLog('Image generation failed: ' . $e->getMessage());
-            $_SESSION['generate_error'] = 'Failed to generate image: ' . $e->getMessage();
+            $respondJsonOrRedirect(false, 'Failed to generate image: ' . $e->getMessage());
         }
-
-        header('Location: /generate');
-        exit;
     }
 
     // Handle prompt enhancement
