@@ -125,9 +125,15 @@ if (preg_match('/set-cookie: PHPSESSID=([^;]+)/i', $homeHeaders, $matches)) {
     $sessionId = $matches[1];
     $output .= "✅ Extracted session ID: " . substr($sessionId, 0, 10) . "...\n";
 
-    // Use the extracted session ID (session already started above)
-    session_id($sessionId);
-    $output .= "✅ Using extracted session ID\n";
+    // Check if we need to change session ID
+    $currentSessionId = session_id();
+    if ($currentSessionId !== $sessionId) {
+        $output .= "Current session ID: $currentSessionId\n";
+        $output .= "New session ID: $sessionId\n";
+        $output .= "Session IDs differ - this might cause issues\n";
+    } else {
+        $output .= "Session ID matches - good!\n";
+    }
 
     // Manually write the cookie to the file in Netscape format
     $cookieLine = "demo.cfox.co.za\tFALSE\t/\tFALSE\t0\tPHPSESSID\t$sessionId\n";
@@ -258,6 +264,12 @@ $apiData = [
 $jsonPayload = json_encode($apiData);
 $contentType = 'application/json';
 
+$output .= "API Request Data:\n";
+$output .= "- Prompt: " . $apiData['prompt'] . "\n";
+$output .= "- CSRF Token: " . substr($apiData['csrf_token'], 0, 10) . "...\n";
+$output .= "- JSON Payload: $jsonPayload\n";
+$output .= "- Content-Type: $contentType\n\n";
+
 $ch3 = curl_init();
 curl_setopt($ch3, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
 curl_setopt($ch3, CURLOPT_POST, true);
@@ -295,6 +307,15 @@ if (php_sapi_name() !== 'cli') {
 $apiResponse = curl_exec($ch3);
 $apiHttpCode = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
 
+// Debug: Show detailed API response info
+$output .= "API cURL info: " . print_r(curl_getinfo($ch3), true) . "\n";
+
+// Debug: Check for cURL errors in API call
+if (curl_error($ch3)) {
+    $output .= "API cURL error: " . curl_error($ch3) . "\n";
+    $output .= "API cURL error number: " . curl_errno($ch3) . "\n";
+}
+
 // Separate headers from body
 $headerSize = curl_getinfo($ch3, CURLINFO_HEADER_SIZE);
 $headers = substr($apiResponse, 0, $headerSize);
@@ -302,6 +323,8 @@ $body = substr($apiResponse, $headerSize);
 
 curl_close($ch3);
 
+$output .= "API Response Headers:\n";
+$output .= $headers . "\n";
 $output .= "\nAPI Response (HTTP $apiHttpCode):\n";
 $output .= $body . "\n\n";
 
