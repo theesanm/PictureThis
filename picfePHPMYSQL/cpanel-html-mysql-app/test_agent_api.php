@@ -67,6 +67,12 @@ $output .= "\n";
 // Step 2: Start session directly and set user
 $output .= "Step 2: Starting session directly and setting user...\n";
 
+// Configure session to match web server settings
+ini_set('session.save_path', '/var/cpanel/php/sessions/ea-php84');
+ini_set('session.name', 'PHPSESSID');
+ini_set('session.cookie_domain', '.cfox.co.za');
+ini_set('session.cookie_path', '/');
+
 // Start session directly in this script (same process, no curl)
 session_id($sessionId);
 session_start();
@@ -79,6 +85,7 @@ $_SESSION['user'] = [
 ];
 
 $output .= "✅ Session started and user set directly in test script\n";
+$output .= "✅ Session configured to match web server settings\n";
 
 $output .= "\n";
 
