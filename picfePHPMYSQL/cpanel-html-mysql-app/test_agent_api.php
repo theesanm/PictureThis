@@ -1,6 +1,25 @@
 <?php
-// Test the agent API by directly setting session (bypassing login)
-// This isolates whether the issue is authentication or the API itself
+// Test the agent API by directly setting session (bypassing lo// Use HTTP request to set session in web server context
+$sessionUrl = $baseUrl . '/set_session_http.php';
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, $sessionUrl);
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_COOKIEJAR, $cookiesFile);  // Save cookies to file
+curl_setopt($ch2, CURLOPT_COOKIEFILE, $cookiesFile); // Read cookies from file
+curl_setopt($ch2, CURLOPT_FOLLOWLOCATION, true);     // Follow redirects
+curl_setopt($ch2, CURLOPT_HEADER, true);             // Include headers in response
+
+$sessionResponse = curl_exec($ch2);
+$sessionHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+
+// Separate headers from body for session response
+$sessionHeaderSize = curl_getinfo($ch2, CURLINFO_HEADER_SIZE);
+$sessionHeaders = substr($sessionResponse, 0, $sessionHeaderSize);
+$sessionBody = substr($sessionResponse, $sessionHeaderSize);
+
+curl_close($ch2);
+
+$output .= "Session setup response (HTTP $sessionHttpCode): $sessionBody\n";
 
 // Start output buffering to prevent headers from being sent
 ob_start();
@@ -142,20 +161,25 @@ curl_setopt($ch3, CURLOPT_URL, $baseUrl . '/api/prompt-agent/start');
 curl_setopt($ch3, CURLOPT_POST, true);
 curl_setopt($ch3, CURLOPT_POSTFIELDS, $jsonPayload);
 curl_setopt($ch3, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch3, CURLOPT_COOKIEFILE, $cookiesFile);
-curl_setopt($ch3, CURLOPT_COOKIEJAR, $cookiesFile); // Also save cookies
+curl_setopt($ch3, CURLOPT_COOKIEFILE, $cookiesFile); // Read cookies from file
+curl_setopt($ch3, CURLOPT_COOKIEJAR, $cookiesFile);  // Save cookies to file
+curl_setopt($ch3, CURLOPT_FOLLOWLOCATION, true);     // Follow redirects
 curl_setopt($ch3, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json'
 ]);
-curl_setopt($ch3, CURLOPT_HEADER, true);
+curl_setopt($ch3, CURLOPT_HEADER, true);             // Include headers in response
 
 // Debug: Show what cookies are being sent
-$cookieData = file_get_contents($cookiesFile);
-$output .= "Cookies being sent with API request:\n";
-if ($cookieData) {
-    $output .= $cookieData . "\n";
+if (file_exists($cookiesFile)) {
+    $cookieData = file_get_contents($cookiesFile);
+    $output .= "Cookies being sent with API request:\n";
+    if ($cookieData) {
+        $output .= $cookieData . "\n";
+    } else {
+        $output .= "Cookies file exists but is empty\n";
+    }
 } else {
-    $output .= "No cookies found in file\n";
+    $output .= "Cookies file does not exist\n";
 }
 
 $apiResponse = curl_exec($ch3);
